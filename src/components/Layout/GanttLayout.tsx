@@ -148,7 +148,7 @@ export function GanttLayout(): JSX.Element {
       >
         {/* Sticky container - stays at top of viewport */}
         <div
-          className="sticky top-0 h-full max-h-screen overflow-hidden bg-neutral-50"
+          className="sticky top-0 h-full max-h-screen overflow-hidden bg-slate-50"
           style={{ height: viewportHeight || "100%" }}
         >
           {/* Layout - flex column with split pane */}
@@ -168,7 +168,7 @@ export function GanttLayout(): JSX.Element {
                 >
                   <div
                     ref={taskTableHeaderScrollRef}
-                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-neutral-200/80 overflow-x-auto overflow-y-hidden"
+                    className="flex-shrink-0 bg-white/90 backdrop-blur-sm border-b border-slate-300/80 overflow-x-auto overflow-y-hidden"
                     style={HIDDEN_SCROLLBAR_STYLE}
                   >
                     <TaskTableHeader />

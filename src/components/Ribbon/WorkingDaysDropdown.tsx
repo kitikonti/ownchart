@@ -80,8 +80,8 @@ export function WorkingDaysDropdown({
           aria-label="Working Days configuration"
         >
           {/* Info text */}
-          <div className="px-4 py-3 border-b border-neutral-200">
-            <p className="text-xs text-neutral-500 leading-relaxed">
+          <div className="px-4 py-3 border-b border-slate-300">
+            <p className="text-xs text-slate-500 leading-relaxed">
               Tasks skip non-working days when dragging and in duration
               calculations.
             </p>
@@ -99,7 +99,7 @@ export function WorkingDaysDropdown({
                   onChange={(checked) => handleConfigChange(key, checked)}
                   aria-label={getLabel(key, label)}
                 />
-                <span className="text-sm text-neutral-700">
+                <span className="text-sm text-slate-700">
                   {getLabel(key, label)}
                 </span>
               </label>

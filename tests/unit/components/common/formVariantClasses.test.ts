@@ -30,8 +30,8 @@ describe("formControlVariantClasses", () => {
       expect(formControlVariantClasses.default).toContain("focus-visible:ring-");
     });
 
-    it("contains border-neutral-300 as default border color", () => {
-      expect(formControlVariantClasses.default).toContain("border-neutral-300");
+    it("contains border-slate-300 as default border color", () => {
+      expect(formControlVariantClasses.default).toContain("border-slate-300");
     });
   });
 
@@ -44,8 +44,8 @@ describe("formControlVariantClasses", () => {
       expect(formControlVariantClasses.figma).toContain("focus-visible:ring-");
     });
 
-    it("contains border-neutral-200 as default border color", () => {
-      expect(formControlVariantClasses.figma).toContain("border-neutral-200");
+    it("contains border-slate-300 as default border color", () => {
+      expect(formControlVariantClasses.figma).toContain("border-slate-300");
     });
   });
 

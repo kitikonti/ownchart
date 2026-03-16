@@ -164,7 +164,7 @@ function SegmentedControlInner<T extends string = string>({
           const className = `flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded border transition-colors duration-150 ${FOCUS_CLASSES} focus-visible:ring-offset-2 ${
             isSelected
               ? "border-brand-600 bg-brand-600 text-white"
-              : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+              : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"
           }`;
           return (
             <SegmentedButton
@@ -190,16 +190,16 @@ function SegmentedControlInner<T extends string = string>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className={`${fullWidth ? "flex" : "inline-flex"} rounded border border-neutral-300 overflow-hidden`}
+      className={`${fullWidth ? "flex" : "inline-flex"} rounded border border-slate-300 overflow-hidden`}
     >
       {options.map((opt, index) => {
         const isSelected = value === opt.value;
         const className = `${fullWidth ? "flex-1" : ""} flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium transition-colors duration-150 ${FOCUS_CLASSES} ${
-          index > 0 ? "border-l border-neutral-300" : ""
+          index > 0 ? "border-l border-slate-300" : ""
         } ${
           isSelected
             ? "bg-brand-600 text-white"
-            : "bg-white text-neutral-700 hover:bg-neutral-50"
+            : "bg-white text-slate-700 hover:bg-slate-50"
         }`;
         return (
           <SegmentedButton

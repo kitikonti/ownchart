@@ -75,8 +75,8 @@ export const RadioOptionCard = memo(function RadioOptionCard({
     OPTION_CARD_MIN_HEIGHT,
     "cursor-pointer transition-all duration-150",
     selected
-      ? "border-neutral-300 border-l-[3px] border-l-brand-600 bg-brand-50"
-      : "border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300"
+      ? "border-slate-300 border-l-[3px] border-l-brand-600 bg-brand-50"
+      : "border-slate-300 hover:bg-slate-50 hover:border-slate-300"
   );
 
   return (
@@ -106,15 +106,15 @@ export const RadioOptionCard = memo(function RadioOptionCard({
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-neutral-900">{title}</span>
+          <span className="text-sm font-medium text-slate-900">{title}</span>
           {badge && (
-            <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-neutral-100 text-neutral-600">
+            <span className="text-xs font-mono px-1.5 py-0.5 rounded-sm bg-slate-100 text-slate-600">
               {badge}
             </span>
           )}
         </div>
         {description && (
-          <p className="text-xs text-neutral-500 mt-0.5">{description}</p>
+          <p className="text-xs text-slate-500 mt-0.5">{description}</p>
         )}
         {selected && children && <div className="mt-4">{children}</div>}
       </div>

@@ -109,7 +109,7 @@ export function Ribbon(): JSX.Element {
       className="flex-shrink-0 relative"
       style={{
         zIndex: Z_INDEX_RIBBON,
-        backgroundColor: COLORS.neutral[50],
+        backgroundColor: COLORS.slate[50],
         paddingBottom: SPACING[2],
       }}
     >
@@ -187,7 +187,7 @@ export function Ribbon(): JSX.Element {
         className="flex items-center justify-between px-3 gap-1"
         style={{
           height: `${TOOLBAR_HEIGHT}px`,
-          backgroundColor: COLORS.neutral[0],
+          backgroundColor: COLORS.slate[0],
           boxShadow: SHADOWS.rest,
           borderRadius: RADIUS.lg,
           width: `calc(100% - ${SPACING[4]})`,

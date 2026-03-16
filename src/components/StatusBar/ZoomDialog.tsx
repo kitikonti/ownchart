@@ -170,7 +170,7 @@ export const ZoomDialog = memo(function ZoomDialog({
             <label
               key={String(preset.value)}
               htmlFor={inputId}
-              className="flex items-center gap-3 px-3 py-2.5 rounded cursor-pointer hover:bg-neutral-50 transition-colors duration-150"
+              className="flex items-center gap-3 px-3 py-2.5 rounded cursor-pointer hover:bg-slate-50 transition-colors duration-150"
             >
               <Radio
                 id={inputId}
@@ -179,7 +179,7 @@ export const ZoomDialog = memo(function ZoomDialog({
                 checked={selectedValue === preset.value}
                 onChange={() => setSelectedValue(preset.value)}
               />
-              <span className="text-sm text-neutral-800">{preset.label}</span>
+              <span className="text-sm text-slate-800">{preset.label}</span>
             </label>
           );
         })}

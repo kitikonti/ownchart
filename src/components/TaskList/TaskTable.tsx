@@ -52,7 +52,7 @@ function AllHiddenMessage({
 }): JSX.Element {
   return (
     <div
-      className="col-span-full flex items-center justify-center text-neutral-500 text-sm"
+      className="col-span-full flex items-center justify-center text-slate-500 text-sm"
       style={{ height: rowHeight }}
       role="status"
     >
@@ -133,7 +133,7 @@ export function TaskTable(): JSX.Element {
   );
 
   return (
-    <div className="task-table-container bg-white border-r border-neutral-200 select-none">
+    <div className="task-table-container bg-white border-r border-slate-300 select-none">
       {/* Table Content - no overflow here, handled by parent */}
       <div className="task-table-wrapper">
         <div

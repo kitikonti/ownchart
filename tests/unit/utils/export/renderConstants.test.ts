@@ -348,8 +348,8 @@ describe("RENDER_COLORS (canary)", () => {
     expect(RENDER_COLORS.gridLine).toBe("#e2e8f0");
   });
 
-  it("weekendBackground is composited neutral-100/50% over white (#f8fafc)", () => {
-    expect(RENDER_COLORS.weekendBackground).toBe("#f8fafc");
+  it("weekendBackground is composited slate-100/50% over white (#f1f5f9)", () => {
+    expect(RENDER_COLORS.weekendBackground).toBe("#f1f5f9");
   });
 
   it("holidayBackground is composited amber-100/50% over white (#fef9e3)", () => {
@@ -360,9 +360,9 @@ describe("RENDER_COLORS (canary)", () => {
     expect(RENDER_COLORS.tableText).toBe("#1e293b");
   });
 
-  it("headerBackground and weekendBackground share the same slate-100 value (#f8fafc)", () => {
+  it("headerBackground and weekendBackground share the same slate-100 value (#f1f5f9)", () => {
     expect(RENDER_COLORS.headerBackground).toBe(RENDER_COLORS.weekendBackground);
-    expect(RENDER_COLORS.headerBackground).toBe("#f8fafc");
+    expect(RENDER_COLORS.headerBackground).toBe("#f1f5f9");
   });
 
   it("tableBorder and gridLine share the same slate-200 value (#e2e8f0)", () => {

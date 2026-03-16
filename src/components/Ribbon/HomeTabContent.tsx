@@ -56,7 +56,7 @@ function IconWithBadge({
           className="absolute -top-0.5 -right-1 font-semibold rounded-full flex items-center justify-center px-0.5 leading-none"
           style={{
             backgroundColor: COLORS.brand[600],
-            color: COLORS.neutral[0],
+            color: COLORS.slate[0],
             fontSize: `${BADGE_FONT_SIZE_PX}px`,
             minWidth: `${BADGE_MIN_WIDTH_PX}px`,
             height: `${BADGE_HEIGHT_PX}px`,

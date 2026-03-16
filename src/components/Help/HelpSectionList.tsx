@@ -61,12 +61,12 @@ function SectionAccordion({
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="w-full flex items-center justify-between py-2.5 px-3 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
+        className="w-full flex items-center justify-between py-2.5 px-3 rounded hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100"
       >
-        <span className="text-sm font-semibold text-neutral-900">
+        <span className="text-sm font-semibold text-slate-900">
           {section.title}
           <span
-            className="ml-2 text-xs font-normal text-neutral-400"
+            className="ml-2 text-xs font-normal text-slate-400"
             aria-hidden="true"
           >
             {section.topics.length}
@@ -74,7 +74,7 @@ function SectionAccordion({
           <span className="sr-only"> ({section.topics.length} topics)</span>
         </span>
         <CaretDown
-          className={`size-4 text-neutral-400 transition-transform duration-200 ${
+          className={`size-4 text-slate-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           weight="bold"

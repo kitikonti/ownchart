@@ -229,7 +229,7 @@ export const FitToWidthSelector = memo(function FitToWidthSelector({
             step={1}
             placeholder={String(DEFAULT_FIT_TO_WIDTH_PX)}
           />
-          <span id={pxUnitId} className="text-sm text-neutral-500">
+          <span id={pxUnitId} className="text-sm text-slate-500">
             px
           </span>
         </div>

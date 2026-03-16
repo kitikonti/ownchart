@@ -97,12 +97,12 @@ export class AppErrorBoundary extends Component<Props, State> {
       return (
         <div
           role="alert"
-          className="h-screen flex flex-col items-center justify-center gap-4 bg-neutral-100 text-neutral-900 p-8"
+          className="h-screen flex flex-col items-center justify-center gap-4 bg-slate-100 text-slate-900 p-8"
         >
           <h1 className="text-2xl font-semibold text-red-600">
             Something went wrong
           </h1>
-          <p className="text-neutral-600 text-sm max-w-md text-center">
+          <p className="text-slate-600 text-sm max-w-md text-center">
             {ERROR_FALLBACK_MESSAGE}
           </p>
           <div className="flex gap-3">
@@ -110,7 +110,7 @@ export class AppErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={this.handleReset}
-                className="px-4 py-2 bg-neutral-200 text-neutral-800 rounded-md text-sm hover:bg-neutral-300 transition-colors"
+                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md text-sm hover:bg-slate-300 transition-colors"
               >
                 Try again
               </button>

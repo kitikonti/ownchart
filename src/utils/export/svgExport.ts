@@ -23,6 +23,7 @@ import {
   REACT_RENDER_WAIT_MS,
   EXPORT_CHART_SVG_CLASS,
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
+  SVG_BACKGROUND_WHITE,
 } from "./constants";
 import {
   waitForFonts,
@@ -52,14 +53,6 @@ import type {
   TaskTableHeaderOptions,
   TaskTableRowsOptions,
 } from "./taskTableRenderer";
-
-/**
- * Opaque background fill colour for the SVG canvas.
- * Intentionally hardcoded: pure white is a presentation-layer override for
- * the "opaque background" export option, not a design-system colour that
- * should track theme changes.
- */
-const EXPORT_OPAQUE_BACKGROUND_COLOR = "#ffffff";
 
 /** Parameters for SVG export */
 export interface ExportToSvgParams {
@@ -330,7 +323,7 @@ export function createRootSvg(
     const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
     bg.setAttribute("width", "100%");
     bg.setAttribute("height", "100%");
-    bg.setAttribute("fill", EXPORT_OPAQUE_BACKGROUND_COLOR);
+    bg.setAttribute("fill", SVG_BACKGROUND_WHITE);
     svg.appendChild(bg);
   }
 

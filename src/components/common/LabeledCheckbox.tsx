@@ -65,14 +65,14 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
         OPTION_CARD_LAYOUT,
         // OPTION_CARD_MIN_HEIGHT: WCAG 2.5.5 minimum 44×44 px touch target size.
         OPTION_CARD_MIN_HEIGHT,
-        "border-neutral-200 transition-colors duration-150",
+        "border-slate-300 transition-colors duration-150",
         alignTop ? "items-start" : "items-center",
         disabled
           ? // pointer-events-none prevents click-to-focus on the hidden input when
             // disabled — without it the label would still transfer focus to the input
             // even though no change event fires (focus-without-change is confusing UX).
             "opacity-50 cursor-not-allowed pointer-events-none"
-          : "hover:bg-neutral-50 hover:border-neutral-300 cursor-pointer"
+          : "hover:bg-slate-50 hover:border-slate-300 cursor-pointer"
       )}
     >
       <Checkbox
@@ -83,9 +83,9 @@ export const LabeledCheckbox = memo(function LabeledCheckbox({
         indeterminate={indeterminate}
       />
       <div className="flex-1">
-        <span className="text-sm font-medium text-neutral-900">{title}</span>
+        <span className="text-sm font-medium text-slate-900">{title}</span>
         {description && (
-          <span className="block text-xs text-neutral-500 mt-0.5">
+          <span className="block text-xs text-slate-500 mt-0.5">
             {description}
           </span>
         )}

@@ -24,22 +24,22 @@ export const SVG_FONT_FAMILY =
 
 /**
  * Semantic color tokens for SVG/PDF export task table rendering.
- * Derived from the design-token neutral scale to stay consistent
+ * Derived from the design-token slate scale to stay consistent
  * with the Tailwind classes used in the HTML (PNG) export path.
  */
 export const EXPORT_COLORS = {
-  /** neutral-700 — task names, regular cell text */
-  textPrimary: COLORS.neutral[700],
-  /** neutral-600 — dates, progress, icons, header labels */
-  textSecondary: COLORS.neutral[600],
-  /** neutral-500 — summary dates/duration (lighter, italic in app) */
-  textSummary: COLORS.neutral[500],
-  /** neutral-200 — header borders */
-  border: COLORS.neutral[200],
-  /** neutral-100 — row borders */
-  borderLight: COLORS.neutral[100],
-  /** neutral-50 — header background */
-  headerBg: COLORS.neutral[50],
+  /** slate-700 — task names, regular cell text */
+  textPrimary: COLORS.slate[700],
+  /** slate-600 — dates, progress, icons, header labels */
+  textSecondary: COLORS.slate[600],
+  /** slate-500 — summary dates/duration (lighter, italic in app) */
+  textSummary: COLORS.slate[500],
+  /** slate-200 — header borders */
+  border: COLORS.slate[200],
+  /** slate-100 — row borders */
+  borderLight: COLORS.slate[100],
+  /** slate-50 — header background */
+  headerBg: COLORS.slate[50],
 } as const;
 
 // ─── Task table cell rendering constants ──────────────────────────────────────

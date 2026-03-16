@@ -68,7 +68,7 @@ const HelpTabContent = memo(function HelpTabContent({
     if (searchResults.length > 0) {
       return (
         <>
-          <p className="text-xs text-neutral-400 mb-3">
+          <p className="text-xs text-slate-400 mb-3">
             {matchCount} result{matchCount !== 1 ? "s" : ""} for &ldquo;
             {query}&rdquo;
           </p>
@@ -77,7 +77,7 @@ const HelpTabContent = memo(function HelpTabContent({
       );
     }
     return (
-      <p className="text-sm text-neutral-400 text-center py-8">
+      <p className="text-sm text-slate-400 text-center py-8">
         No results for &ldquo;{query}&rdquo;
       </p>
     );
@@ -205,7 +205,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
       isOpen={isOpen}
       onClose={closeHelp}
       title="Help"
-      icon={<Question size={24} weight="light" className="text-neutral-500" />}
+      icon={<Question size={24} weight="light" className="text-slate-500" />}
       widthClass="max-w-2xl"
       headerStyle="bordered"
       footerStyle="bordered"
@@ -225,7 +225,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
       {!isSearching && (
         <div
           ref={tablistRef}
-          className="px-6 flex gap-1 border-b border-neutral-200"
+          className="px-6 flex gap-1 border-b border-slate-300"
           role="tablist"
           aria-label="Help navigation"
           tabIndex={-1}
@@ -241,7 +241,7 @@ export const HelpDialog = memo(function HelpDialog(): JSX.Element | null {
                 className={`px-3 py-2 text-sm font-medium transition-colors relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-inset rounded-sm ${
                   isActive
                     ? "text-brand-600"
-                    : "text-neutral-500 hover:text-neutral-700"
+                    : "text-slate-500 hover:text-slate-700"
                 }`}
                 role="tab"
                 aria-selected={isActive}

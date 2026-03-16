@@ -147,8 +147,8 @@ describe("Alert — variant container classes", () => {
   it("neutral variant has neutral container classes", () => {
     const { container } = renderAlert("neutral");
     expect(container.firstChild).toHaveClass(
-      "bg-neutral-100",
-      "border-neutral-200"
+      "bg-slate-100",
+      "border-slate-300"
     );
   });
 });

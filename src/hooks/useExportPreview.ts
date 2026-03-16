@@ -17,6 +17,7 @@ import type { Task } from "@/types/chart.types";
 import type { ExportOptions } from "@/utils/export/types";
 import { ExportRenderer } from "@/components/Export/ExportRenderer";
 import { calculateExportDimensions } from "@/utils/export/exportLayout";
+import { SVG_BACKGROUND_WHITE } from "@/utils/export/constants";
 
 /** Debounce delay before triggering a new preview render */
 const DEBOUNCE_MS = 300;
@@ -24,8 +25,6 @@ const DEBOUNCE_MS = 300;
 const RENDER_SETTLE_MS = 100;
 /** Pixel ratio for preview capture — intentionally reduced for performance */
 const PREVIEW_PIXEL_RATIO = 1;
-/** White background hex used for container background and canvas capture */
-const WHITE_HEX = "#ffffff";
 
 export interface UseExportPreviewResult {
   /** Data URL of the preview image (use with <img src={...}>) */
@@ -265,8 +264,12 @@ export function useExportPreview({
     } | null> => {
       const fullDimensions = calculateExportDimensions(params);
       const isWhiteBackground = params.options.background === "white";
-      const containerBackground = isWhiteBackground ? WHITE_HEX : "transparent";
-      const captureBackground = isWhiteBackground ? WHITE_HEX : undefined;
+      const containerBackground = isWhiteBackground
+        ? SVG_BACKGROUND_WHITE
+        : "transparent";
+      const captureBackground = isWhiteBackground
+        ? SVG_BACKGROUND_WHITE
+        : undefined;
 
       // Phase 1: Build off-screen container
       const { wrapper, container } = buildRenderContainer(

@@ -111,7 +111,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleZoomOut}
           aria-disabled={isAtMinZoom}
-          className={`p-0.5 transition-colors ${isAtMinZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
+          className={`p-0.5 transition-colors ${isAtMinZoom ? "text-slate-300 cursor-not-allowed" : "text-slate-500 hover:text-slate-700"}`}
           aria-label="Zoom out"
           title="Zoom out"
         >
@@ -124,7 +124,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           max={MAX_ZOOM * 100}
           value={zoomPercentage}
           onChange={handleSliderChange}
-          className="status-bar-slider w-24 h-1 bg-neutral-300 rounded-full appearance-none cursor-pointer"
+          className="status-bar-slider w-24 h-1 bg-slate-300 rounded-full appearance-none cursor-pointer"
           aria-label="Zoom level"
           aria-valuemin={MIN_ZOOM * 100}
           aria-valuemax={MAX_ZOOM * 100}
@@ -136,7 +136,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
           type="button"
           onClick={handleZoomIn}
           aria-disabled={isAtMaxZoom}
-          className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-neutral-300 cursor-not-allowed" : "text-neutral-500 hover:text-neutral-700"}`}
+          className={`p-0.5 transition-colors ${isAtMaxZoom ? "text-slate-300 cursor-not-allowed" : "text-slate-500 hover:text-slate-700"}`}
           aria-label="Zoom in"
           title="Zoom in"
         >
@@ -147,7 +147,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
         <button
           type="button"
           onClick={handleOpenZoomDialog}
-          className="min-w-[44px] text-right text-neutral-600 hover:text-neutral-800 hover:underline cursor-pointer transition-colors"
+          className="min-w-[44px] text-right text-slate-600 hover:text-slate-800 hover:underline cursor-pointer transition-colors"
           aria-label={`Zoom: ${zoomPercentage}%. Open zoom dialog`}
         >
           {zoomPercentage}%
@@ -156,7 +156,7 @@ export const ZoomControls = memo(function ZoomControls(): JSX.Element {
         <button
           type="button"
           onClick={handleFitToView}
-          className="p-0.5 text-neutral-500 hover:text-neutral-700 transition-colors"
+          className="p-0.5 text-slate-500 hover:text-slate-700 transition-colors"
           aria-label="Fit to view"
           title="Fit to View (F)"
         >

@@ -32,7 +32,7 @@ export const TaskTypeIcon = memo(function TaskTypeIcon({
   onClick,
   className = "",
 }: TaskTypeIconProps): JSX.Element {
-  const iconClassName = `text-neutral-600 flex-shrink-0 ${className}`;
+  const iconClassName = `text-slate-600 flex-shrink-0 ${className}`;
 
   const Icon =
     type === "summary" ? Folder : type === "milestone" ? Diamond : CheckSquare;
@@ -69,7 +69,7 @@ export const TaskTypeIcon = memo(function TaskTypeIcon({
         type="button"
         tabIndex={0}
         aria-label={`Task type: ${TYPE_LABELS[type]}. Click to change`}
-        className="inline-flex cursor-pointer hover:text-neutral-800 transition-colors bg-transparent border-0 p-0"
+        className="inline-flex cursor-pointer hover:text-slate-800 transition-colors bg-transparent border-0 p-0"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
       >

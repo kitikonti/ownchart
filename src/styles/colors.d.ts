@@ -3,18 +3,21 @@
  * IMPORTANT: Keep literal types in sync with colors.js when changing values.
  */
 
-export declare const neutral: {
+export declare const slate: {
   readonly 0: "#ffffff";
-  readonly 50: "#f5f5f5";
-  readonly 100: "#ebebeb";
-  readonly 200: "#d4d4d4";
-  readonly 300: "#b3b3b3";
-  readonly 400: "#8a8a8a";
-  readonly 500: "#6b6b6b";
-  readonly 600: "#525252";
-  readonly 700: "#404040";
-  readonly 800: "#303030";
-  readonly 900: "#1a1a1a";
+  readonly 50: "#f8fafc";
+  readonly 100: "#f1f5f9";
+  readonly 200: "#e2e8f0";
+  readonly 300: "#cbd5e1";
+  readonly 325: "#abb4c0";
+  readonly 350: "#7f8b9b";
+  readonly 400: "#94a3b8";
+  readonly 500: "#64748b";
+  readonly 600: "#475569";
+  readonly 700: "#334155";
+  readonly 800: "#1e293b";
+  readonly 900: "#0f172a";
+  readonly 950: "#020617";
 };
 
 export declare const brand: {
@@ -39,6 +42,6 @@ export declare const semantic: {
 
 export declare const surface: {
   readonly DEFAULT: "#ffffff";
-  readonly raised: "#f5f5f5";
-  readonly sunken: "#ebebeb";
+  readonly raised: "#f8fafc";
+  readonly sunken: "#e2e8f0";
 };

@@ -93,7 +93,7 @@ function ColorSwatch({
 }): JSX.Element {
   return (
     <span
-      className="inline-block rounded-sm border border-neutral-200 shrink-0"
+      className="inline-block rounded-sm border border-slate-300 shrink-0"
       style={{ width: size, height: size, backgroundColor: color }}
     />
   );
@@ -130,7 +130,7 @@ function ColorPickerRow({
         value={value}
         onChange={(e) => onChange(toHexColor(e.target.value))}
         aria-label={`${label} color`}
-        className="w-8 h-6 border border-neutral-200 rounded cursor-pointer p-0.5"
+        className="w-8 h-6 border border-slate-300 rounded cursor-pointer p-0.5"
       />
     </div>
   );
@@ -177,7 +177,7 @@ function RangeSliderRow({
 function ManualOptions(): JSX.Element {
   return (
     <div className="p-3">
-      <div className="text-xs text-neutral-500">
+      <div className="text-xs text-slate-500">
         Use the color picker in the task list to set individual task colors.
       </div>
     </div>
@@ -197,7 +197,7 @@ function ThemeOptions({
     <div className="py-2">
       {PALETTE_CATEGORIES.map((category) => (
         <div key={category} className="mb-2">
-          <div className="px-3 py-1 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">
+          <div className="px-3 py-1 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             {CATEGORY_LABELS[category]}
           </div>
 
@@ -234,7 +234,7 @@ function SummaryOptions({
 }: SummaryOptionsProps): JSX.Element {
   return (
     <div className="p-3">
-      <div className="text-xs text-neutral-500 mb-3">
+      <div className="text-xs text-slate-500 mb-3">
         Set colors on summary tasks — children inherit automatically.
       </div>
       <label className="flex items-center gap-2 cursor-pointer mb-3">
@@ -249,7 +249,7 @@ function SummaryOptions({
 
       {options.useMilestoneAccent && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">Accent:</span>
+          <span className="text-xs text-slate-500">Accent:</span>
           <input
             type="color"
             value={options.milestoneAccentColor}
@@ -257,7 +257,7 @@ function SummaryOptions({
               onChange({ milestoneAccentColor: toHexColor(e.target.value) })
             }
             aria-label="Milestone accent color"
-            className="w-7 h-7 border border-neutral-200 rounded cursor-pointer p-0.5"
+            className="w-7 h-7 border border-slate-300 rounded cursor-pointer p-0.5"
           />
         </div>
       )}
@@ -451,14 +451,14 @@ export function ColorDropdown({
           </div>
 
           {/* Divider */}
-          <div className="h-px bg-neutral-100 my-1" />
+          <div className="h-px bg-slate-100 my-1" />
 
           {/* Mode-specific options (scrollable) */}
           <div className="overflow-y-auto max-h-80">{renderOptions()}</div>
 
           {/* Apply Colors to Manual footer (only in auto modes) */}
           {currentMode !== "manual" && (
-            <div className="border-t border-neutral-100 p-2">
+            <div className="border-t border-slate-100 p-2">
               <Button
                 variant="secondary"
                 fullWidth

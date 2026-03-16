@@ -40,11 +40,11 @@ export const CollapsibleSection = memo(function CollapsibleSection({
         onClick={toggleOpen}
         aria-expanded={isOpen}
         aria-controls={contentId}
-        className="w-full flex items-center justify-between p-4 rounded hover:bg-neutral-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
+        className="w-full flex items-center justify-between p-4 rounded hover:bg-slate-50 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-100 focus-visible:ring-offset-2"
       >
-        <span className="text-sm font-semibold text-neutral-900">{title}</span>
+        <span className="text-sm font-semibold text-slate-900">{title}</span>
         <CaretDown
-          className={`size-4 text-neutral-500 transition-transform duration-200 ${
+          className={`size-4 text-slate-500 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
           weight="bold"
@@ -63,7 +63,7 @@ export const CollapsibleSection = memo(function CollapsibleSection({
       <div
         id={contentId}
         className={[
-          "mt-3 bg-neutral-50 rounded px-6 py-4 space-y-5",
+          "mt-3 bg-slate-50 rounded px-6 py-4 space-y-5",
           isOpen ? undefined : "hidden",
         ]
           .filter(Boolean)

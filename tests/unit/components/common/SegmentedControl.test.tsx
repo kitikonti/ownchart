@@ -71,7 +71,7 @@ describe("SegmentedControl", () => {
 
       const unselectedButton = screen.getByText("Option A").closest("button");
       expect(unselectedButton?.className).toContain("bg-white");
-      expect(unselectedButton?.className).toContain("text-neutral-700");
+      expect(unselectedButton?.className).toContain("text-slate-700");
     });
 
     it("renders with role=radiogroup and aria-label", () => {
@@ -192,7 +192,7 @@ describe("SegmentedControl", () => {
       expect(selectedButton?.className).toContain("border-brand-600");
 
       const unselectedButton = screen.getByText("Option B").closest("button");
-      expect(unselectedButton?.className).toContain("border-neutral-300");
+      expect(unselectedButton?.className).toContain("border-slate-300");
     });
 
     it("calls onChange with selected value", () => {

@@ -179,7 +179,7 @@ export const Cell = memo(function Cell({
         role="gridcell"
         aria-selected={true}
         tabIndex={-1}
-        className={`relative flex items-center border-b ${borderRight} border-neutral-200 bg-white`}
+        className={`relative flex items-center border-b ${borderRight} border-slate-300 bg-white`}
         style={getEditingCellStyle(column.id)}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleEditModeKeyDown}
@@ -228,11 +228,11 @@ export const Cell = memo(function Cell({
       className={[
         "border-b",
         borderRight,
-        "border-neutral-200 flex items-center cursor-pointer relative",
+        "border-slate-300 flex items-center cursor-pointer relative",
         isActive && !isCut && "bg-white",
-        !column.editable && "bg-neutral-50 text-neutral-500",
+        !column.editable && "bg-slate-50 text-slate-500",
         isCut &&
-          "opacity-50 outline outline-2 outline-dashed outline-neutral-500 -outline-offset-2",
+          "opacity-50 outline outline-2 outline-dashed outline-slate-500 -outline-offset-2",
       ]
         .filter(Boolean)
         .join(" ")}

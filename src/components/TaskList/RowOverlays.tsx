@@ -14,7 +14,7 @@ import { SELECTION_RADIUS } from "./rowNumberConfig";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const SELECTION_BORDER = `2px solid ${COLORS.brand[600]}`;
-const CLIPBOARD_BORDER = `2px dotted ${COLORS.neutral[500]}`;
+const CLIPBOARD_BORDER = `2px dotted ${COLORS.slate[500]}`;
 
 // ── Props ────────────────────────────────────────────────────────────────────
 

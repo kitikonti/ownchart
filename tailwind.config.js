@@ -1,4 +1,4 @@
-import { neutral, brand, semantic, surface } from './src/styles/colors.js';
+import { slate, brand, semantic, surface } from './src/styles/colors.js';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -18,7 +18,7 @@ export default {
         mono: ['ui-monospace', 'SF Mono', 'Fira Code', 'monospace'],
       },
       colors: {
-        neutral,
+        slate,
         brand,
         ...semantic,
         surface,
@@ -45,8 +45,8 @@ export default {
         // Dialog shadow
         modal: '0 0 8px rgba(0,0,0,0.12), 0 32px 64px rgba(0,0,0,0.14)',
         // Focus ring
-        focus: '0 0 0 2px #CFE4FA',
-        'focus-brand': '0 0 0 2px #0F6CBD',
+        focus: `0 0 0 2px ${brand[100]}`,
+        'focus-brand': `0 0 0 2px ${brand[600]}`,
       },
       transitionTimingFunction: {
         spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',

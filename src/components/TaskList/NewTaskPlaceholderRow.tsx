@@ -34,7 +34,7 @@ const PLACEHOLDER_TEXT = "Add new task...";
 function getPlaceholderCellClassName(column: ColumnDefinition): string {
   return [
     column.showRightBorder !== false && "border-r",
-    "border-b border-neutral-200 flex items-center cursor-pointer",
+    "border-b border-slate-300 flex items-center cursor-pointer",
   ]
     .filter(Boolean)
     .join(" ");
@@ -162,7 +162,7 @@ const PlaceholderRowNumberCell = memo(function PlaceholderRowNumberCell({
 
   return (
     <div
-      className="border-r border-b border-neutral-200 flex items-center justify-end cursor-pointer pr-2"
+      className="border-r border-b border-slate-300 flex items-center justify-end cursor-pointer pr-2"
       style={{
         height: "var(--density-row-height)",
         backgroundColor: isSelected
@@ -250,7 +250,7 @@ const PlaceholderNameCell = memo(function PlaceholderNameCell({
           aria-label="New task name"
         />
       ) : (
-        <span className="text-neutral-500 italic select-none">
+        <span className="text-slate-500 italic select-none">
           {PLACEHOLDER_TEXT}
         </span>
       )}

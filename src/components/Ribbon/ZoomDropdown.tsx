@@ -33,7 +33,7 @@ const textStyle: CSSProperties = {
   height: `${TEXT_HEIGHT}px`,
   lineHeight: `${TEXT_HEIGHT}px`,
   paddingLeft: SPACING[2],
-  color: COLORS.neutral[800],
+  color: COLORS.slate[800],
   fontSize: TYPOGRAPHY.fontSize.base,
   fontWeight: TYPOGRAPHY.fontWeight.normal,
   whiteSpace: "nowrap",
@@ -90,7 +90,7 @@ export function ZoomDropdown({
 
   const chevronStyle: CSSProperties = {
     ...chevronBaseStyle,
-    backgroundColor: isOpen ? COLORS.neutral[100] : "transparent",
+    backgroundColor: isOpen ? COLORS.slate[100] : "transparent",
   };
 
   return (
@@ -120,7 +120,7 @@ export function ZoomDropdown({
           size={12}
           weight="bold"
           style={{
-            color: isOpen ? COLORS.neutral[800] : COLORS.neutral[600],
+            color: isOpen ? COLORS.slate[800] : COLORS.slate[600],
           }}
         />
       </span>

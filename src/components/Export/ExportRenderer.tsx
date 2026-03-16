@@ -39,6 +39,7 @@ import {
 import { getColumnDisplayValue } from "@/utils/export/columns";
 import { getComputedTaskColor } from "@/utils/computeTaskColor";
 import { HEADER_HEIGHT } from "@/config/layoutConstants";
+import { SVG_BACKGROUND_WHITE } from "@/utils/export/constants";
 
 interface ExportRendererProps {
   tasks: Task[];
@@ -73,7 +74,7 @@ function ExportTaskTableHeader({
 }): JSX.Element {
   return (
     <div
-      className="flex border-b border-neutral-200 bg-neutral-50"
+      className="flex border-b border-slate-300 bg-slate-50"
       style={{ width, minWidth: width, height: HEADER_HEIGHT }}
     >
       {selectedColumns.map((key) => {
@@ -82,7 +83,7 @@ function ExportTaskTableHeader({
         return (
           <div
             key={col.key}
-            className={`flex items-center px-3 text-xs font-semibold text-neutral-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-neutral-200" : ""}`}
+            className={`flex items-center px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider ${col.key !== "color" ? "border-r border-slate-300" : ""}`}
             style={{
               width: columnWidths[col.key] || col.defaultWidth,
               height: HEADER_HEIGHT,
@@ -126,7 +127,7 @@ function ExportTaskTableRows({
 }): JSX.Element {
   return (
     <div
-      className="export-task-table bg-white border-r border-neutral-200"
+      className="export-task-table bg-white border-r border-slate-300"
       style={{ width, minWidth: width, height }}
     >
       {flattenedTasks.map((flattenedTask, index) => {
@@ -135,7 +136,7 @@ function ExportTaskTableRows({
         return (
           <div
             key={task.id}
-            className="flex border-b border-neutral-100"
+            className="flex border-b border-slate-100"
             style={{ height: rowHeight, fontSize: fontSizeCell }}
           >
             {selectedColumns.map((key) => {
@@ -176,7 +177,7 @@ function ExportTaskTableRows({
                 return (
                   <div
                     key={key}
-                    className="flex items-center gap-1 border-r border-neutral-100"
+                    className="flex items-center gap-1 border-r border-slate-100"
                     style={{
                       width: colWidth,
                       paddingLeft: `${level * indentSize}px`,
@@ -187,7 +188,7 @@ function ExportTaskTableRows({
                   >
                     {/* Expand/collapse placeholder - matches app's w-4 (16px) */}
                     {hasChildren && isSummary ? (
-                      <span className="w-4 text-center text-neutral-600 flex-shrink-0">
+                      <span className="w-4 text-center text-slate-600 flex-shrink-0">
                         ▼
                       </span>
                     ) : (
@@ -203,7 +204,7 @@ function ExportTaskTableRows({
 
               // Handle milestone and summary special cases
               const isSummary = task.type === "summary";
-              // Summary dates/duration are styled differently (text-neutral-500 italic)
+              // Summary dates/duration are styled differently (text-slate-500 italic)
               const useSummaryStyle =
                 isSummary &&
                 (key === "startDate" ||
@@ -218,7 +219,7 @@ function ExportTaskTableRows({
               return (
                 <div
                   key={key}
-                  className={`flex items-center border-r border-neutral-100 ${useSummaryStyle ? "text-neutral-500 italic" : ""}`}
+                  className={`flex items-center border-r border-slate-100 ${useSummaryStyle ? "text-slate-500 italic" : ""}`}
                   style={{
                     width: colWidth,
                     height: rowHeight,
@@ -388,7 +389,8 @@ export function ExportRenderer({
     (options.includeHeader ? HEADER_HEIGHT : 0) + contentHeight;
 
   // Background color
-  const bgColor = options.background === "white" ? "#ffffff" : "transparent";
+  const bgColor =
+    options.background === "white" ? SVG_BACKGROUND_WHITE : "transparent";
 
   return (
     <div

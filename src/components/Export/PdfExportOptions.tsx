@@ -352,7 +352,7 @@ export function PdfExportOptions({
               ))}
             </Select>
             {options.pageSize !== "custom" && (
-              <p className="text-xs text-neutral-600 mt-2">
+              <p className="text-xs text-slate-600 mt-2">
                 {displayWidth} × {displayHeight} mm
               </p>
             )}
@@ -389,7 +389,7 @@ export function PdfExportOptions({
             ariaLabel="Margin preset"
           />
           {options.marginPreset !== "none" && (
-            <p className="text-xs text-neutral-600 mt-2">
+            <p className="text-xs text-slate-600 mt-2">
               {PDF_MARGIN_PRESETS[options.marginPreset].top}mm top/bottom,{" "}
               {PDF_MARGIN_PRESETS[options.marginPreset].left}mm left/right
             </p>

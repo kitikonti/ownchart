@@ -180,7 +180,7 @@ describe("InlineProjectTitle", () => {
   it("uses muted styling for Untitled placeholder", () => {
     render(<InlineProjectTitle />);
     const button = screen.getByText("Untitled").closest("button")!;
-    expect(button.className).toContain("text-neutral-500");
+    expect(button.className).toContain("text-slate-500");
     expect(button.className).toContain("italic");
   });
 
@@ -188,7 +188,7 @@ describe("InlineProjectTitle", () => {
     useChartStore.setState({ projectTitle: "My Plan" });
     render(<InlineProjectTitle />);
     const button = screen.getByText("My Plan").closest("button")!;
-    expect(button.className).toContain("text-neutral-600");
+    expect(button.className).toContain("text-slate-600");
     expect(button.className).not.toContain("italic");
   });
 

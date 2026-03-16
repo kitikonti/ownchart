@@ -74,17 +74,17 @@ const FormatCard = memo(function FormatCard({
       className={`flex flex-col items-center gap-2 px-4 py-3.5 rounded border transition-colors duration-150 ${FORMAT_CARD_MIN_HEIGHT} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
         isSelected
           ? "border-brand-600 bg-brand-600"
-          : "border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50"
+          : "border-slate-300 hover:border-slate-300 hover:bg-slate-50"
       }`}
     >
       <Icon
         size={ICON_SIZE}
         weight="light"
-        className={isSelected ? "text-white" : "text-neutral-500"}
+        className={isSelected ? "text-white" : "text-slate-500"}
       />
       <span
         className={`text-xs font-semibold ${
-          isSelected ? "text-white" : "text-neutral-700"
+          isSelected ? "text-white" : "text-slate-700"
         }`}
       >
         {option.label}
@@ -139,7 +139,7 @@ export const ExportFormatSelector = memo(function ExportFormatSelector({
 
   return (
     <div>
-      <span className="block text-sm font-semibold text-neutral-900 mb-3">
+      <span className="block text-sm font-semibold text-slate-900 mb-3">
         Format
       </span>
 
@@ -168,10 +168,10 @@ export const ExportFormatSelector = memo(function ExportFormatSelector({
 
       {/* Help Text Box — id referenced by the selected radio button via aria-describedby */}
       {selectedOption && (
-        <div className="mt-3 flex items-start gap-2 text-xs text-neutral-600 bg-neutral-50 rounded p-3 border border-neutral-200">
+        <div className="mt-3 flex items-start gap-2 text-xs text-slate-600 bg-slate-50 rounded p-3 border border-slate-300">
           <Info
             aria-hidden="true"
-            className="size-4 text-neutral-500 mt-0.5 flex-shrink-0"
+            className="size-4 text-slate-500 mt-0.5 flex-shrink-0"
             weight="fill"
           />
           <p id={descriptionId}>{selectedOption.helpText}</p>

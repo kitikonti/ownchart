@@ -114,7 +114,7 @@ describe("SVG / DOM constants", () => {
 });
 
 // ---------------------------------------------------------------------------
-// EXPORT_COLORS — derived from design tokens; must stay in sync with neutral scale
+// EXPORT_COLORS — derived from design tokens; must stay in sync with slate scale
 // ---------------------------------------------------------------------------
 
 describe("EXPORT_COLORS", () => {
@@ -126,28 +126,28 @@ describe("EXPORT_COLORS", () => {
     }
   });
 
-  it("textPrimary is neutral-700 (#404040)", () => {
-    expect(EXPORT_COLORS.textPrimary).toBe("#404040");
+  it("textPrimary is slate-700 (#334155)", () => {
+    expect(EXPORT_COLORS.textPrimary).toBe("#334155");
   });
 
-  it("textSecondary is neutral-600 (#525252)", () => {
-    expect(EXPORT_COLORS.textSecondary).toBe("#525252");
+  it("textSecondary is slate-600 (#475569)", () => {
+    expect(EXPORT_COLORS.textSecondary).toBe("#475569");
   });
 
-  it("textSummary is neutral-500 (#6b6b6b)", () => {
-    expect(EXPORT_COLORS.textSummary).toBe("#6b6b6b");
+  it("textSummary is slate-500 (#64748b)", () => {
+    expect(EXPORT_COLORS.textSummary).toBe("#64748b");
   });
 
-  it("border is neutral-200 (#d4d4d4)", () => {
-    expect(EXPORT_COLORS.border).toBe("#d4d4d4");
+  it("border is slate-200 (#e2e8f0)", () => {
+    expect(EXPORT_COLORS.border).toBe("#e2e8f0");
   });
 
-  it("borderLight is neutral-100 (#ebebeb)", () => {
-    expect(EXPORT_COLORS.borderLight).toBe("#ebebeb");
+  it("borderLight is slate-100 (#f1f5f9)", () => {
+    expect(EXPORT_COLORS.borderLight).toBe("#f1f5f9");
   });
 
-  it("headerBg is neutral-50 (#f5f5f5)", () => {
-    expect(EXPORT_COLORS.headerBg).toBe("#f5f5f5");
+  it("headerBg is slate-50 (#f8fafc)", () => {
+    expect(EXPORT_COLORS.headerBg).toBe("#f8fafc");
   });
 });
 

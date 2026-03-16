@@ -140,7 +140,7 @@ describe("getAllSwatches", () => {
       ...CURATED_SWATCHES.blues,
       ...CURATED_SWATCHES.greens,
       ...CURATED_SWATCHES.warm,
-      ...CURATED_SWATCHES.neutral,
+      ...CURATED_SWATCHES.grays,
     ];
     expect(result).toEqual(expected);
   });

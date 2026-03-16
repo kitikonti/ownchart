@@ -52,8 +52,9 @@
 /* ============================================================================
    OwnChart Design System
    ============================================================================
-   A professional, trustworthy design language befitting a privacy-first tool.
-   - Neutral gray palette (pure grays, no blue tint)
+   Colors are defined in colors.js (single source of truth) and referenced
+   here via Tailwind's theme() function. No color hex values in this file.
+   - Slate gray palette (Tailwind Slate, blue-gray tint)
    - Brand blue (#0F6CBD) as the single brand color
    - WCAG AA compliant contrast ratios
    ============================================================================ */
@@ -71,54 +72,21 @@
   letter-spacing: normal;
 
   color-scheme: light;
-  color: var(--color-neutral-700);
-  background-color: var(--color-surface);
+  color: theme("colors.slate.700");
+  background-color: theme("colors.surface.DEFAULT");
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* ─── Color Palette - Neutrals (pure grays) ─── */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f5f5f5;
-  --color-neutral-100: #ebebeb;
-  --color-neutral-200: #d4d4d4;
-  --color-neutral-300: #b3b3b3;
-  --color-neutral-400: #8a8a8a;
-  --color-neutral-500: #6b6b6b;
-  --color-neutral-600: #525252;
-  --color-neutral-700: #404040;
-  --color-neutral-800: #303030;
-  --color-neutral-900: #1a1a1a;
-
-  /* ─── Color Palette - Brand ─── */
-  --color-brand-100: #cfe4fa; /* focus rings */
-  --color-brand-500: #115ea3; /* hover states */
-  --color-brand-600: #0f6cbd; /* primary buttons */
-  --color-brand-800: #0c3b5e; /* pressed states */
-
-  /* Primary accent color (brand-600 for interactive elements) */
-  --color-accent: #0f6cbd;
-
-  /* Surface colors */
-  --color-surface: #ffffff;
-
-  /* Borders */
-  --color-border-subtle: #ebebeb;
-  --color-border-default: #d4d4d4;
-  --color-border-strong: #b3b3b3;
-
-  /* Text colors - WCAG AA compliant (4.5:1 minimum on white) */
-  --color-text-primary: #1a1a1a; /* neutral-900 ~16:1 contrast */
-  --color-text-tertiary: #6b6b6b; /* neutral-500 ~4.5:1 contrast */
-  --color-text-disabled: #b3b3b3; /* neutral-300 */
-
   /* ─── Shadows ─── */
   --shadow-context-menu:
     0 0 2px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.14);
   /* Focus ring - high visibility for accessibility */
-  --shadow-focus: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-accent);
+  --shadow-focus:
+    0 0 0 2px theme("colors.surface.DEFAULT"),
+    0 0 0 4px theme("colors.brand.600");
 
   /* ─── Radii ─── */
   --radius-sm: 2px;
@@ -182,7 +150,7 @@
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid theme("colors.brand.600");
   outline-offset: 2px;
 }
 
@@ -228,7 +196,7 @@ input[type="color"]::-moz-color-swatch {
 }
 
 input[type="color"]:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid theme("colors.brand.600");
   outline-offset: 2px;
 }
 
@@ -239,9 +207,9 @@ input[type="checkbox"] {
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1.5px solid var(--color-neutral-400);
+  border: 1.5px solid theme("colors.slate.400");
   border-radius: 3px;
-  background: var(--color-surface);
+  background: theme("colors.surface.DEFAULT");
   cursor: pointer;
   display: grid;
   place-content: center;
@@ -250,19 +218,19 @@ input[type="checkbox"] {
 }
 
 input[type="checkbox"]:hover {
-  border-color: var(--color-neutral-600);
+  border-color: theme("colors.slate.600");
 }
 
 input[type="checkbox"]:checked {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: theme("colors.brand.600");
+  border-color: theme("colors.brand.600");
 }
 
 input[type="checkbox"]::before {
   content: "";
   width: 5px;
   height: 9px;
-  border: solid var(--color-surface);
+  border: solid theme("colors.surface.DEFAULT");
   border-width: 0 2px 2px 0;
   transform: scale(0) rotate(45deg);
   transform-origin: center;
@@ -274,20 +242,20 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:indeterminate {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  background: theme("colors.brand.600");
+  border-color: theme("colors.brand.600");
 }
 
 input[type="checkbox"]:indeterminate::before {
   width: 10px;
   height: 2px;
-  background: var(--color-surface);
+  background: theme("colors.surface.DEFAULT");
   border: none;
   transform: scale(1);
 }
 
 input[type="checkbox"]:focus-visible {
-  outline: 2px solid var(--color-brand-100);
+  outline: 2px solid theme("colors.brand.100");
   outline-offset: 2px;
 }
 
@@ -303,9 +271,9 @@ input[type="radio"] {
   appearance: none;
   width: 16px;
   height: 16px;
-  border: 1.5px solid var(--color-neutral-400);
+  border: 1.5px solid theme("colors.slate.400");
   border-radius: 50%;
-  background: var(--color-surface);
+  background: theme("colors.surface.DEFAULT");
   cursor: pointer;
   display: grid;
   place-content: center;
@@ -314,18 +282,18 @@ input[type="radio"] {
 }
 
 input[type="radio"]:hover {
-  border-color: var(--color-neutral-600);
+  border-color: theme("colors.slate.600");
 }
 
 input[type="radio"]:checked {
-  border-color: var(--color-accent);
+  border-color: theme("colors.brand.600");
 }
 
 input[type="radio"]::before {
   content: "";
   width: 8px;
   height: 8px;
-  background: var(--color-accent);
+  background: theme("colors.brand.600");
   border-radius: 50%;
   transform: scale(0);
   transition: transform 120ms ease-in-out;
@@ -336,7 +304,7 @@ input[type="radio"]:checked::before {
 }
 
 input[type="radio"]:focus-visible {
-  outline: 2px solid var(--color-brand-100);
+  outline: 2px solid theme("colors.brand.100");
   outline-offset: 2px;
 }
 
@@ -345,27 +313,27 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-neutral-300);
+  background-color: theme("colors.surface.DEFAULT");
+  border: 1px solid theme("colors.slate.325");
   border-radius: var(--radius-md);
   padding: 4px 24px 4px 8px;
   font-size: 12px;
-  color: var(--color-neutral-700);
+  color: theme("colors.slate.700");
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%236b6b6b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%2364748b' d='M5 7L1 3h8z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 6px center;
   transition: border-color 150ms ease;
 }
 
 select:hover {
-  border-color: var(--color-neutral-400);
+  border-color: theme("colors.slate.400");
 }
 
 select:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid theme("colors.brand.600");
   outline-offset: 1px;
-  border-color: var(--color-neutral-500);
+  border-color: theme("colors.slate.500");
 }
 
 /* ─── Utility Classes ─── */
@@ -386,7 +354,7 @@ select:focus-visible {
 /* Scrollbar styling */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: var(--color-border-default) transparent;
+  scrollbar-color: theme("colors.slate.200") transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
@@ -399,12 +367,12 @@ select:focus-visible {
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: var(--color-border-default);
+  background: theme("colors.slate.200");
   border-radius: var(--radius-full);
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-strong);
+  background: theme("colors.slate.300");
 }
 
 /* ─── Ribbon Tab Styling (MS Office style) ─── */
@@ -421,7 +389,7 @@ select:focus-visible {
   font-size: 14px;
   line-height: 20px;
   font-weight: 400;
-  color: var(--color-neutral-600);
+  color: theme("colors.slate.600");
   background-color: transparent;
   border: 0.666667px solid transparent;
   border-radius: var(--radius-md);
@@ -437,18 +405,18 @@ select:focus-visible {
 
 .ribbon-tab:hover {
   cursor: pointer;
-  color: var(--color-neutral-800);
+  color: theme("colors.slate.800");
 }
 
 .ribbon-tab:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid theme("colors.brand.600");
   outline-offset: 1px;
 }
 
 /* Active tab */
 .ribbon-tab-active {
   font-weight: 600;
-  color: var(--color-neutral-800);
+  color: theme("colors.slate.800");
 }
 
 /* File tab - background hover/active effect */
@@ -457,11 +425,11 @@ select:focus-visible {
 }
 
 .ribbon-tab-file:hover {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 .ribbon-tab-file.ribbon-tab-active {
-  background-color: var(--color-neutral-200);
+  background-color: theme("colors.slate.200");
   font-weight: 600;
 }
 
@@ -478,8 +446,8 @@ select:focus-visible {
   left: 8px;
   right: 8px;
   height: 2px;
-  background-color: var(--color-neutral-300);
-  border: 0.666667px solid var(--color-neutral-300);
+  background-color: theme("colors.slate.325");
+  border: 0.666667px solid theme("colors.slate.325");
   border-radius: 10000px;
   display: none;
 }
@@ -496,7 +464,7 @@ select:focus-visible {
   left: 8px;
   right: 8px;
   height: 2px;
-  background-color: var(--color-accent);
+  background-color: theme("colors.brand.600");
   border-radius: 10000px;
 }
 
@@ -510,7 +478,7 @@ select:focus-visible {
   min-width: 32px;
   padding: 5px;
   background-color: transparent;
-  color: var(--color-neutral-800);
+  color: theme("colors.slate.800");
   border: 1px solid transparent;
   border-radius: 4px;
   font-size: 14px;
@@ -526,7 +494,7 @@ select:focus-visible {
 }
 
 .ribbon-toolbar-button:disabled {
-  color: var(--color-neutral-300);
+  color: theme("colors.slate.325");
   cursor: not-allowed;
 }
 
@@ -535,31 +503,31 @@ select:focus-visible {
 }
 
 .ribbon-toolbar-button[data-variant="primary"] {
-  background-color: var(--color-brand-600);
+  background-color: theme("colors.brand.600");
   color: #ffffff;
   border: none;
   border-radius: 3px;
 }
 
 .ribbon-toolbar-button[data-variant="primary"]:disabled {
-  background-color: var(--color-neutral-300);
-  color: var(--color-neutral-400);
+  background-color: theme("colors.slate.325");
+  color: theme("colors.slate.400");
 }
 
 /* Toggle active: visible border + subtle background */
 .ribbon-toolbar-button[aria-pressed="true"] {
-  background-color: var(--color-neutral-100);
-  border-color: var(--color-neutral-600);
+  background-color: theme("colors.slate.100");
+  border-color: theme("colors.slate.600");
 }
 
 .ribbon-toolbar-button:hover:not(:disabled) {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
   cursor: pointer;
 }
 
 /* Primary button hover - darker brand color with subtle shadow (Outlook style) */
 .ribbon-toolbar-button[data-variant="primary"]:hover:not(:disabled) {
-  background-color: var(--color-brand-500);
+  background-color: theme("colors.brand.500");
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 1px 2px rgba(0, 0, 0, 0.08);
@@ -567,7 +535,7 @@ select:focus-visible {
 
 /* Primary button active - even darker with depressed shadow */
 .ribbon-toolbar-button[data-variant="primary"]:active:not(:disabled) {
-  background-color: var(--color-brand-800);
+  background-color: theme("colors.brand.800");
   box-shadow:
     0 1px 2px rgba(0, 0, 0, 0.14),
     0 0 2px rgba(0, 0, 0, 0.12);
@@ -575,16 +543,16 @@ select:focus-visible {
 
 /* Toggle hover resets the active border to avoid visual clutter */
 .ribbon-toolbar-button[aria-pressed="true"]:hover:not(:disabled) {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
   border-color: transparent;
 }
 
 .ribbon-toolbar-button:active:not(:disabled) {
-  background-color: var(--color-neutral-200);
+  background-color: theme("colors.slate.200");
 }
 
 .ribbon-toolbar-button:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid theme("colors.brand.600");
   outline-offset: 1px;
 }
 
@@ -597,7 +565,7 @@ select:focus-visible {
   padding: 8px 16px;
   font-size: 14px;
   line-height: 20px;
-  color: var(--color-neutral-800);
+  color: theme("colors.slate.800");
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -606,27 +574,27 @@ select:focus-visible {
 }
 
 .file-menu-item:hover {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 .file-menu-item:active {
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 .file-menu-item:focus-visible {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
   outline: none;
 }
 
 .file-menu-shortcut {
   margin-left: auto;
   font-size: 12px;
-  color: var(--color-neutral-400);
+  color: theme("colors.slate.400");
 }
 
 .file-menu-divider {
   height: 1px;
-  background-color: var(--color-border-subtle);
+  background-color: theme("colors.slate.200");
   margin: 4px 0;
 }
 
@@ -648,7 +616,7 @@ select:focus-visible {
   position: absolute;
   top: 100%;
   margin-top: 2px;
-  background-color: var(--color-surface);
+  background-color: theme("colors.surface.DEFAULT");
   border-radius: 2px;
   box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 8px 0px;
   padding: 4px 0;
@@ -662,23 +630,23 @@ select:focus-visible {
 }
 
 .dropdown-trigger:hover {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 .dropdown-trigger[aria-expanded="true"] {
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 .dropdown-trigger[aria-expanded="true"]:hover {
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 .dropdown-trigger-active {
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 .dropdown-trigger-active:hover {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
   border-color: transparent !important;
 }
 
@@ -688,28 +656,28 @@ select:focus-visible {
 }
 
 .dropdown-item:hover {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 .dropdown-item-selected {
-  background-color: var(--color-neutral-50);
-  border: 0.667px solid var(--color-border-strong) !important;
+  background-color: theme("colors.slate.50");
+  border: 0.667px solid theme("colors.slate.325") !important;
   border-radius: 4px !important;
 }
 
 .dropdown-item-selected:hover {
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 /* Keyboard-focused item (Arrow key navigation) — matches hover style so
    keyboard users get the same visual affordance as mouse users. */
 .dropdown-item-focused {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 /* ─── Context Menu ─── */
 .context-menu-container {
-  background-color: var(--color-surface);
+  background-color: theme("colors.surface.DEFAULT");
   border-radius: 8px;
   box-shadow: var(--shadow-context-menu);
   padding: 6px 0;
@@ -728,7 +696,7 @@ select:focus-visible {
   border-radius: 4px;
   font-size: 14px;
   line-height: 20px;
-  color: var(--color-text-primary);
+  color: theme("colors.slate.900");
   background-color: transparent;
   cursor: pointer;
   user-select: none;
@@ -742,12 +710,12 @@ select:focus-visible {
 
 .context-menu-item:hover,
 .context-menu-item:focus-visible {
-  background-color: var(--color-neutral-50);
+  background-color: theme("colors.slate.50");
 }
 
 .context-menu-item:disabled,
 .context-menu-item[aria-disabled="true"] {
-  color: var(--color-text-disabled);
+  color: theme("colors.slate.325");
   cursor: default;
   background-color: transparent;
 }
@@ -776,26 +744,26 @@ select:focus-visible {
   justify-content: flex-end;
   column-gap: 2px;
   font-size: 12px;
-  color: var(--color-text-tertiary);
+  color: theme("colors.slate.500");
   padding-left: 4px;
   flex-shrink: 0;
 }
 
 .context-menu-separator {
-  border-bottom: 0.667px solid var(--color-border-subtle);
+  border-bottom: 0.667px solid theme("colors.slate.200");
   margin: 3px 0;
   height: 0;
 }
 
 /* Zoom combobox - border darkens on hover */
 .zoom-combobox {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border-default);
+  background-color: theme("colors.surface.DEFAULT");
+  border: 1px solid theme("colors.slate.300");
   transition: border-color 0.1s;
 }
 
 .zoom-combobox:hover {
-  border-color: var(--color-neutral-400);
+  border-color: theme("colors.slate.400");
 }
 
 /* ─── Animations ─── */
@@ -868,13 +836,13 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: var(--color-neutral-200);
+  background: theme("colors.slate.200");
 }
 
 input[type="range"]::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: var(--color-neutral-200);
+  background: theme("colors.slate.200");
 }
 
 /* Thumb styling */
@@ -884,8 +852,8 @@ input[type="range"]::-webkit-slider-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--color-accent);
-  border: 2px solid var(--color-surface);
+  background: theme("colors.brand.600");
+  border: 2px solid theme("colors.surface.DEFAULT");
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   margin-top: -5px; /* Center thumb on track */
   transition: transform 150ms ease;
@@ -895,8 +863,8 @@ input[type="range"]::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--color-accent);
-  border: 2px solid var(--color-surface);
+  background: theme("colors.brand.600");
+  border: 2px solid theme("colors.surface.DEFAULT");
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: transform 150ms ease;
 }
@@ -914,11 +882,11 @@ input[type="range"]:focus-visible {
 }
 
 input[type="range"]:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 3px var(--color-brand-100);
+  box-shadow: 0 0 0 3px theme("colors.brand.100");
 }
 
 input[type="range"]:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 3px var(--color-brand-100);
+  box-shadow: 0 0 0 3px theme("colors.brand.100");
 }
 
 /* Status Bar Slider - compact version */
@@ -958,7 +926,7 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 /* ─── Toolbar Separator (High-DPI aware) ─── */
 .toolbar-separator {
   width: 1px;
-  background-color: var(--color-border-default);
+  background-color: theme("colors.slate.300");
 }
 
 @media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
@@ -976,12 +944,12 @@ input[type="range"]:focus-visible::-moz-range-thumb {
 /* ─── Horizontal Divider (High-DPI aware) ─── */
 .divider-h {
   height: 1px;
-  background-color: var(--color-border-subtle);
+  background-color: theme("colors.slate.200");
 }
 
 .divider-h-light {
   height: 1px;
-  background-color: var(--color-neutral-100);
+  background-color: theme("colors.slate.100");
 }
 
 @media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {

@@ -17,7 +17,7 @@ import { COLORS } from "@/styles/design-tokens";
 import { estimateFileSize } from "@/utils/export";
 
 /** Checkerboard tile color for transparent background visualization */
-const CHECKERBOARD_TILE_COLOR = COLORS.neutral[100];
+const CHECKERBOARD_TILE_COLOR = COLORS.slate[100];
 
 /** Format types supported by the preview component (excludes PDF) */
 type PreviewFormatType = "png" | "svg";
@@ -42,7 +42,7 @@ const PreviewFrame = memo(function PreviewFrame({
 }: PreviewFrameProps): JSX.Element {
   return (
     <div
-      className="bg-white border border-neutral-200 shadow-sm flex items-center justify-center relative overflow-hidden"
+      className="bg-white border border-slate-300 shadow-sm flex items-center justify-center relative overflow-hidden"
       style={{
         aspectRatio:
           dimensions.width > 0 && dimensions.height > 0
@@ -75,7 +75,7 @@ const PreviewFrame = memo(function PreviewFrame({
             className="animate-spin text-brand-600"
             weight="regular"
           />
-          <p className="text-sm text-neutral-600 mt-3">Rendering preview...</p>
+          <p className="text-sm text-slate-600 mt-3">Rendering preview...</p>
         </div>
       )}
 
@@ -99,13 +99,13 @@ const PreviewFrame = memo(function PreviewFrame({
       {/* Empty State (no preview yet) */}
       {!previewDataUrl && !isRendering && !error && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-          <div className="w-16 h-16 rounded-2xl bg-neutral-700 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-slate-700 flex items-center justify-center mb-4">
             <Image size={32} className="text-white" weight="regular" />
           </div>
-          <p className="text-sm text-neutral-700 font-medium">
+          <p className="text-sm text-slate-700 font-medium">
             Preview will render here
           </p>
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {formatType === "svg"
               ? "Vector image format"
               : "Raster image format"}
@@ -153,10 +153,10 @@ export function ChartPreview({
     <div className="flex flex-col h-full">
       {/* Preview Header */}
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-1">
+        <h3 className="text-sm font-semibold text-slate-700 mb-1">
           Export Preview
         </h3>
-        <p className="text-xs text-neutral-500">Live preview of your export</p>
+        <p className="text-xs text-slate-500">Live preview of your export</p>
       </div>
 
       {/* Preview Area Container - centers the preview frame */}
@@ -174,27 +174,27 @@ export function ChartPreview({
       {/* Info Panel - Compact */}
       <div className="mt-4 space-y-2">
         {/* Single row with dot separators */}
-        <div className="text-xs text-neutral-600">
-          <span className="font-medium text-neutral-900">
+        <div className="text-xs text-slate-600">
+          <span className="font-medium text-slate-900">
             {effectiveZoom !== undefined
               ? `${Math.round(effectiveZoom * 100)}%`
               : "—"}
           </span>
           {" zoom"}
-          <span className="mx-1.5 text-neutral-300">·</span>
+          <span className="mx-1.5 text-slate-300">·</span>
           {dimensions.width > 0 && dimensions.height > 0 ? (
             <>
-              <span className="font-medium text-neutral-900">
+              <span className="font-medium text-slate-900">
                 {dimensions.width.toLocaleString()}×
                 {dimensions.height.toLocaleString()}
               </span>
               {" px"}
             </>
           ) : (
-            <span className="text-neutral-400">—</span>
+            <span className="text-slate-400">—</span>
           )}
-          <span className="mx-1.5 text-neutral-300">·</span>
-          <span className="font-medium text-neutral-900">
+          <span className="mx-1.5 text-slate-300">·</span>
+          <span className="font-medium text-slate-900">
             {estimateFileSize(dimensions.width, dimensions.height)}
           </span>
         </div>

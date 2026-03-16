@@ -45,6 +45,7 @@ import {
   EXPORT_TIMELINE_HEADER_SVG_CLASS,
   SVG_NS,
   REACT_RENDER_WAIT_MS,
+  SVG_BACKGROUND_WHITE,
 } from "./constants";
 import { APP_CONFIG } from "@/config/appConfig";
 import { registerInterFont } from "./interFont";
@@ -73,14 +74,14 @@ const PDF_BANNER_FONT_SIZE_PT = 9;
 
 /**
  * Text color for header/footer labels.
- * Derived from the design-token EXPORT_COLORS.textSecondary (neutral-600)
+ * Derived from the design-token EXPORT_COLORS.textSecondary (slate-600)
  * so it stays in sync when the design system changes.
  */
 const PDF_TEXT_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.textSecondary);
 
 /**
  * Separator line color.
- * Derived from EXPORT_COLORS.border (neutral-200) — same token used by the
+ * Derived from EXPORT_COLORS.border (slate-200) — same token used by the
  * task-table header borders in the SVG export path.
  */
 const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.border);
@@ -93,14 +94,6 @@ const PDF_HEADER_TEXT_OFFSET_MM = 6;
 
 /** Footer text vertical offset from the bottom margin edge in mm */
 const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
-
-/**
- * White background fill colour for the SVG canvas.
- * Intentionally hardcoded: pure white is a presentation-layer override for
- * the "opaque background" export option, not a design-system colour that
- * should track theme changes.
- */
-const SVG_BACKGROUND_WHITE = "#ffffff";
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";

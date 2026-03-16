@@ -19,10 +19,10 @@ const DEFAULT_COLOR = COLORS.brand[600];
 /**
  * Text colors used for contrast selection.
  *
- * LIGHT_TEXT: pure white, from the neutral scale (neutral[0]).
+ * LIGHT_TEXT: pure white, from the slate scale (slate[0]).
  * DARK_TEXT: slate[800] — imported as SLATE_800 from design-tokens.ts.
  */
-const LIGHT_TEXT = COLORS.neutral[0]; // "#ffffff"
+const LIGHT_TEXT = COLORS.slate[0]; // "#ffffff"
 const DARK_TEXT = SLATE_800; // "#1e293b" — slate[800]
 
 // ─────────────────────────────────────────────────────────────────────────────

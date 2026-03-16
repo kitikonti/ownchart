@@ -41,7 +41,7 @@ const SelectAllButton = memo(function SelectAllButton({
   return (
     <button
       onClick={onSelectAll}
-      className="absolute inset-0 cursor-pointer hover:bg-neutral-200 transition-colors"
+      className="absolute inset-0 cursor-pointer hover:bg-slate-200 transition-colors"
       title={allSelected ? "Deselect all" : "Select all"}
       aria-label={allSelected ? "Deselect all tasks" : "Select all tasks"}
     >
@@ -115,7 +115,7 @@ const HeaderCell = memo(function HeaderCell({
         column.resizable ? "pr-3" : "px-3",
         "border-b",
         (column.showRightBorder ?? true) ? "border-r" : "",
-        "text-xs font-semibold text-neutral-600 uppercase tracking-wider",
+        "text-xs font-semibold text-slate-600 uppercase tracking-wider",
         "whitespace-nowrap relative",
       ].join(" ")}
       style={{

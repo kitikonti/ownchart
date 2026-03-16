@@ -23,7 +23,7 @@ export const FieldLabel = memo(function FieldLabel({
   children,
   htmlFor,
 }: FieldLabelProps): JSX.Element {
-  const className = "block text-sm font-medium text-neutral-700 mb-2";
+  const className = "block text-sm font-medium text-slate-700 mb-2";
 
   if (htmlFor) {
     return (

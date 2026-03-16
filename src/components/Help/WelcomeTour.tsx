@@ -47,8 +47,8 @@ interface TourTip {
 const TOUR_TIPS: TourTip[] = [
   {
     id: "add-tasks",
-    icon: <Cursor size={18} className="text-neutral-600" />,
-    iconBg: "bg-neutral-100",
+    icon: <Cursor size={18} className="text-slate-600" />,
+    iconBg: "bg-slate-100",
     label: "Click the empty row to add tasks",
     description: "Start building your project timeline",
   },
@@ -127,28 +127,28 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
     >
       <div className="space-y-5">
         {/* Description */}
-        <p className="text-neutral-600 text-balance">
+        <p className="text-slate-600 text-balance">
           Your privacy-first Gantt chart creator. All data stays on your device
           - no cloud, no tracking.
         </p>
 
         {/* Quick tips */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-neutral-900">Quick tips</h3>
+          <h3 className="text-sm font-semibold text-slate-900">Quick tips</h3>
 
           {TOUR_TIPS.map((tip) => (
             <div
               key={tip.id}
-              className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
+              className="flex items-start gap-3 p-3 bg-slate-50 rounded border border-slate-300"
             >
               <div className={`p-2 ${tip.iconBg} rounded`} aria-hidden="true">
                 {tip.icon}
               </div>
               <div>
-                <p className="text-sm font-medium text-neutral-800">
+                <p className="text-sm font-medium text-slate-800">
                   {tip.label}
                 </p>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   {tip.description}
                 </p>
               </div>
@@ -166,7 +166,7 @@ export const WelcomeTour = memo(function WelcomeTour(): JSX.Element | null {
             checked={dontShowAgain}
             onChange={setDontShowAgain}
           />
-          <span className="text-sm text-neutral-500 group-hover:text-neutral-600 transition-colors">
+          <span className="text-sm text-slate-500 group-hover:text-slate-600 transition-colors">
             Don&apos;t show this again
           </span>
         </label>

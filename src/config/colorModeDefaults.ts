@@ -3,7 +3,7 @@
  * Runtime constants extracted from colorMode.types.ts.
  */
 
-import { COLORS } from "@/styles/design-tokens";
+import { COLORS, DEFAULT_MILESTONE_COLOR } from "@/styles/design-tokens";
 import type { ColorModeState } from "@/types/colorMode.types";
 
 /** Percentage of lightening applied per hierarchy level */
@@ -11,9 +11,6 @@ const HIERARCHY_LIGHTEN_STEP_PERCENT = 12;
 
 /** Maximum total lightening percentage for deepest hierarchy levels */
 const HIERARCHY_MAX_LIGHTEN_PERCENT = 36;
-
-/** Default milestone accent colour (Tailwind yellow-600 / gold) */
-const DEFAULT_MILESTONE_COLOR = "#CA8A04";
 
 /**
  * Default color mode state — used for store initialization and file loading fallback.

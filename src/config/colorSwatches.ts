@@ -11,7 +11,7 @@ export const CURATED_SWATCHES = {
   blues: ["#0A2E4A", "#0F6CBD", "#2B88D8", "#62ABF5", "#B4D6FA"],
   greens: ["#1B4332", "#2D6A4F", "#40916C", "#52B788", "#74C69D"],
   warm: ["#7F1D1D", "#DC2626", "#F97316", "#FBBF24", "#FDE68A"],
-  neutral: ["#1E293B", "#334155", "#64748B", "#94A3B8", "#CBD5E1"],
+  grays: ["#1E293B", "#334155", "#64748B", "#94A3B8", "#CBD5E1"],
 } as const;
 
 /**
@@ -22,6 +22,6 @@ export function getAllSwatches(): string[] {
     ...CURATED_SWATCHES.blues,
     ...CURATED_SWATCHES.greens,
     ...CURATED_SWATCHES.warm,
-    ...CURATED_SWATCHES.neutral,
+    ...CURATED_SWATCHES.grays,
   ];
 }

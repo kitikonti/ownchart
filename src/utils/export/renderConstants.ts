@@ -85,20 +85,19 @@ export const MILESTONE_RENDER_CONSTANTS = {
   sizeFactor: 0.5,
 } as const;
 
-// ─── Private hex literals (Tailwind values not exported by design-tokens) ────
+// ─── Slate scale aliases for readability ─────────────────────────────────────
 //
-// These are extracted as named constants so that RENDER_COLORS entries sharing
-// the same hex value reference a single source of truth rather than repeating
-// the literal string.  The names use Tailwind's scale nomenclature for clarity.
+// These reference the unified Slate scale via COLORS, avoiding
+// duplicated hex literals.
 
-/** Tailwind slate-100 / cool-gray — weekend background and header chrome */
-const SLATE_100_COOL = "#f8fafc";
+/** slate[100] — weekend background and header chrome */
+const SLATE_100 = COLORS.slate[100];
 
-/** Tailwind slate-200 — grid lines and table borders */
-const SLATE_200 = "#e2e8f0";
+/** slate[200] — grid lines and table borders */
+const SLATE_200 = COLORS.slate[200];
 
-/** Tailwind slate-600 — header text labels */
-const SLATE_600 = "#475569";
+/** slate[600] — header text labels */
+const SLATE_600 = COLORS.slate[600];
 
 /**
  * Default colors used in rendering.
@@ -123,28 +122,28 @@ export const RENDER_COLORS = {
 
   /**
    * Text color for external labels (before/after positions).
-   * Bootstrap gray-700 (#495057) — matches COLORS.chart.text.
+   * slate[600] — matches COLORS.chart.text.
    */
   textExternal: COLORS.chart.text,
 
   /**
    * Text color for internal labels (inside position).
-   * Pure white (neutral-0).
+   * Pure white (slate-0).
    */
-  textInternal: COLORS.neutral[0],
+  textInternal: COLORS.slate[0],
 
   /**
    * Dependency line color.
-   * Matches COLORS.chart.dependencyDefault (slate-400).
+   * Matches COLORS.chart.dependencyDefault (slate[400]).
    */
   dependency: COLORS.chart.dependencyDefault,
 
   /**
    * Weekend background color.
-   * Derived from neutral-100 (rgba(241,245,249,0.5)) composited over white →
+   * Derived from slate-100 (rgba(241,245,249,0.5)) composited over white →
    * #f8fafc. If the source opacity or color changes, re-derive this hex value.
    */
-  weekendBackground: SLATE_100_COOL,
+  weekendBackground: SLATE_100,
 
   /**
    * Holiday background color.
@@ -154,8 +153,7 @@ export const RENDER_COLORS = {
   holidayBackground: "#fef9e3",
 
   /**
-   * Grid line color (slate-200).
-   * Matches COLORS.chart area styling.
+   * Grid line color (slate[200]).
    */
   gridLine: SLATE_200,
 
@@ -172,31 +170,27 @@ export const RENDER_COLORS = {
   todayHighlight: COLORS.chart.todayHighlight,
 
   /**
-   * Header background color (slate-100).
-   * Cool-gray tint matching the chart area chrome.
+   * Header background color (slate[100]).
    */
-  headerBackground: SLATE_100_COOL,
+  headerBackground: SLATE_100,
 
   /**
-   * Header text color.
-   * Tailwind slate-600 (#475569) — not in the exported design-token scale.
+   * Header text color (slate[600]).
    */
   headerText: SLATE_600,
 
   /**
-   * Table border color (slate-200).
+   * Table border color (slate[200]).
    */
   tableBorder: SLATE_200,
 
   /**
-   * Table text color.
-   * Uses the exported SLATE_800 constant for WCAG contrast calculations.
+   * Table text color (slate[800]).
    */
   tableText: SLATE_800,
 
   /**
-   * Table header text color.
-   * Tailwind slate-500 (#64748b) — matches COLORS.chart.dependencyHover.
+   * Table header text color (slate[500]).
    */
   tableHeaderText: COLORS.chart.dependencyHover,
 } as const;

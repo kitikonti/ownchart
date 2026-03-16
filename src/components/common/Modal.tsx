@@ -25,18 +25,18 @@ export type ModalStyleVariant = "default" | "bordered";
  */
 const HEADER_STYLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "p-6 pb-0",
-  bordered: "px-8 py-6 border-b border-neutral-200",
+  bordered: "px-8 py-6 border-b border-slate-300",
 } as const;
 
 const HEADER_TITLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "text-xl text-brand-600",
-  bordered: "text-xl text-neutral-900",
+  bordered: "text-xl text-slate-900",
 } as const;
 
 const FOOTER_STYLE_CLASSES: Record<ModalStyleVariant, string> = {
   default: "px-6 pb-6 pt-2 flex justify-end gap-2",
   bordered:
-    "px-8 py-6 border-t border-neutral-200 bg-neutral-50 rounded-b flex justify-end gap-3",
+    "px-8 py-6 border-t border-slate-300 bg-slate-50 rounded-b flex justify-end gap-3",
 } as const;
 
 /**
@@ -76,7 +76,7 @@ export interface ModalProps {
   /** Header style: "default" = flush, "bordered" = border-bottom (Fluent-style) */
   headerStyle?: ModalStyleVariant;
 
-  /** Footer style: "default" = minimal, "bordered" = border-top with bg-neutral-50 */
+  /** Footer style: "default" = minimal, "bordered" = border-top with bg-slate-50 */
   footerStyle?: ModalStyleVariant;
 
   /** Custom padding for content area */
@@ -120,7 +120,7 @@ const ModalHeader = memo(function ModalHeader({
             {title}
           </h2>
           {subtitle && (
-            <p id={subtitleId} className="text-sm text-neutral-500 mt-0.5">
+            <p id={subtitleId} className="text-sm text-slate-500 mt-0.5">
               {subtitle}
             </p>
           )}
@@ -128,7 +128,7 @@ const ModalHeader = memo(function ModalHeader({
       </div>
       <button
         onClick={onClose}
-        className="p-1.5 -m-1.5 rounded-sm text-neutral-500 hover:text-neutral-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="p-1.5 -m-1.5 rounded-sm text-slate-500 hover:text-slate-700 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         aria-label={`Close ${title}`}
       >
         <X size={20} weight="regular" />

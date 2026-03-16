@@ -131,7 +131,7 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
   );
 
   return (
-    <div className="flex items-center gap-1 bg-white border border-neutral-300 rounded px-3 py-1.5">
+    <div className="flex items-center gap-1 bg-white border border-slate-300 rounded px-3 py-1.5">
       <input
         type="number"
         value={draft}
@@ -141,11 +141,11 @@ const ZoomPercentInput = memo(function ZoomPercentInput({
         onClick={onClick}
         aria-label="Zoom percentage"
         aria-describedby={unitId}
-        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 text-neutral-900"
+        className="w-10 text-sm text-center font-mono bg-transparent border-none focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 text-slate-900"
         min={EXPORT_ZOOM_MIN * 100}
         max={EXPORT_ZOOM_MAX * 100}
       />
-      <span id={unitId} className="text-xs text-neutral-500">
+      <span id={unitId} className="text-xs text-slate-500">
         %
       </span>
     </div>
@@ -180,7 +180,7 @@ const PresetButton = memo(function PresetButton({
       className={`px-3 py-1.5 text-xs font-mono font-medium rounded transition-colors duration-150 ${
         isActive
           ? "bg-brand-600 text-white"
-          : "bg-white border border-neutral-300 text-neutral-700 hover:border-neutral-400 hover:bg-neutral-50"
+          : "bg-white border border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
       }`}
     >
       {Math.round(value * 100)}%
@@ -227,7 +227,7 @@ export const CustomZoomControl = memo(function CustomZoomControl({
           aria-valuemax={EXPORT_ZOOM_MAX * 100}
           aria-valuenow={Math.round(timelineZoom * 100)}
           aria-valuetext={`${Math.round(timelineZoom * 100)}%`}
-          className="flex-1 h-1.5 bg-neutral-200 rounded-full appearance-none cursor-pointer accent-brand-600"
+          className="flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-brand-600"
         />
         <ZoomPercentInput
           value={timelineZoom}

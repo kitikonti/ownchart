@@ -44,7 +44,7 @@ const FOCUSABLE_SELECTOR =
   'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 /** Border style for unselected swatches */
-const SWATCH_BORDER = `1px solid ${COLORS.neutral[200]}`;
+const SWATCH_BORDER = `1px solid ${COLORS.slate[300]}`;
 
 /** Border style for the selected swatch */
 const SWATCH_BORDER_SELECTED = `2px solid ${COLORS.brand[600]}`;
@@ -57,7 +57,7 @@ const SWATCH_CATEGORIES: {
   { key: "blues", label: "Blues" },
   { key: "greens", label: "Greens" },
   { key: "warm", label: "Warm" },
-  { key: "neutral", label: "Neutral" },
+  { key: "grays", label: "Grays" },
 ];
 
 // =============================================================================
@@ -110,7 +110,7 @@ function SectionHeader({
       style={{
         fontSize: TYPOGRAPHY.fontSize.xs,
         fontWeight: TYPOGRAPHY.fontWeight.semibold,
-        color: COLORS.neutral[600],
+        color: COLORS.slate[600],
         textTransform: "uppercase",
         letterSpacing: TYPOGRAPHY.letterSpacing.wide,
         marginBottom: SPACING[2],
@@ -176,7 +176,7 @@ function ColorPreview({
         gap: SPACING[3],
         marginBottom: SPACING[4],
         padding: SPACING[2],
-        backgroundColor: COLORS.neutral[50],
+        backgroundColor: COLORS.slate[50],
         borderRadius: RADIUS.lg,
       }}
     >
@@ -209,7 +209,7 @@ function ColorPreview({
         <div
           style={{
             fontSize: TYPOGRAPHY.fontSize.xs,
-            color: COLORS.neutral[500],
+            color: COLORS.slate[500],
           }}
         >
           {showResetButton ? "Manual override" : "Current color"}
@@ -259,7 +259,7 @@ function CustomColorSection({
   return (
     <div
       style={{
-        borderTop: `1px solid ${COLORS.neutral[200]}`,
+        borderTop: `1px solid ${COLORS.slate[300]}`,
         paddingTop: SPACING[3],
       }}
     >
@@ -289,7 +289,7 @@ function CustomColorSection({
         />
         <button
           type="button"
-          className="hover:bg-neutral-100"
+          className="hover:bg-slate-100"
           onClick={() => nativePickerRef.current?.click()}
           style={{
             flex: 1,
@@ -298,9 +298,9 @@ function CustomColorSection({
             borderRadius: RADIUS.md,
             cursor: "pointer",
             fontSize: TYPOGRAPHY.fontSize.sm,
-            color: COLORS.neutral[600],
+            color: COLORS.slate[600],
             textAlign: "left",
-            backgroundColor: COLORS.neutral[50],
+            backgroundColor: COLORS.slate[50],
           }}
         >
           Choose custom color...
@@ -319,7 +319,7 @@ function computePopoverStyle(anchorRect?: DOMRect): React.CSSProperties {
   const style: React.CSSProperties = {
     position: "fixed",
     zIndex: Z_INDEX.popover,
-    backgroundColor: COLORS.neutral[0],
+    backgroundColor: COLORS.slate[0],
     borderRadius: RADIUS.lg,
     boxShadow: SHADOWS.dropdown,
     padding: SPACING[4],
@@ -505,7 +505,7 @@ export function ColorPickerPopover({
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="hover:bg-neutral-100"
+          className="hover:bg-slate-100"
           style={{
             border: "none",
             backgroundColor: "transparent",

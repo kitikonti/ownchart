@@ -48,9 +48,9 @@ const variantStyles: Record<
     text: "text-red-700",
   },
   neutral: {
-    container: "bg-neutral-100 border-neutral-200",
-    icon: "text-neutral-500",
-    text: "text-neutral-600",
+    container: "bg-slate-100 border-slate-300",
+    icon: "text-slate-500",
+    text: "text-slate-600",
   },
 };
 

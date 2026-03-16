@@ -186,7 +186,7 @@ describe("Modal", () => {
     it("applies neutral title color when headerStyle=bordered", () => {
       render(<Modal {...defaultProps} headerStyle="bordered" />);
       const title = screen.getByText("Test Modal");
-      expect(title.className).toContain("text-neutral-900");
+      expect(title.className).toContain("text-slate-900");
     });
 
     it("applies brand title color when headerStyle=default", () => {

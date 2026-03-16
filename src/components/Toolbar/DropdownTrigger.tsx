@@ -59,9 +59,9 @@ export function DropdownTrigger({
   // When label is hidden, use label text as tooltip fallback
   const effectiveTitle = !showLabel && !title ? label : title;
 
-  // Active border uses COLORS.neutral[600] (#525252); transparent when inactive or open.
+  // Active border uses COLORS.slate[600]; transparent when inactive or open.
   const activeBorderColor =
-    isActive && !isOpen ? COLORS.neutral[600] : "transparent";
+    isActive && !isOpen ? COLORS.slate[600] : "transparent";
 
   return (
     <button
@@ -73,7 +73,7 @@ export function DropdownTrigger({
       aria-haspopup={ariaHaspopup}
       aria-expanded={isOpen}
       title={effectiveTitle}
-      className={`dropdown-trigger inline-flex items-center justify-center gap-1 rounded px-1.5 py-1 text-sm font-normal leading-5 text-neutral-800 cursor-pointer select-none whitespace-nowrap${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
+      className={`dropdown-trigger inline-flex items-center justify-center gap-1 rounded px-1.5 py-1 text-sm font-normal leading-5 text-slate-800 cursor-pointer select-none whitespace-nowrap${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
       style={{
         // Height is a design token value — cannot be expressed as a static Tailwind class
         height: `${TOOLBAR.buttonHeight}px`,

@@ -133,7 +133,7 @@ describe("ExportFormatSelector", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
       const pdfButton = screen.getByText("PDF").closest("button");
-      expect(pdfButton).toHaveClass("border-neutral-200");
+      expect(pdfButton).toHaveClass("border-slate-300");
       expect(pdfButton).not.toHaveClass("bg-brand-600");
     });
   });

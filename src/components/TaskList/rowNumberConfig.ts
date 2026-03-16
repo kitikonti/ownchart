@@ -26,8 +26,8 @@ function buildRowSelectCursor(fill: string, stroke: string): string {
 }
 
 export const ROW_SELECT_CURSOR = buildRowSelectCursor(
-  COLORS.neutral[900],
-  COLORS.neutral[0]
+  COLORS.slate[900],
+  COLORS.slate[0]
 );
 
 // ── Color map ──────────────────────────────────────────────────────────────

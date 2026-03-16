@@ -13,7 +13,7 @@ import { type HelpTopic, resolveShortcut, isMac } from "@/config/helpContent";
 
 export function KeyBadge({ children }: { children: string }): ReactElement {
   return (
-    <kbd className="px-1.5 py-0.5 text-xs font-mono bg-neutral-100 border border-neutral-200 rounded text-neutral-700 shadow-xs">
+    <kbd className="px-1.5 py-0.5 text-xs font-mono bg-slate-100 border border-slate-300 rounded text-slate-700 shadow-xs">
       {children}
     </kbd>
   );
@@ -23,7 +23,7 @@ export function KeyBadge({ children }: { children: string }): ReactElement {
 export function MenuPathLabel({ path }: { path: string }): ReactElement {
   const parts = path.split(" > ");
   return (
-    <span className="text-xs text-neutral-400 flex items-center gap-0.5 flex-shrink-0">
+    <span className="text-xs text-slate-400 flex items-center gap-0.5 flex-shrink-0">
       {parts.map((part, index) => (
         <span key={`${part}-${index}`} className="flex items-center gap-0.5">
           {index > 0 && (
@@ -55,7 +55,7 @@ export function ShortcutKeys({ keys }: { keys: string }): ReactElement {
           className="flex items-center gap-1"
           aria-hidden="true"
         >
-          {index > 0 && <span className="text-neutral-300 text-xs">+</span>}
+          {index > 0 && <span className="text-slate-300 text-xs">+</span>}
           <KeyBadge>{part.trim()}</KeyBadge>
         </span>
       ))}
@@ -80,7 +80,7 @@ export function HelpTopicCard({
   if (compact) {
     return (
       <div className="flex items-center justify-between py-1.5 px-2 -mx-2 rounded">
-        <span className="text-sm text-neutral-600">{topic.description}</span>
+        <span className="text-sm text-slate-600">{topic.description}</span>
         {topic.shortcuts && topic.shortcuts.length > 0 ? (
           <ShortcutKeys keys={topic.shortcuts[0]} />
         ) : topic.menuPath ? (
@@ -94,10 +94,8 @@ export function HelpTopicCard({
     <div className="py-2.5 px-3 -mx-3 rounded">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h4 className="text-sm font-medium text-neutral-900">
-            {topic.title}
-          </h4>
-          <p className="text-sm text-neutral-500 mt-0.5 leading-relaxed">
+          <h4 className="text-sm font-medium text-slate-900">{topic.title}</h4>
+          <p className="text-sm text-slate-500 mt-0.5 leading-relaxed">
             {resolveShortcut(topic.description)}
           </p>
         </div>
@@ -111,7 +109,7 @@ export function HelpTopicCard({
         ) : null}
       </div>
       {topic.tip && (
-        <p className="text-xs text-neutral-400 mt-1.5 flex items-center gap-1">
+        <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1">
           {/* "Tip:" is announced once by screen readers via sr-only; visible via aria-hidden.
               On macOS with a {mod} shortcut the ⌘ Command icon is added as an extra
               visual cue — its positioning comes after the shared "Tip:" prefix. */}

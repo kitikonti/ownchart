@@ -21,7 +21,7 @@ export type FormControlVariant = "default" | "figma";
  */
 export const formControlVariantClasses: Record<FormControlVariant, string> = {
   default:
-    "border-neutral-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-neutral-400",
+    "border-slate-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-600 focus-visible:border-brand-600 hover:border-slate-400",
   figma:
-    "border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:border-brand-600",
+    "border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:border-brand-600",
 };

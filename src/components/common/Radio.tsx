@@ -60,9 +60,9 @@ export const Radio = memo(function Radio({
           !disabled ? "peer-hover:border-brand-700" : null,
         ]
       : [
-          "border border-neutral-400",
+          "border border-slate-400",
           !disabled
-            ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
+            ? "peer-hover:border-slate-500 peer-hover:bg-slate-50"
             : null,
         ],
     PEER_FOCUS_RING,

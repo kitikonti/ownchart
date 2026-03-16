@@ -128,9 +128,9 @@ export const ColumnResizer = memo(function ColumnResizer({
     <div
       className={`
         absolute right-0 top-0 bottom-0 w-1 cursor-col-resize
-        hover:bg-neutral-400 hover:w-1.5
+        hover:bg-slate-400 hover:w-1.5
         focus-visible:bg-brand-600 focus-visible:w-1.5
-        ${isResizing ? "bg-neutral-500 w-1.5" : "bg-transparent"}
+        ${isResizing ? "bg-slate-500 w-1.5" : "bg-transparent"}
       `}
       onMouseDown={handleMouseDown}
       onDoubleClick={handleDoubleClick}

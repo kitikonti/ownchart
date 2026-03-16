@@ -39,13 +39,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand-600 text-white border border-transparent hover:bg-brand-500 active:bg-brand-800 disabled:bg-neutral-300 disabled:text-neutral-400",
+    "bg-brand-600 text-white border border-transparent hover:bg-brand-500 active:bg-brand-800 disabled:bg-slate-300 disabled:text-slate-400",
   secondary:
-    "bg-white text-neutral-800 border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 active:bg-neutral-100 disabled:bg-neutral-100 disabled:text-neutral-300 disabled:border-neutral-200",
+    "bg-white text-slate-800 border border-slate-300 hover:bg-slate-50 hover:border-slate-300 active:bg-slate-100 disabled:bg-slate-100 disabled:text-slate-300 disabled:border-slate-300",
   ghost:
-    "bg-transparent text-neutral-700 border border-transparent hover:bg-neutral-100 hover:text-neutral-800 active:bg-neutral-200 disabled:text-neutral-300",
+    "bg-transparent text-slate-700 border border-transparent hover:bg-slate-100 hover:text-slate-800 active:bg-slate-200 disabled:text-slate-300",
   danger:
-    "bg-red-600 text-white border border-transparent hover:bg-red-700 active:bg-red-800 disabled:bg-neutral-300 disabled:text-neutral-400",
+    "bg-red-600 text-white border border-transparent hover:bg-red-700 active:bg-red-800 disabled:bg-slate-300 disabled:text-slate-400",
 };
 
 // Fluent button sizing: height ~31px, min-width 96px, padding 5px 12px

@@ -73,24 +73,22 @@ function GettingStartedTabInner({
         return (
           <div
             key={topic.id}
-            className="flex items-start gap-3 p-3 bg-neutral-50 rounded border border-neutral-200"
+            className="flex items-start gap-3 p-3 bg-slate-50 rounded border border-slate-300"
           >
             <div
-              className={`p-2 rounded flex-shrink-0 ${visual?.bg ?? "bg-neutral-100"}`}
+              className={`p-2 rounded flex-shrink-0 ${visual?.bg ?? "bg-slate-100"}`}
             >
-              {visual?.icon ?? (
-                <Cursor size={20} className="text-neutral-500" />
-              )}
+              {visual?.icon ?? <Cursor size={20} className="text-slate-500" />}
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-medium text-neutral-800">
+              <h3 className="text-sm font-medium text-slate-800">
                 {topic.title}
               </h3>
-              <p className="text-xs text-neutral-500 mt-0.5 leading-relaxed">
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {resolveShortcut(topic.description)}
               </p>
               {topic.tip && (
-                <p className="text-xs text-neutral-400 mt-1 flex items-center gap-1">
+                <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
                   {/* "Tip:" is announced once by screen readers via sr-only; visible label via aria-hidden. */}
                   <span className="sr-only">Tip: </span>
                   <span aria-hidden="true">Tip: </span>

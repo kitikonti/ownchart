@@ -64,21 +64,21 @@ const ExternalLink = memo(function ExternalLink({
       href={sanitizeHref(href)}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-neutral-50 transition-colors"
+      className="flex items-start gap-3 group py-1 rounded -mx-1 px-1 hover:bg-slate-50 transition-colors"
     >
       {/* Category icon — decorative; the text label conveys the link purpose */}
       <span
-        className="mt-0.5 text-neutral-500 group-hover:text-neutral-700 flex-shrink-0"
+        className="mt-0.5 text-slate-500 group-hover:text-slate-700 flex-shrink-0"
         aria-hidden="true"
       >
         {icon}
       </span>
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-neutral-700 group-hover:text-neutral-900">
+        <span className="text-sm text-slate-700 group-hover:text-slate-900">
           {label}
         </span>
         {sublabel && (
-          <span className="flex items-center gap-1 text-xs text-neutral-400 group-hover:text-brand-600">
+          <span className="flex items-center gap-1 text-xs text-slate-400 group-hover:text-brand-600">
             {sublabel}
             <ArrowSquareOut size={11} weight="regular" aria-hidden="true" />
           </span>
@@ -122,19 +122,19 @@ export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
           className="text-brand-600"
           aria-hidden="true"
         />
-        <h3 className="mt-3 text-lg font-semibold text-neutral-900">
+        <h3 className="mt-3 text-lg font-semibold text-slate-900">
           {APP_CONFIG.name}
         </h3>
-        <span className="text-sm text-neutral-500">
+        <span className="text-sm text-slate-500">
           {/* __APP_VERSION__ is injected by Vite at build time — see vite.config.ts */}
           Version {__APP_VERSION__}
         </span>
-        <p className="mt-2 text-sm text-neutral-600 leading-relaxed">
+        <p className="mt-2 text-sm text-slate-600 leading-relaxed">
           {APP_CONFIG.tagline}
         </p>
       </div>
 
-      <hr className="border-neutral-200 mb-4" />
+      <hr className="border-slate-300 mb-4" />
 
       {/* Open Source + Links */}
       <div className="space-y-3">
@@ -151,7 +151,7 @@ export const AboutDialog = memo(function AboutDialog(): JSX.Element | null {
         />
       </div>
 
-      <hr className="border-neutral-200 my-4" />
+      <hr className="border-slate-300 my-4" />
 
       {/* Sponsor */}
       <ExternalLink

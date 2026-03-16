@@ -134,7 +134,7 @@ export function InlineProjectTitle({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="bg-white border border-brand-400 rounded px-2 py-0.5 text-sm text-neutral-800 text-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400"
+          className="bg-white border border-brand-400 rounded px-2 py-0.5 text-sm text-slate-800 text-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400"
           style={{ width: `${inputWidth}px`, maxWidth: `${MAX_INPUT_WIDTH}px` }}
           aria-label="Project title"
         />
@@ -146,11 +146,11 @@ export function InlineProjectTitle({
           aria-label={
             isDirty ? `${displayName} (unsaved changes)` : displayName
           }
-          className={`max-w-[300px] truncate hover:bg-neutral-200/50 rounded px-2 py-0.5 transition-colors cursor-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400 ${isPlaceholder ? "text-neutral-500 italic" : "text-neutral-600"}`}
+          className={`max-w-[300px] truncate hover:bg-slate-200/50 rounded px-2 py-0.5 transition-colors cursor-text focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-400 ${isPlaceholder ? "text-slate-500 italic" : "text-slate-600"}`}
         >
           {displayName}
           {isDirty && (
-            <span className="text-neutral-500" aria-hidden="true">
+            <span className="text-slate-500" aria-hidden="true">
               *
             </span>
           )}

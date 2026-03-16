@@ -58,7 +58,7 @@ function ExportDialogFooter({
         {showProgress && (
           <div className="flex items-center gap-2">
             <div
-              className="w-32 h-2 bg-neutral-200 rounded-full overflow-hidden"
+              className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden"
               role="progressbar"
               aria-valuenow={exportProgress}
               aria-valuemin={0}
@@ -70,7 +70,7 @@ function ExportDialogFooter({
                 style={{ width: `${exportProgress}%` }}
               />
             </div>
-            <span className="text-xs text-neutral-500 font-mono">
+            <span className="text-xs text-slate-500 font-mono">
               {exportProgress}%
             </span>
           </div>
@@ -176,7 +176,7 @@ export function ExportDialog(): JSX.Element {
     >
       <div className={`flex ${CONTENT_HEIGHT}`}>
         {/* Left: Preview Panel */}
-        <div className="flex-1 bg-neutral-50 p-6 border-r border-neutral-200">
+        <div className="flex-1 bg-slate-50 p-6 border-r border-slate-300">
           {selectedExportFormat === "pdf" ? (
             <ExportPreview
               format="pdf"

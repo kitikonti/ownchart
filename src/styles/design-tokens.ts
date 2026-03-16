@@ -4,13 +4,12 @@
  * - Brand blue (#0F6CBD) as the single brand color
  * - WCAG AA compliant contrast ratios
  *
- * Color systems:
- * - COLORS.neutral: Pure grays (no blue tint) — used for Ribbon, toolbars, UI chrome
+ * Gray system: Unified Tailwind Slate (blue-gray tint) scale.
+ * All UI areas — chrome, chart grid, overlays, headers — share a single
+ * slate family defined in colors.js. See Issue #56 for rationale.
+ *
+ * - COLORS.slate: Tailwind Slate gray scale — used everywhere
  * - COLORS.brand: Brand blue scale — primary interactive color
- * - Section tokens (GRID, TIMELINE_HEADER, etc.): Cool grays with slight blue tint —
- *   used for chart/grid areas for visual softness
- * - TABLE_HEADER / ROW_NUMBER: Header chrome grays (#F3F3F3 etc.) — neither
- *   cool-tinted nor matching the neutral scale; shared via TABLE_HEADER references
  */
 
 // =============================================================================
@@ -19,33 +18,11 @@
 
 // Canonical color scales imported from the single source of truth.
 // See colors.js for the full palette definitions.
-import { neutral, brand, semantic } from "./colors.js";
-
-// Cool gray (Bootstrap/Tailwind cool-gray family — slight blue tint)
-// Used for chart/grid areas for visual softness vs. pure neutral UI chrome.
-const coolGray = {
-  50: "#f8f9fa",
-  100: "#f1f3f5",
-  200: "#e9ecef",
-  250: "#dee2e6",
-  400: "#d1d5db",
-} as const;
-
-// Slate (Tailwind Slate family — stronger blue-gray tint)
-// Used for dependency arrows, connection handles, toasts, and chart overlays.
-const slate = {
-  100: "#f8fafc",
-  200: "#e2e8f0",
-  400: "#94a3b8",
-  500: "#64748b", // dependency hover (between default and selected)
-  700: "#334155",
-  800: "#1e293b",
-} as const;
+import { slate, brand, semantic } from "./colors.js";
 
 /**
  * slate[800] exported for use as a contrast-safe dark text color in colorUtils.
- * The full slate scale is a private chart/overlay scale not included in COLORS,
- * but this specific value is needed for WCAG contrast calculations.
+ * This specific value is needed for WCAG contrast calculations.
  */
 export const SLATE_800 = slate[800];
 
@@ -56,17 +33,23 @@ export const SLATE_800 = slate[800];
  */
 export const DEFAULT_TASK_COLOR = brand[600];
 
+/**
+ * Default milestone accent colour (Tailwind yellow-600 / gold).
+ * Used in color mode defaults and milestone rendering.
+ */
+export const DEFAULT_MILESTONE_COLOR = "#CA8A04";
+
 export const COLORS = {
-  neutral,
+  slate,
   brand,
 
   // Semantic (NOT for UI, only for status indicators)
   semantic,
 
-  // Chart-specific colors (referencing brand scale where applicable)
+  // Chart-specific colors (referencing brand + slate scales)
   chart: {
     selection: brand[400], // drag preview/selection
-    text: "#495057", // Text in SVG (Bootstrap gray-700)
+    text: slate[600], // Text in SVG
     dependencyDefault: slate[400],
     dependencyHover: slate[500], // between default and selected
     dependencySelected: slate[700],
@@ -241,10 +224,10 @@ export const CONTEXT_MENU = {
 // =============================================================================
 
 export const TABLE_HEADER = {
-  bg: "#F3F3F3",
-  bgHover: "#E8E8E8",
-  border: "#E1E1E1",
-  triangle: "#A6A6A6",
+  bg: slate[50],
+  bgHover: slate[100],
+  border: slate[200],
+  triangle: slate[400],
 } as const;
 
 // =============================================================================
@@ -252,14 +235,14 @@ export const TABLE_HEADER = {
 // =============================================================================
 
 export const GRID = {
-  weekendBg: coolGray[100],
+  weekendBg: slate[100],
   weekendOpacity: 0.6,
   holidayBg: "#fce7f3", // Tailwind pink-100
   holidayOpacity: 0.7,
-  lineDaily: coolGray[200],
-  lineWeeklyMonthly: coolGray[400],
-  lineDailyWeekend: coolGray[250],
-  lineHorizontal: coolGray[200],
+  lineDaily: slate[200],
+  lineWeeklyMonthly: slate[300],
+  lineDailyWeekend: slate[200],
+  lineHorizontal: slate[200],
 } as const;
 
 // =============================================================================
@@ -267,8 +250,8 @@ export const GRID = {
 // =============================================================================
 
 export const TIMELINE_HEADER = {
-  bg: coolGray[50],
-  border: coolGray[250],
+  bg: slate[50],
+  border: slate[200],
 } as const;
 
 // =============================================================================
@@ -301,10 +284,10 @@ export const CELL = {
 // =============================================================================
 
 export const PLACEHOLDER_CELL = {
-  bgDefault: neutral[50], // Subtle background for idle state
-  bgSelected: neutral[100], // Selected state
-  bgActive: neutral[100], // Active (focused) state
-  bgEditing: neutral[0], // Editing state (white)
+  bgDefault: slate[50], // Subtle background for idle state
+  bgSelected: slate[100], // Selected state
+  bgActive: slate[100], // Active (focused) state
+  bgEditing: slate[0], // Editing state (white)
 } as const;
 
 // =============================================================================
@@ -314,11 +297,11 @@ export const PLACEHOLDER_CELL = {
 export const ROW_NUMBER = {
   bgInactive: TABLE_HEADER.bg,
   bgHover: TABLE_HEADER.bgHover,
-  textInactive: neutral[500], // Secondary text
-  textSelected: neutral[0],
+  textInactive: slate[500], // Secondary text
+  textSelected: slate[0],
   border: TABLE_HEADER.border,
-  hiddenIndicator: neutral[400], // Subtle indicator lines
-  controlBg: neutral[0], // Insert-circle & cursor background
+  hiddenIndicator: slate[350], // Subtle indicator lines
+  controlBg: slate[0], // Insert-circle & cursor background
 } as const;
 
 // =============================================================================
@@ -327,7 +310,7 @@ export const ROW_NUMBER = {
 
 export const TABLE_ROW = {
   /** Default (unselected) row background — white. */
-  defaultBg: neutral[0],
+  defaultBg: slate[0],
   /**
    * Selected row background: brand[600] (#0F6CBD) at chart.selectionFillOpacity (8%).
    * Using rgba() avoids the fragile hex+alpha-suffix approach.

@@ -14,7 +14,7 @@ import { ZoomControls } from "./ZoomControls";
 /** Decorative bullet separator between statistics. Hidden from screen readers. */
 function Separator(): JSX.Element {
   return (
-    <span className="mx-1.5 text-neutral-300" aria-hidden="true">
+    <span className="mx-1.5 text-slate-300" aria-hidden="true">
       ·
     </span>
   );
@@ -26,14 +26,14 @@ export const StatusBar = memo(function StatusBar(): JSX.Element {
   const { totalTasks, completedTasks, overdueTasks } = useTaskStatistics();
 
   return (
-    <div className="status-bar h-6 flex-shrink-0 flex items-center justify-between select-none bg-neutral-50 border-neutral-200 text-xs px-3">
+    <div className="status-bar h-6 flex-shrink-0 flex items-center justify-between select-none bg-slate-50 border-slate-300 text-xs px-3">
       {/* Left: version + task statistics */}
-      <div className="flex items-center text-neutral-500">
+      <div className="flex items-center text-slate-500">
         {/* Static version — kept outside the live region so AT don't re-read it on stat changes */}
         <button
           type="button"
           onClick={openAboutDialog}
-          className="text-neutral-400 hover:text-neutral-600 cursor-pointer transition-colors"
+          className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors"
           aria-label="About OwnChart"
         >
           OwnChart v{__APP_VERSION__}

@@ -53,7 +53,7 @@ type DataColumn = ColumnDefinition & { field: EditableField };
  */
 
 /** CSS classes for read-only italic content in summary tasks */
-const READONLY_CLASSES = "text-neutral-500 italic";
+const READONLY_CLASSES = "text-slate-500 italic";
 
 /** Type guard: narrows ColumnDefinition to DataColumn (has a field). */
 function isDataColumn(col: ColumnDefinition): col is DataColumn {
@@ -280,7 +280,7 @@ const NameCell = memo(function NameCell({
               e.stopPropagation();
               toggleTaskCollapsed(task.id);
             }}
-            className="w-4 h-4 flex items-center justify-center hover:bg-neutral-200 rounded text-neutral-600 flex-shrink-0"
+            className="w-4 h-4 flex items-center justify-center hover:bg-slate-200 rounded text-slate-600 flex-shrink-0"
             aria-label={
               isExpanded
                 ? `Collapse ${displayTask.name}`

@@ -108,8 +108,8 @@ export const DropdownItem = memo(function DropdownItem({
         "dropdown-item",
         "flex items-center w-full text-left text-sm whitespace-nowrap",
         disabled
-          ? "cursor-not-allowed text-neutral-400"
-          : "cursor-pointer text-neutral-900",
+          ? "cursor-not-allowed text-slate-400"
+          : "cursor-pointer text-slate-900",
         hasDescription
           ? "min-h-[36px] py-1.5 pr-3 pl-2"
           : "h-8 py-0 pr-[15px] pl-[9px]", // pl-[9px]/pr-[15px] pixel-align with DropdownPanel's px-[9px] left-padding so the checkmark column visually aligns with the panel edge — if DropdownPanel padding changes, update this value to match
@@ -146,7 +146,7 @@ export const DropdownItem = memo(function DropdownItem({
       {hasDescription ? (
         <div className="flex-1">
           <div>{children}</div>
-          <div className="text-xs text-neutral-500 mt-px">{description}</div>
+          <div className="text-xs text-slate-500 mt-px">{description}</div>
         </div>
       ) : (
         <span className="flex-1">{children}</span>

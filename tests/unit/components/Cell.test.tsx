@@ -169,7 +169,7 @@ describe("Cell", () => {
         />
       );
       const cell = screen.getByRole("gridcell");
-      expect(cell.className).toContain("bg-neutral-50");
+      expect(cell.className).toContain("bg-slate-50");
     });
   });
 

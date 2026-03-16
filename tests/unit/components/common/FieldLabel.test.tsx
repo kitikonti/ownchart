@@ -30,7 +30,7 @@ describe("FieldLabel", () => {
     const el = screen.getByText("Styled");
     expect(el.className).toContain("text-sm");
     expect(el.className).toContain("font-medium");
-    expect(el.className).toContain("text-neutral-700");
+    expect(el.className).toContain("text-slate-700");
     expect(el.className).toContain("mb-2");
   });
 

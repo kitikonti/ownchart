@@ -39,7 +39,7 @@ export interface InputProps extends Omit<
 }
 
 const baseClasses =
-  "px-3 py-2 text-sm bg-white border rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-neutral-50";
+  "px-3 py-2 text-sm bg-white border rounded transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-50";
 
 function InputInner(
   {

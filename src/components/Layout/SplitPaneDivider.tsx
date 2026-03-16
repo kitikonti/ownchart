@@ -33,9 +33,9 @@ function getDividerClassName(
   isDragging: boolean
 ): string {
   if (isCollapsed) {
-    return `${DIVIDER_BASE_CLASSES} w-3 cursor-e-resize bg-neutral-200 hover:bg-neutral-300 flex items-center justify-center`;
+    return `${DIVIDER_BASE_CLASSES} w-3 cursor-e-resize bg-slate-200 hover:bg-slate-300 flex items-center justify-center`;
   }
-  return `${DIVIDER_BASE_CLASSES} w-1 cursor-col-resize ${isDragging ? "bg-neutral-500" : "bg-neutral-200"} hover:bg-neutral-400 group`;
+  return `${DIVIDER_BASE_CLASSES} w-1 cursor-col-resize ${isDragging ? "bg-slate-500" : "bg-slate-200"} hover:bg-slate-400 group`;
 }
 
 export function SplitPaneDivider({
@@ -89,7 +89,7 @@ export function SplitPaneDivider({
           aria-hidden="true"
           size={COLLAPSE_ICON_SIZE}
           weight="bold"
-          className="text-neutral-500 pointer-events-none"
+          className="text-slate-500 pointer-events-none"
         />
       ) : (
         /* Visual indicator on hover - extends hit area */

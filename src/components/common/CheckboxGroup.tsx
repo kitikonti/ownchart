@@ -60,7 +60,7 @@ const CheckboxGroupRow = memo(function CheckboxGroupRow({
         className="flex items-center gap-3 cursor-pointer group min-h-[32px]"
       >
         <Checkbox id={inputId} checked={item.checked} onChange={handleChange} />
-        <span className="text-sm text-neutral-900">{item.label}</span>
+        <span className="text-sm text-slate-900">{item.label}</span>
       </label>
     </li>
   );
@@ -81,7 +81,7 @@ export const CheckboxGroup = memo(function CheckboxGroup({
     // but with broader screen reader support (especially VoiceOver on iOS).
     // Browser-default fieldset styles (border, padding, min-inline-size) are
     // reset via Tailwind so the visual appearance is unchanged.
-    <fieldset className="bg-white border border-neutral-200 rounded p-3 min-w-0">
+    <fieldset className="bg-white border border-slate-300 rounded p-3 min-w-0">
       {/* sr-only <legend> names the group for assistive technologies,
           replacing the former aria-label on the div. */}
       <legend className="sr-only">{ariaLabel}</legend>

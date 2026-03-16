@@ -113,16 +113,16 @@ interface SectionStripProps {
 function SectionStrip({ left, right, border }: SectionStripProps): JSX.Element {
   const borderClass =
     border === "bottom"
-      ? "border-b border-neutral-200"
-      : "border-t border-neutral-200";
+      ? "border-b border-slate-300"
+      : "border-t border-slate-300";
   return (
     <div
       className={`flex items-center justify-between px-1 py-0.5 ${borderClass} shrink-0`}
     >
-      <span className="text-[6px] text-neutral-600 truncate">
+      <span className="text-[6px] text-slate-600 truncate">
         {left.join(DOT_SEPARATOR)}
       </span>
-      <span className="text-[6px] text-neutral-600 truncate">
+      <span className="text-[6px] text-slate-600 truncate">
         {right.join(DOT_SEPARATOR)}
       </span>
     </div>
@@ -200,20 +200,20 @@ function PdfPreviewInfo({
   return (
     <div className="mt-4 space-y-2">
       {/* Single row with dot separators */}
-      <div className="text-xs text-neutral-600">
-        <span className="font-medium text-neutral-900">
+      <div className="text-xs text-slate-600">
+        <span className="font-medium text-slate-900">
           {effectiveZoom !== undefined
             ? `${Math.round(effectiveZoom * 100)}%`
             : "\u2014"}
         </span>
         {" zoom"}
-        <span className="mx-1.5 text-neutral-300">&middot;</span>
-        <span className="font-medium text-neutral-900">
+        <span className="mx-1.5 text-slate-300">&middot;</span>
+        <span className="font-medium text-slate-900">
           {formatPageSizeName(pdfOptions.pageSize)}{" "}
           {pdfOptions.orientation === "landscape" ? "Landscape" : "Portrait"}
         </span>
-        <span className="mx-1.5 text-neutral-300">&middot;</span>
-        <span className="font-medium text-neutral-900">
+        <span className="mx-1.5 text-slate-300">&middot;</span>
+        <span className="font-medium text-slate-900">
           {pageDims.width}&times;{pageDims.height}
         </span>
         {" mm"}
@@ -310,16 +310,16 @@ export function PdfPreview({
     <div className="flex flex-col h-full">
       {/* Preview Header */}
       <div className="mb-4">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-1">
+        <h3 className="text-sm font-semibold text-slate-700 mb-1">
           PDF Preview
         </h3>
-        <p className="text-xs text-neutral-500">Page layout visualization</p>
+        <p className="text-xs text-slate-500">Page layout visualization</p>
       </div>
 
       {/* Paper Frame Container */}
       <div className="flex-1 flex items-center justify-center p-2">
         <div
-          className="bg-white border border-neutral-200 shadow-sm relative overflow-hidden"
+          className="bg-white border border-slate-300 shadow-sm relative overflow-hidden"
           style={{
             aspectRatio: `${aspectRatio}`,
             maxWidth: "100%",
@@ -334,7 +334,7 @@ export function PdfPreview({
             style={{ padding: marginPadding }}
           >
             {/* Margin border (dashed) */}
-            <div className="absolute inset-0 border border-dashed border-neutral-200 pointer-events-none" />
+            <div className="absolute inset-0 border border-dashed border-slate-300 pointer-events-none" />
 
             {/* Content area */}
             <div className="flex flex-col h-full">
@@ -360,7 +360,7 @@ export function PdfPreview({
                       className="animate-spin text-brand-600"
                       weight="regular"
                     />
-                    <p className="text-[8px] text-neutral-600 mt-2">
+                    <p className="text-[8px] text-slate-600 mt-2">
                       Rendering...
                     </p>
                   </div>
@@ -393,8 +393,8 @@ export function PdfPreview({
 
                 {!previewDataUrl && !isRendering && !error && (
                   <div className="flex items-center justify-center">
-                    <div className="w-3/4 h-1/2 bg-neutral-100 rounded flex items-center justify-center">
-                      <span className="text-[7px] text-neutral-400">
+                    <div className="w-3/4 h-1/2 bg-slate-100 rounded flex items-center justify-center">
+                      <span className="text-[7px] text-slate-400">
                         Chart content
                       </span>
                     </div>

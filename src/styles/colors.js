@@ -10,19 +10,33 @@
  * directly in the Node.js/PostCSS context without a TS loader.
  */
 
-/** Neutral grays — pure grays, no blue tint. Used for UI chrome. */
-export const neutral = Object.freeze({
+/**
+ * Unified gray scale — Tailwind Slate (blue-gray tint).
+ *
+ * Chosen to harmonize with our blue brand accent (#0F6CBD).
+ * Replaces the former pure-gray neutral, coolGray, slate, and
+ * TABLE_HEADER gray families (see Issue #56).
+ *
+ * Standard Tailwind Slate stops (50–950) are used as-is.
+ * Custom intermediate stops bridge luminance gaps:
+ *   325 — form/select borders (contrast-matched to former neutral[300])
+ *   350 — muted icons/indicators (luminance-matched to former neutral[400])
+ */
+export const slate = Object.freeze({
   0: '#ffffff',
-  50: '#f5f5f5',
-  100: '#ebebeb',
-  200: '#d4d4d4',
-  300: '#b3b3b3',
-  400: '#8a8a8a',
-  500: '#6b6b6b',
-  600: '#525252',
-  700: '#404040',
-  800: '#303030',
-  900: '#1a1a1a',
+  50: '#f8fafc',     // Tailwind slate-50
+  100: '#f1f5f9',    // Tailwind slate-100
+  200: '#e2e8f0',    // Tailwind slate-200
+  300: '#cbd5e1',    // Tailwind slate-300
+  325: '#abb4c0',    // Custom: contrast-matched to former neutral[300] for form borders
+  350: '#7f8b9b',    // Custom: luminance-matched to former neutral[400] for indicators
+  400: '#94a3b8',    // Tailwind slate-400
+  500: '#64748b',    // Tailwind slate-500
+  600: '#475569',    // Tailwind slate-600
+  700: '#334155',    // Tailwind slate-700
+  800: '#1e293b',    // Tailwind slate-800
+  900: '#0f172a',    // Tailwind slate-900
+  950: '#020617',    // Tailwind slate-950
 });
 
 /**
@@ -53,9 +67,9 @@ export const semantic = Object.freeze({
   info: '#0284c7',
 });
 
-/** Surface colors — background layers. */
+/** Surface colors — background layers (derived from slate scale). */
 export const surface = Object.freeze({
   DEFAULT: '#ffffff',
-  raised: '#f5f5f5',
-  sunken: '#ebebeb',
+  raised: '#f8fafc',   // slate[50]
+  sunken: '#e2e8f0',   // slate[200]
 });

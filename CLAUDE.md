@@ -327,6 +327,34 @@ npm run test:e2e            # E2E tests (Playwright)
 - ❌ Third-party libraries
 - ❌ Styling (unless critical to UX)
 
+## Color System (Issue #56)
+
+**Single source of truth**: `src/styles/colors.js` defines all color palettes. Never duplicate hex values elsewhere.
+
+**Architecture**:
+- `colors.js` → defines `slate` (gray), `brand` (blue), `semantic`, `surface` scales
+- `colors.d.ts` → TypeScript type declarations (must stay in sync with colors.js)
+- `design-tokens.ts` → imports from colors.js, exports `COLORS.slate[X]`, `COLORS.brand[X]`, and section tokens (GRID, TABLE_HEADER, TOAST, etc.)
+- `tailwind.config.js` → imports from colors.js, generates Tailwind utility classes
+- `index.css` → uses `theme("colors.slate.X")` to reference colors (never hardcode hex)
+
+**Rules — NEVER violate these**:
+- ❌ **Never hardcode hex/rgb/hsl values** in components, hooks, or CSS
+- ✅ In TS/TSX: use `COLORS.slate[X]` or `COLORS.brand[X]` from `@/styles/design-tokens`
+- ✅ In JSX className: use Tailwind classes like `bg-slate-50`, `text-slate-700`, `border-slate-300`
+- ✅ In CSS: use `theme("colors.slate.X")` — PostCSS resolves at build time
+- ✅ New colors: add to `colors.js` → `colors.d.ts` → `design-tokens.ts`
+
+**Allowed exceptions** (intentionally curated data, not design tokens):
+- `src/utils/colorPalettes.ts` — named chart color palettes (Tableau, D3, etc.)
+- `src/config/colorSwatches.ts` — color picker swatch values
+
+**Custom stops**: The slate scale includes custom intermediate stops:
+- `325` — form borders, disabled text (contrast-matched)
+- `350` — muted icons, indicators (luminance-matched)
+
+**CI enforcement**: `npm run lint:colors` checks for violations. Runs as part of `ci:local`.
+
 ## Code Style
 
 **TypeScript**:

@@ -136,7 +136,7 @@ export function HolidayRegionPopover(): JSX.Element {
         aria-label="Holiday Region settings"
         aria-haspopup="true"
         aria-expanded={isOpen}
-        className="dropdown-trigger inline-flex items-center justify-center h-7 w-7 p-1 border-none rounded cursor-pointer text-neutral-700 transition-[background] duration-100"
+        className="dropdown-trigger inline-flex items-center justify-center h-7 w-7 p-1 border-none rounded cursor-pointer text-slate-700 transition-[background] duration-100"
       >
         <Gear size={ICON_SIZE} weight="light" />
       </button>
@@ -145,24 +145,24 @@ export function HolidayRegionPopover(): JSX.Element {
       {isOpen && (
         <DropdownPanel align="right" width="320px">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-neutral-200">
+          <div className="px-4 py-3 border-b border-slate-300">
             <div className="flex items-center gap-2">
-              <Globe size={16} className="text-neutral-500" />
-              <span className="text-sm font-semibold text-neutral-900">
+              <Globe size={16} className="text-slate-500" />
+              <span className="text-sm font-semibold text-slate-900">
                 Holiday Region
               </span>
             </div>
-            <p className="text-xs text-neutral-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Current: {currentCountryName} ({holidayRegion})
             </p>
           </div>
 
           {/* Search input */}
-          <div className="p-2 border-b border-neutral-200">
+          <div className="p-2 border-b border-slate-300">
             <div className="relative">
               <MagnifyingGlass
                 size={16}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <Input
                 type="text"
@@ -194,7 +194,7 @@ export function HolidayRegionPopover(): JSX.Element {
             aria-label="Holiday region"
           >
             {filteredCountries.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-neutral-500">
+              <div className="px-3 py-2 text-sm text-slate-500">
                 No countries found
               </div>
             ) : (
@@ -209,16 +209,16 @@ export function HolidayRegionPopover(): JSX.Element {
                     role="option"
                     aria-selected={isSelected}
                     onClick={() => handleCountrySelect(country.code)}
-                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-neutral-50 transition-colors ${
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-slate-50 transition-colors ${
                       isSelected
-                        ? "bg-neutral-100 text-neutral-900"
+                        ? "bg-slate-100 text-slate-900"
                         : isActive
-                          ? "bg-neutral-50 text-neutral-900"
-                          : "text-neutral-800"
+                          ? "bg-slate-50 text-slate-900"
+                          : "text-slate-800"
                     }`}
                   >
                     <span className="font-medium">{country.name}</span>
-                    <span className="text-neutral-500">({country.code})</span>
+                    <span className="text-slate-500">({country.code})</span>
                   </button>
                 );
               })

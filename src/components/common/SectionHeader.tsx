@@ -53,7 +53,7 @@ export const SectionHeader = memo(function SectionHeader({
       <Element
         id={id}
         className={[
-          "block text-sm font-semibold text-neutral-900 mb-3",
+          "block text-sm font-semibold text-slate-900 mb-3",
           className,
         ]
           .filter(Boolean)
@@ -69,7 +69,7 @@ export const SectionHeader = memo(function SectionHeader({
       <Element
         id={id}
         className={[
-          "text-sm font-semibold text-neutral-900 mb-2.5 pb-1.5 border-b border-neutral-200",
+          "text-sm font-semibold text-slate-900 mb-2.5 pb-1.5 border-b border-slate-300",
           className,
         ]
           .filter(Boolean)
@@ -88,11 +88,11 @@ export const SectionHeader = memo(function SectionHeader({
         .join(" ")}
     >
       {icon && (
-        <span className="text-neutral-500 flex-shrink-0" aria-hidden="true">
+        <span className="text-slate-500 flex-shrink-0" aria-hidden="true">
           {icon}
         </span>
       )}
-      <Element id={id} className="text-sm font-semibold text-neutral-900">
+      <Element id={id} className="text-sm font-semibold text-slate-900">
         {title}
       </Element>
     </div>

@@ -300,7 +300,7 @@ export function SharedExportOptions({
             onChange={handleColumnChange}
             ariaLabel="Columns to Include"
           />
-          <p className="text-xs text-neutral-600 mt-2">
+          <p className="text-xs text-slate-600 mt-2">
             Uncheck all for timeline-only export
           </p>
         </div>
@@ -331,7 +331,7 @@ export function SharedExportOptions({
             ariaLabel="Task label position"
           />
           {options.taskLabelPosition === "inside" && (
-            <div className="mt-3 text-xs text-neutral-600 bg-white rounded px-3 py-2.5 border border-neutral-200">
+            <div className="mt-3 text-xs text-slate-600 bg-white rounded px-3 py-2.5 border border-slate-300">
               Note: Milestones and summary tasks default to &quot;After&quot;
               positioning
             </div>

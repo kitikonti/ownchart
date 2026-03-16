@@ -44,7 +44,7 @@ export function ZoomModeSelector({
 
   return (
     <fieldset className="border-0 p-0 m-0">
-      <legend className="block text-sm font-semibold text-neutral-900 mb-3">
+      <legend className="block text-sm font-semibold text-slate-900 mb-3">
         Timeline Scale
       </legend>
 

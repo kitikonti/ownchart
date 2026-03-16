@@ -74,7 +74,7 @@ describe('ColorPickerPopover', () => {
       expect(screen.getByText('Blues')).toBeInTheDocument();
       expect(screen.getByText('Greens')).toBeInTheDocument();
       expect(screen.getByText('Warm')).toBeInTheDocument();
-      expect(screen.getByText('Neutral')).toBeInTheDocument();
+      expect(screen.getByText('Grays')).toBeInTheDocument();
     });
 
     it('should render custom color section', () => {

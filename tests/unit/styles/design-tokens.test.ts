@@ -71,8 +71,8 @@ describe("design-tokens hex format", () => {
 // ── Scale consistency ──────────────────────────────────────────────────────
 
 describe("design-tokens scale consistency", () => {
-  it("neutral[0] should be white", () => {
-    expect(COLORS.neutral[0]).toBe("#ffffff");
+  it("slate[0] should be white", () => {
+    expect(COLORS.slate[0]).toBe("#ffffff");
   });
 
   it("brand[600] should be brand blue (#0F6CBD)", () => {
@@ -120,11 +120,11 @@ describe("design-tokens snapshots", () => {
       {
         "holidayBg": "#fce7f3",
         "holidayOpacity": 0.7,
-        "lineDaily": "#e9ecef",
-        "lineDailyWeekend": "#dee2e6",
-        "lineHorizontal": "#e9ecef",
-        "lineWeeklyMonthly": "#d1d5db",
-        "weekendBg": "#f1f3f5",
+        "lineDaily": "#e2e8f0",
+        "lineDailyWeekend": "#e2e8f0",
+        "lineHorizontal": "#e2e8f0",
+        "lineWeeklyMonthly": "#cbd5e1",
+        "weekendBg": "#f1f5f9",
         "weekendOpacity": 0.6,
       }
     `);
@@ -133,8 +133,8 @@ describe("design-tokens snapshots", () => {
   it("TIMELINE_HEADER tokens should match snapshot", () => {
     expect(TIMELINE_HEADER).toMatchInlineSnapshot(`
       {
-        "bg": "#f8f9fa",
-        "border": "#dee2e6",
+        "bg": "#f8fafc",
+        "border": "#e2e8f0",
       }
     `);
   });
@@ -147,7 +147,7 @@ describe("design-tokens snapshots", () => {
         "durationMs": 3000,
         "fontSize": "14px",
         "padding": "12px 16px",
-        "text": "#f8fafc",
+        "text": "#f1f5f9",
       }
     `);
   });

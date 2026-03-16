@@ -129,6 +129,7 @@ Fixes #(issue number)
 
 ## Checklist
 - [ ] Code follows style guidelines
+- [ ] No hardcoded color values — use design tokens or Tailwind classes (run `npm run lint:colors`)
 - [ ] Self-review completed
 - [ ] Comments added for complex code
 - [ ] Documentation updated

@@ -56,7 +56,7 @@ export const HelpSearchInput = memo(function HelpSearchInput({
       </label>
       <MagnifyingGlass
         size={16}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none z-10"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10"
         aria-hidden="true"
       />
       <Input
@@ -73,7 +73,7 @@ export const HelpSearchInput = memo(function HelpSearchInput({
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-neutral-400 hover:text-neutral-600 transition-colors"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded text-slate-400 hover:text-slate-600 transition-colors"
           aria-label="Clear search"
         >
           <X size={14} aria-hidden="true" />

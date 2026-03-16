@@ -76,7 +76,7 @@ export const TimelinePanel = memo(function TimelinePanel({
     <div className="flex flex-col h-full" role="region" aria-label="Timeline">
       <div
         ref={timelineHeaderScrollRef}
-        className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-neutral-200/80"
+        className="flex-shrink-0 bg-white/90 backdrop-blur-sm overflow-x-auto overflow-y-hidden border-b border-slate-300/80"
         style={HIDDEN_SCROLLBAR_STYLE}
       >
         {/* Polite announcement for screen readers while the scale is computing. */}

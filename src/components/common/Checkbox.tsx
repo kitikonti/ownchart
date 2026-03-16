@@ -84,9 +84,9 @@ export const Checkbox = memo(function Checkbox({
             : null,
         ]
       : [
-          "bg-white border border-neutral-400",
+          "bg-white border border-slate-400",
           !disabled
-            ? "peer-hover:border-neutral-500 peer-hover:bg-neutral-50"
+            ? "peer-hover:border-slate-500 peer-hover:bg-slate-50"
             : null,
         ],
     PEER_FOCUS_RING,
