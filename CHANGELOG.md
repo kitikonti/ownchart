@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.17](https://github.com/kitikonti/ownchart/compare/v1.2.16...v1.2.17) (2026-03-16)
+
+
+### Code Refactoring
+
+* address review findings from color system audit ([921aa9f](https://github.com/kitikonti/ownchart/commit/921aa9f7600658bf28df379142d33706c7453948))
+* consolidate color system to unified Tailwind Slate scale ([#56](https://github.com/kitikonti/ownchart/issues/56)) ([68f548a](https://github.com/kitikonti/ownchart/commit/68f548a93aa3a494e222a21860d3440ffa299f5a))
+
 ## [1.2.16](https://github.com/kitikonti/ownchart/compare/v1.2.15...v1.2.16) (2026-03-15)
 
 
