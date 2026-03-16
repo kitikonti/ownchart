@@ -19,6 +19,7 @@
  *
  * Standard Tailwind Slate stops (50–950) are used as-is.
  * Custom intermediate stops bridge luminance gaps:
+ *   250 — HiDPI grid line compensation (midpoint 200↔300, Issue #64)
  *   325 — form/select borders (contrast-matched to former neutral[300])
  *   350 — muted icons/indicators (luminance-matched to former neutral[400])
  */

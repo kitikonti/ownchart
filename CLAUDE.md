@@ -350,6 +350,7 @@ npm run test:e2e            # E2E tests (Playwright)
 - `src/config/colorSwatches.ts` — color picker swatch values
 
 **Custom stops**: The slate scale includes custom intermediate stops:
+- `250` — HiDPI grid line color compensation (midpoint 200↔300)
 - `325` — form borders, disabled text (contrast-matched)
 - `350` — muted icons, indicators (luminance-matched)
 
