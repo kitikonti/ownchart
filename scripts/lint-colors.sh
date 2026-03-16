@@ -85,6 +85,7 @@ check_pattern 'hsla?\([0-9]' \
   src/components src/hooks
 
 # ─── Check CSS for raw hex values (should use theme()) ────────────────────────
+# #ffffff is excluded — pure white for text-on-brand buttons, not a gray scale value
 
 css_hex=$(grep -n -E '#[0-9a-fA-F]{3,8}' src/index.css 2>/dev/null \
   | grep -v '/\*' \

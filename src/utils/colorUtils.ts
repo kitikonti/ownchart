@@ -9,7 +9,7 @@
  * indices), see {@link ../utils/hashUtils}.
  */
 
-import { COLORS, SLATE_800 } from "@/styles/design-tokens";
+import { COLORS, DARK_TEXT_COLOR } from "@/styles/design-tokens";
 
 /**
  * Default fallback color (brand primary — matches COLORS.brand[600] in design-tokens.ts)
@@ -20,10 +20,10 @@ const DEFAULT_COLOR = COLORS.brand[600];
  * Text colors used for contrast selection.
  *
  * LIGHT_TEXT: pure white, from the slate scale (slate[0]).
- * DARK_TEXT: slate[800] — imported as SLATE_800 from design-tokens.ts.
+ * DARK_TEXT: slate[800] — DARK_TEXT_COLOR from design-tokens.ts.
  */
 const LIGHT_TEXT = COLORS.slate[0]; // "#ffffff"
-const DARK_TEXT = SLATE_800; // "#1e293b" — slate[800]
+const DARK_TEXT = DARK_TEXT_COLOR; // "#1e293b" — slate[800]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // WCAG 2.1 sRGB linearization coefficients

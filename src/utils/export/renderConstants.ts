@@ -6,7 +6,7 @@
  */
 
 import { getContrastTextColor } from "@/utils/colorUtils";
-import { COLORS, SLATE_800 } from "@/styles/design-tokens";
+import { COLORS, DARK_TEXT_COLOR } from "@/styles/design-tokens";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -85,29 +85,14 @@ export const MILESTONE_RENDER_CONSTANTS = {
   sizeFactor: 0.5,
 } as const;
 
-// ─── Slate scale aliases for readability ─────────────────────────────────────
-//
-// These reference the unified Slate scale via COLORS, avoiding
-// duplicated hex literals.
-
-/** slate[100] — weekend background and header chrome */
-const SLATE_100 = COLORS.slate[100];
-
-/** slate[200] — grid lines and table borders */
-const SLATE_200 = COLORS.slate[200];
-
-/** slate[600] — header text labels */
-const SLATE_600 = COLORS.slate[600];
-
 /**
  * Default colors used in rendering.
  * Defined before LABEL_RENDER_CONSTANTS so label colors can reference these
  * as the single source of truth for shared hex values.
  *
- * Values sourced from COLORS / design-tokens where available to prevent
- * drift when design tokens change.  Composited values (weekendBackground,
- * holidayBackground) and colors from Tailwind scales not exported by the
- * design-token module remain as documented hex literals.
+ * All values reference COLORS from design-tokens to prevent drift.
+ * The only exception is holidayBackground — a pre-composited opaque hex
+ * derived from an rgba overlay (see inline comment).
  */
 export const RENDER_COLORS = {
   /**
@@ -143,7 +128,7 @@ export const RENDER_COLORS = {
    * Derived from slate-100 (rgba(241,245,249,0.5)) composited over white →
    * #f8fafc. If the source opacity or color changes, re-derive this hex value.
    */
-  weekendBackground: SLATE_100,
+  weekendBackground: COLORS.slate[100],
 
   /**
    * Holiday background color.
@@ -155,7 +140,7 @@ export const RENDER_COLORS = {
   /**
    * Grid line color (slate[200]).
    */
-  gridLine: SLATE_200,
+  gridLine: COLORS.slate[200],
 
   /**
    * Today marker color (brand-600).
@@ -172,22 +157,22 @@ export const RENDER_COLORS = {
   /**
    * Header background color (slate[100]).
    */
-  headerBackground: SLATE_100,
+  headerBackground: COLORS.slate[100],
 
   /**
    * Header text color (slate[600]).
    */
-  headerText: SLATE_600,
+  headerText: COLORS.slate[600],
 
   /**
    * Table border color (slate[200]).
    */
-  tableBorder: SLATE_200,
+  tableBorder: COLORS.slate[200],
 
   /**
    * Table text color (slate[800]).
    */
-  tableText: SLATE_800,
+  tableText: DARK_TEXT_COLOR,
 
   /**
    * Table header text color (slate[500]).

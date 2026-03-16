@@ -21,10 +21,10 @@
 import { slate, brand, semantic } from "./colors.js";
 
 /**
- * slate[800] exported for use as a contrast-safe dark text color in colorUtils.
- * This specific value is needed for WCAG contrast calculations.
+ * Contrast-safe dark text color (slate[800]).
+ * Used in WCAG contrast calculations and export table text rendering.
  */
-export const SLATE_800 = slate[800];
+export const DARK_TEXT_COLOR = slate[800];
 
 /**
  * Default color applied to newly created tasks.
@@ -38,6 +38,17 @@ export const DEFAULT_TASK_COLOR = brand[600];
  * Used in color mode defaults and milestone rendering.
  */
 export const DEFAULT_MILESTONE_COLOR = "#CA8A04";
+
+/**
+ * Convert a hex color to an rgba() string.
+ * Keeps color references tied to the scale instead of hardcoding RGB components.
+ */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 export const COLORS = {
   slate,
@@ -311,11 +322,8 @@ export const ROW_NUMBER = {
 export const TABLE_ROW = {
   /** Default (unselected) row background — white. */
   defaultBg: slate[0],
-  /**
-   * Selected row background: brand[600] (#0F6CBD) at chart.selectionFillOpacity (8%).
-   * Using rgba() avoids the fragile hex+alpha-suffix approach.
-   */
-  selectionBg: `rgba(15, 108, 189, ${COLORS.chart.selectionFillOpacity})`,
+  /** Selected row background: brand[600] at chart.selectionFillOpacity (8%). */
+  selectionBg: hexToRgba(brand[600], COLORS.chart.selectionFillOpacity),
 } as const;
 
 // =============================================================================
