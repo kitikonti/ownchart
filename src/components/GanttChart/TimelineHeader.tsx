@@ -234,6 +234,7 @@ export function TimelineHeader({
                 y2={(rowIndex + 1) * ROW_HEIGHT}
                 stroke={TIMELINE_HEADER.border}
                 strokeWidth={1}
+                shapeRendering="crispEdges"
               />
 
               {/* Cell label */}
@@ -273,6 +274,7 @@ export function TimelineHeader({
         y2={currentScales.length * ROW_HEIGHT}
         stroke={TIMELINE_HEADER.border}
         strokeWidth={1}
+        shapeRendering="crispEdges"
       />
     </g>
   );

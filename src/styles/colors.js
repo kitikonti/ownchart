@@ -27,6 +27,7 @@ export const slate = Object.freeze({
   50: '#f8fafc',     // Tailwind slate-50
   100: '#f1f5f9',    // Tailwind slate-100
   200: '#e2e8f0',    // Tailwind slate-200
+  250: '#d6dee8',    // Custom: HiDPI grid line compensation (midpoint 200↔300)
   300: '#cbd5e1',    // Tailwind slate-300
   325: '#abb4c0',    // Custom: contrast-matched to former neutral[300] for form borders
   350: '#7f8b9b',    // Custom: luminance-matched to former neutral[400] for indicators

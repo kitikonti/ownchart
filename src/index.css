@@ -923,6 +923,47 @@ input[type="range"]:focus-visible::-moz-range-thumb {
   transform: scale(1.15);
 }
 
+/* ─── SVG Grid & Header Lines (High-DPI aware) ─── */
+/* SVG strokes don't auto-thin on HiDPI like CSS borders do.
+   CSS rules override SVG presentation attributes (lower specificity). */
+
+@media (min-resolution: 144dpi), (-webkit-min-device-pixel-ratio: 1.5) {
+  .grid-lines line,
+  .timeline-header line {
+    stroke-width: 0.67px;
+  }
+
+  /* Compensate: thinner strokes appear lighter, so nudge colors slightly darker */
+  .grid-lines .daily-line,
+  .grid-lines .horizontal-line,
+  .timeline-header line {
+    stroke: theme("colors.slate.250");
+  }
+
+  .grid-lines .weekly-line,
+  .grid-lines .monthly-line {
+    stroke: theme("colors.slate.300");
+  }
+}
+
+@media (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  .grid-lines line,
+  .timeline-header line {
+    stroke-width: 0.5px;
+  }
+
+  .grid-lines .daily-line,
+  .grid-lines .horizontal-line,
+  .timeline-header line {
+    stroke: theme("colors.slate.250");
+  }
+
+  .grid-lines .weekly-line,
+  .grid-lines .monthly-line {
+    stroke: theme("colors.slate.300");
+  }
+}
+
 /* ─── Toolbar Separator (High-DPI aware) ─── */
 .toolbar-separator {
   width: 1px;

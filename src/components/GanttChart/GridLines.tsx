@@ -194,7 +194,7 @@ export function GridLines({
   const gridHeight = taskCount * rowHeight;
 
   return (
-    <g className="grid-lines">
+    <g className="grid-lines" shapeRendering="crispEdges">
       {/* Weekend background highlighting */}
       {weekendColumns.map(({ x, date }) => (
         <rect
@@ -249,6 +249,8 @@ export function GridLines({
           y2={y}
           stroke={GRID.lineHorizontal}
           strokeWidth={1}
+          className="horizontal-line"
+          shapeRendering="auto"
         />
       ))}
     </g>
