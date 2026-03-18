@@ -1,7 +1,7 @@
 /**
- * Hook for creating new tasks from the placeholder row.
+ * Hook for creating new tasks (toolbar button and placeholder row).
  * Extracts task creation logic (date calculation, order, addTask)
- * from NewTaskPlaceholderRow for testability and separation of concerns.
+ * for testability and separation of concerns.
  */
 
 import { useCallback } from "react";
@@ -19,8 +19,8 @@ interface UseNewTaskCreationReturn {
 }
 
 /**
- * Compute start/end dates for a task appended after the last task.
- * Starts one day after the last task's end date, or today if no tasks exist.
+ * Compute start/end dates for a task appended after the latest-ending task.
+ * Starts one day after that task's end date, or today if no tasks exist.
  *
  * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
  * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
@@ -44,7 +44,7 @@ function computeAppendDates(lastTask: { endDate?: string } | null): {
 
 /**
  * Provides a `createTask(name)` function that appends a new task
- * after the last existing task, using shared constants and utilities.
+ * after the latest-ending existing task, using shared constants and utilities.
  */
 export function useNewTaskCreation(): UseNewTaskCreationReturn {
   const addTask = useTaskStore((state) => state.addTask);
