@@ -54,20 +54,24 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
       // Access tasks at call time (event handler), not during render
       const { tasks } = useTaskStore.getState();
 
-      // Compute lastTaskByPosition and nextOrder in a single pass to avoid iterating twice.
-      // lastTaskByPosition is the last element by array index (visual bottom of list),
-      // which determines the start date for the new task. highestOrder tracks
-      // the maximum order value (tasks may not be sorted by order) so the new
-      // task is appended after all existing tasks regardless of their order values.
-      let lastTaskByPosition: Task | null = null;
+      // Find the task with the latest endDate and the highest order value
+      // in a single pass. The latest-ending task determines the start date
+      // for the new task (so it never overlaps existing tasks), while
+      // highestOrder ensures the new task is appended after all others.
+      let latestEndTask: Task | null = null;
       let highestOrder = -1;
       for (const t of tasks) {
-        lastTaskByPosition = t;
+        if (
+          !latestEndTask ||
+          (t.endDate && t.endDate > (latestEndTask.endDate ?? ""))
+        ) {
+          latestEndTask = t;
+        }
         if (t.order > highestOrder) highestOrder = t.order;
       }
       const nextOrder = tasks.length > 0 ? highestOrder + 1 : 0;
 
-      const { startDate, endDate } = computeAppendDates(lastTaskByPosition);
+      const { startDate, endDate } = computeAppendDates(latestEndTask);
 
       addTask({
         name,

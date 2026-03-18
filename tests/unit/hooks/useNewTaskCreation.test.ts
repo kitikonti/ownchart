@@ -169,7 +169,30 @@ describe("useNewTaskCreation", () => {
 
     const call = mockAddTask.mock.calls[0][0];
     expect(call.order).toBe(6); // max(0, 5, 3) + 1
-    // Uses last task's endDate (t3 at index 2), not the one with highest order
-    expect(call.startDate).toBe("2025-01-16");
+    // Uses the task with the latest endDate (t2: 2025-01-20), not the last by array position
+    expect(call.startDate).toBe("2025-01-21");
+  });
+
+  it("starts after the task with the latest endDate, not the last by array position", () => {
+    const tasks = [
+      makeTask({ id: "t1", order: 0, endDate: "2025-06-30" }), // latest endDate
+      makeTask({ id: "t2", order: 1, endDate: "2025-03-15" }),
+      makeTask({ id: "t3", order: 2, endDate: "2025-01-10" }), // last by array position
+    ];
+    vi.mocked(useTaskStore.getState).mockReturnValue({
+      tasks,
+    } as unknown as ReturnType<typeof useTaskStore.getState>);
+
+    const { result } = renderHook(() => useNewTaskCreation());
+
+    act(() => {
+      result.current.createTask("After Latest");
+    });
+
+    const call = mockAddTask.mock.calls[0][0];
+    // Must start after t1 (latest endDate), not after t3 (last in array)
+    expect(call.startDate).toBe("2025-07-01");
+    expect(call.endDate).toBe("2025-07-07");
+    expect(call.order).toBe(3);
   });
 });
