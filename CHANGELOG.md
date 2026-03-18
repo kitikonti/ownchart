@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.21](https://github.com/kitikonti/ownchart/compare/v1.2.20...v1.2.21) (2026-03-18)
+
+
+### Bug Fixes
+
+* use latest endDate for new task placement, not last array position ([4604bfa](https://github.com/kitikonti/ownchart/commit/4604bfa800786968c31665730df0255909a25300)), closes [#77](https://github.com/kitikonti/ownchart/issues/77)
+
+
+### Code Refactoring
+
+* update JSDoc comments to reflect latest-endDate logic ([350e857](https://github.com/kitikonti/ownchart/commit/350e85773bd36d4e0ce80d53ae347c969483c38c))
+
 ## [1.2.20](https://github.com/kitikonti/ownchart/compare/v1.2.19...v1.2.20) (2026-03-18)
 
 
