@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.19](https://github.com/kitikonti/ownchart/compare/v1.2.18...v1.2.19) (2026-03-18)
+
+
+### Bug Fixes
+
+* restore scroll position on file open and browser reload ([#76](https://github.com/kitikonti/ownchart/issues/76)) ([f4b6604](https://github.com/kitikonti/ownchart/commit/f4b6604f1257d6ea481ebad01ae37309cc165c2b))
+
+
+### Code Refactoring
+
+* address review findings from scroll position restore ([04c6604](https://github.com/kitikonti/ownchart/commit/04c660422b782bceb6fe9fbcd48180d1babe6519))
+
 ## [1.2.18](https://github.com/kitikonti/ownchart/compare/v1.2.17...v1.2.18) (2026-03-16)
 
 
