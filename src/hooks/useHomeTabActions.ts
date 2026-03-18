@@ -62,7 +62,6 @@ export function useHomeTabActions(): HomeTabActions {
   // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
-  const tasks = useTaskStore((state) => state.tasks);
   const updateTask = useTaskStore((state) => state.updateTask);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
@@ -141,23 +140,19 @@ export function useHomeTabActions(): HomeTabActions {
   const canDelete = selectedTaskIds.length > 0;
   const canHide = selectedTaskIds.length > 0;
 
-  // Task type — derived from the single selected task
-  const selectedTask = useMemo(
-    () =>
-      singleSelectedTaskId
-        ? (tasks.find((t) => t.id === singleSelectedTaskId) ?? null)
-        : null,
-    [tasks, singleSelectedTaskId]
-  );
-  const currentTaskType: TaskType = selectedTask?.type ?? "task";
-  const canChangeType = selectedTask !== null;
-  const hasSelectedChildren = useMemo(
-    () =>
-      singleSelectedTaskId
-        ? tasks.some((t) => t.parent === singleSelectedTaskId)
-        : false,
-    [tasks, singleSelectedTaskId]
-  );
+  // Task type — derived via targeted selector that returns primitives,
+  // so the toolbar only re-renders when these specific values change
+  // (not on every task name edit, progress change, etc.).
+  const currentTaskType = useTaskStore((state): TaskType => {
+    if (!singleSelectedTaskId) return "task";
+    const t = state.tasks.find((t) => t.id === singleSelectedTaskId);
+    return t?.type ?? "task";
+  });
+  const canChangeType = singleSelectedTaskId !== null;
+  const hasSelectedChildren = useTaskStore((state): boolean => {
+    if (!singleSelectedTaskId) return false;
+    return state.tasks.some((t) => t.parent === singleSelectedTaskId);
+  });
 
   // Handlers
   const handleAddTask = useCallback((): void => {

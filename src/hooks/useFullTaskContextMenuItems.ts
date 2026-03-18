@@ -85,7 +85,6 @@ interface UseFullTaskContextMenuItemsResult {
  */
 export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
-  const tasks = useTaskStore((state) => state.tasks);
   const updateTask = useTaskStore((state) => state.updateTask);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
@@ -163,9 +162,12 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       );
 
       // Group 2b: Task Type (submenu)
-      const task = tasks.find((t) => t.id === taskId);
+      // Read tasks lazily at right-click time via getState() to avoid subscribing
+      // to the entire tasks array (which changes on every task edit).
+      const currentTasks = useTaskStore.getState().tasks;
+      const task = currentTasks.find((t) => t.id === taskId);
       if (task) {
-        const hasChildren = tasks.some((t) => t.parent === taskId);
+        const hasChildren = currentTasks.some((t) => t.parent === taskId);
         items.push(
           buildTaskTypeSubmenu({
             currentType: task.type ?? "task",
@@ -226,7 +228,6 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
     },
     [
       selectedTaskIds,
-      tasks,
       canCopyOrCut,
       canPaste,
       canIndent,

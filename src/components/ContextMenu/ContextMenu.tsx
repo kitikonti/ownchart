@@ -26,6 +26,9 @@ const VIEWPORT_EDGE_MARGIN_PX = 4;
 /** Size of the submenu arrow indicator (CaretRight). */
 const SUBMENU_ARROW_SIZE = 12;
 
+/** Delay in ms before a submenu opens/closes on mouse hover. */
+const SUBMENU_HOVER_DELAY_MS = 80;
+
 export interface ContextMenuItem {
   id: string;
   label: string;
@@ -175,6 +178,8 @@ interface SubmenuPanelProps {
   onClose: () => void;
   /** Called when a leaf item is clicked — closes the entire menu tree. */
   onCloseAll: () => void;
+  /** Accessible label for the submenu (read by screen readers). */
+  ariaLabel: string;
 }
 
 /**
@@ -186,6 +191,7 @@ const SubmenuPanel = memo(function SubmenuPanel({
   parentItemEl,
   onClose,
   onCloseAll,
+  ariaLabel,
 }: SubmenuPanelProps): JSX.Element | null {
   const panelRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
@@ -308,6 +314,7 @@ const SubmenuPanel = memo(function SubmenuPanel({
         minWidth: CONTEXT_MENU.minWidth,
       }}
       role="menu"
+      aria-label={ariaLabel}
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
@@ -467,12 +474,12 @@ export const ContextMenu = memo(function ContextMenu({
       if (item.children && !item.disabled) {
         submenuTimerRef.current = setTimeout(() => {
           setOpenSubmenuIndex(index);
-        }, 80);
+        }, SUBMENU_HOVER_DELAY_MS);
       } else {
         // Close any open submenu when hovering a non-submenu item
         submenuTimerRef.current = setTimeout(() => {
           setOpenSubmenuIndex(null);
-        }, 80);
+        }, SUBMENU_HOVER_DELAY_MS);
       }
     },
     []
@@ -616,6 +623,7 @@ export const ContextMenu = memo(function ContextMenu({
               parentItemEl={itemRefs.current.get(index) ?? null}
               onClose={handleSubmenuClose}
               onCloseAll={handleCloseAll}
+              ariaLabel={item.label}
             />
           )}
         </Fragment>
