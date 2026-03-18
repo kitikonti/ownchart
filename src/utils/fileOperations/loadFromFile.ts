@@ -85,12 +85,8 @@ export function loadFileIntoApp(file: {
     // loaded tasks fit within the previous session's dateRange, causing
     // viewAnchorDate-based scroll restore to compute a wrong pixel offset.
     const chartStore = useChartStore.getState();
-    useChartStore.setState({
-      dateRange: null,
-      scale: null,
-      // Restore vertical scroll position from file (applied by GanttLayout)
-      pendingScrollTop: viewSettings.scrollTop ?? null,
-    });
+    chartStore.resetForLoad();
+    chartStore.setPendingScrollTop(viewSettings.scrollTop ?? null);
     chartStore.updateScale(data.tasks);
     chartStore.signalFileLoaded();
   } catch (e) {

@@ -102,7 +102,7 @@ function restoreChartState(chartState: ChartState): void {
   applyIfDefined(chartState.viewAnchorDate, store.setViewAnchorDate);
   // Vertical scroll position — stored as pending, applied by GanttLayout
   if (chartState.scrollTop !== undefined && chartState.scrollTop > 0) {
-    useChartStore.setState({ pendingScrollTop: chartState.scrollTop });
+    store.setPendingScrollTop(chartState.scrollTop);
   }
 
   // Cannot use applyIfDefined — setWorkingDaysConfig auto-derives workingDaysMode
@@ -145,7 +145,7 @@ function restoreStateFromChart(savedChart: TabChartData): void {
   // signaling file loaded. useInfiniteScroll (in GanttLayout, parent) fires
   // before ChartCanvas.updateScale (child effect), so without this explicit
   // call, the scroll positioning would use a stale scale with wrong minDate.
-  useChartStore.setState({ dateRange: null, scale: null });
+  useChartStore.getState().resetForLoad();
   useChartStore.getState().updateScale(savedChart.tasks);
   useChartStore.getState().signalFileLoaded();
 }

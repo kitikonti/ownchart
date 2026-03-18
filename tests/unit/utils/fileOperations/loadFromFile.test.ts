@@ -21,6 +21,8 @@ const mockAutoFitColumn = vi.fn();
 const mockSetViewSettings = vi.fn();
 const mockUpdateScale = vi.fn();
 const mockSignalFileLoaded = vi.fn();
+const mockResetForLoad = vi.fn();
+const mockSetPendingScrollTop = vi.fn();
 
 const mockSetFileName = vi.fn();
 const mockSetChartId = vi.fn();
@@ -54,9 +56,9 @@ vi.mock('@/store/slices/chartSlice', () => ({
       setViewSettings: mockSetViewSettings,
       updateScale: mockUpdateScale,
       signalFileLoaded: mockSignalFileLoaded,
+      resetForLoad: mockResetForLoad,
+      setPendingScrollTop: mockSetPendingScrollTop,
     }),
-    // loadFromFile calls setState directly to clear stale dateRange
-    setState: vi.fn(),
   },
 }));
 

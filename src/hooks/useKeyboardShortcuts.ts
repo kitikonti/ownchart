@@ -403,11 +403,7 @@ function handleViewToggleShortcuts(
   if (isCellActive || modKey || e.altKey || e.shiftKey) return false;
 
   const key = e.key.toLowerCase();
-  // View-toggle shortcuts — bare key, no modifier, no active cell.
-  // `f` reads tasks via getState() so the handler doesn't subscribe to
-  // `tasks` and trigger listener re-registration on every task mutation.
-  // Bare-key view toggles (no modifier). fitToView moved to Alt+F
-  // to avoid conflicting with browser Ctrl+F (find).
+  // Bare-key view toggles (no modifier, no active cell).
   const VIEW_TOGGLE_ACTIONS: Partial<Record<string, () => void>> = {
     d: () => ctx.toggleDependencies(),
     t: () => ctx.toggleTodayMarker(),

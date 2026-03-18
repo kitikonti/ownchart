@@ -19,7 +19,6 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       showWeekends: true,
       showTodayMarker: true,
       isZooming: false,
-      isPanning: false,
     });
   });
 
@@ -229,16 +228,6 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
   });
 
   describe('transient state', () => {
-    it('should track panning state', () => {
-      const { setIsPanning } = useChartStore.getState();
-
-      setIsPanning(true);
-      expect(useChartStore.getState().isPanning).toBe(true);
-
-      setIsPanning(false);
-      expect(useChartStore.getState().isPanning).toBe(false);
-    });
-
     it('should track zooming state', () => {
       const { setIsZooming } = useChartStore.getState();
 

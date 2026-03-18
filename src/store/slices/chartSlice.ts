@@ -114,7 +114,6 @@ interface ChartState {
 
   // Transient UI state
   isZooming: boolean;
-  isPanning: boolean;
   lastFitToViewTime: number; // Timestamp to detect fitToView calls
 
   // Viewport state (for visible range calculation in export + scroll restore)
@@ -183,7 +182,6 @@ interface ChartActions {
 
   // Transient state
   setIsZooming: (isZooming: boolean) => void;
-  setIsPanning: (isPanning: boolean) => void;
   setViewport: (scrollLeft: number, width: number, scrollTop?: number) => void;
 
   // Settings - View toggles
@@ -242,6 +240,17 @@ interface ChartActions {
   // Scroll-to-date (for ensuring newly created tasks are visible)
   requestScrollToDate: (date: string) => void;
   clearScrollTarget: () => void;
+
+  // Reset dateRange/scale before loading new data (file open, localStorage restore).
+  // Clears stale dateRange so updateScale recalculates from scratch.
+  resetForLoad: () => void;
+
+  // Set pending vertical scroll position to restore (consumed by GanttLayout)
+  setPendingScrollTop: (top: number | null) => void;
+
+  // Expand dateRange to include a target date (used by useScrollToDate when
+  // jumping to a date outside current range, e.g. Alt+T from far-away project)
+  expandDateRangeTo: (targetDate: string) => void;
 }
 
 const DEFAULT_CONTAINER_WIDTH = 800;
@@ -306,7 +315,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
 
     // Transient UI state
     isZooming: false,
-    isPanning: false,
     lastFitToViewTime: 0,
     viewportScrollLeft: 0,
     viewportScrollTop: 0,
@@ -567,12 +575,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setIsZooming: (isZooming: boolean): void => {
       set((state) => {
         state.isZooming = isZooming;
-      });
-    },
-
-    setIsPanning: (isPanning: boolean): void => {
-      set((state) => {
-        state.isPanning = isPanning;
       });
     },
 
@@ -1014,6 +1016,38 @@ export const useChartStore = create<ChartState & ChartActions>()(
     clearScrollTarget: (): void => {
       set((state) => {
         state.scrollTargetDate = null;
+      });
+    },
+
+    // Reset dateRange/scale before loading new data (file open, localStorage restore)
+    resetForLoad: (): void => {
+      set((state) => {
+        state.dateRange = null;
+        state.scale = null;
+      });
+    },
+
+    // Set pending vertical scroll position to restore (consumed by GanttLayout)
+    setPendingScrollTop: (top: number | null): void => {
+      set((state) => {
+        state.pendingScrollTop = top;
+      });
+    },
+
+    // Expand dateRange to include a target date (used by useScrollToDate)
+    expandDateRangeTo: (targetDate: string): void => {
+      set((state) => {
+        if (!state.dateRange) return;
+        const needsExpand =
+          targetDate < state.dateRange.min || targetDate > state.dateRange.max;
+        if (!needsExpand) return;
+        if (targetDate < state.dateRange.min) {
+          state.dateRange.min = addDays(targetDate, -DATE_RANGE_PADDING_DAYS);
+        }
+        if (targetDate > state.dateRange.max) {
+          state.dateRange.max = addDays(targetDate, DATE_RANGE_PADDING_DAYS);
+        }
+        state.scale = deriveScale(state.dateRange, state.zoom);
       });
     },
   }))

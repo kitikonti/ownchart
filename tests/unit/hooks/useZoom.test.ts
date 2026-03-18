@@ -44,7 +44,6 @@ describe('useZoom', () => {
       showWeekends: true,
       showTodayMarker: true,
       isZooming: false,
-      isPanning: false,
     });
 
     vi.spyOn(useChartStore.getState(), 'setZoom').mockImplementation(setZoomSpy);

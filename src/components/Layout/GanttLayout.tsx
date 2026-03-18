@@ -107,13 +107,8 @@ export function GanttLayout(): JSX.Element {
       if (chartTranslateRef.current)
         chartTranslateRef.current.style.transform = `translateY(-${top}px)`;
       // Track scrollTop in store for persistence (localStorage / file save)
-      useChartStore
-        .getState()
-        .setViewport(
-          useChartStore.getState().viewportScrollLeft,
-          useChartStore.getState().viewportWidth,
-          top
-        );
+      const store = useChartStore.getState();
+      store.setViewport(store.viewportScrollLeft, store.viewportWidth, top);
     };
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
@@ -148,7 +143,7 @@ export function GanttLayout(): JSX.Element {
     // Apply via rAF to ensure DOM is ready
     requestAnimationFrame(() => {
       el.scrollTop = pendingScrollTop;
-      useChartStore.setState({ pendingScrollTop: null });
+      useChartStore.getState().setPendingScrollTop(null);
     });
   }, [fileLoadCounter]);
 

@@ -405,6 +405,14 @@ function normalizeViewSettings(raw: ViewSettings): ViewSettings {
   const zoom = finiteOr(raw.zoom, 1);
   const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
 
+  // scrollTop: vertical scroll position. Must be a finite non-negative number.
+  const rawScrollTop =
+    typeof raw.scrollTop === "number" && Number.isFinite(raw.scrollTop)
+      ? raw.scrollTop
+      : undefined;
+  const scrollTop =
+    rawScrollTop !== undefined && rawScrollTop >= 0 ? rawScrollTop : undefined;
+
   // DEPRECATED: kept for backwards compat with older app versions
   const panOffset = {
     x: finiteOr(raw.panOffset?.x, 0),
@@ -424,6 +432,7 @@ function normalizeViewSettings(raw: ViewSettings): ViewSettings {
     zoom: clampedZoom,
     panOffset,
     viewAnchorDate,
+    scrollTop,
     taskTableWidth:
       raw.taskTableWidth === null
         ? null

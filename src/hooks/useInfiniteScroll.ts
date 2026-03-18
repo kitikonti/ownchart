@@ -207,8 +207,11 @@ export function useInfiniteScroll({
         prevDateRangeRef.current = dateRangeKey;
       }
       return (): void => {
-        // Only cancel the rAF write, but keep the pending target in the ref
-        // so the next effect run can re-schedule it.
+        // Only cancel the rAF write — do NOT clear pendingScrollTargetRef.
+        // The ref must survive effect re-runs so the next run can re-schedule
+        // the scroll. ChartCanvas.updateScale creates a new scale object on
+        // every call, triggering re-render → cleanup → re-run. If we cleared
+        // the ref here, the scroll target would be lost.
         cancelled = true;
       };
     }
