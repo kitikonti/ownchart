@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.20](https://github.com/kitikonti/ownchart/compare/v1.2.19...v1.2.20) (2026-03-18)
+
+
+### Code Refactoring
+
+* address review findings from insert-task-scroll ([ec9d963](https://github.com/kitikonti/ownchart/commit/ec9d963ae97c55a6eb3db899eebf4c74c7b9da52))
+
 ## [1.2.19](https://github.com/kitikonti/ownchart/compare/v1.2.18...v1.2.19) (2026-03-18)
 
 
