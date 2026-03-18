@@ -24,7 +24,7 @@
     "test": "vitest",
     "test:unit": "vitest run --coverage",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "bash scripts/e2e-docker.sh",
     "test:e2e:ui": "playwright test --ui",
     "test:vrt": "bash scripts/vrt-docker.sh",
     "test:vrt:update": "bash scripts/vrt-docker.sh --update",

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #
-# Run Playwright visual regression tests inside Docker.
+# Run Playwright E2E tests inside Docker.
 # Automatically fixes file ownership so host user isn't left with root-owned files.
 #
 # Usage:
-#   scripts/vrt-docker.sh                  # verify snapshots match
-#   scripts/vrt-docker.sh --update         # generate / update baseline snapshots
+#   scripts/e2e-docker.sh                              # run all e2e tests
+#   scripts/e2e-docker.sh tests/e2e/some.spec.ts       # run specific test file
+#   scripts/e2e-docker.sh --project=chromium            # pass Playwright flags
+#   scripts/e2e-docker.sh tests/e2e/some.spec.ts --project=chromium
 #
 set -euo pipefail
 
@@ -24,18 +26,6 @@ if [[ ! -d node_modules/@playwright/test ]]; then
   exit 1
 fi
 
-# --- Arguments ----------------------------------------------------------------
-
-UPDATE_FLAG=""
-case "${1:-}" in
-  --update) UPDATE_FLAG="--update-snapshots" ;;
-  "")       ;;
-  *)
-    echo "Usage: $0 [--update]" >&2
-    exit 1
-    ;;
-esac
-
 # --- Config -------------------------------------------------------------------
 
 PW_VERSION=$(node -e "console.log(require('./node_modules/@playwright/test/package.json').version)")
@@ -45,18 +35,20 @@ HOST_UID=$(id -u)
 HOST_GID=$(id -g)
 
 # Directories that Docker (running as root) may create or modify
-OWNED_DIRS="node_modules playwright-report test-results tests/e2e/visual-regression.spec.ts-snapshots"
+OWNED_DIRS="node_modules playwright-report test-results"
 
 echo "Playwright ${PW_VERSION} | Docker image: ${IMAGE}"
 
 # --- Run ----------------------------------------------------------------------
 
+# All arguments are forwarded to `npx playwright test`
+ARGS="${*}"
+
 # Run tests inside Docker; always fix ownership on exit, even on failure/crash.
-# We use a trap inside the container so chown runs regardless of how the test exits.
 docker run --rm -v "$(pwd)":/app -w /app "${IMAGE}" \
   bash -c "
     cleanup() { chown -R ${HOST_UID}:${HOST_GID} ${OWNED_DIRS} 2>/dev/null || true; }
     trap cleanup EXIT
     npm ci --ignore-scripts &&
-    npx playwright test visual-regression --project=chromium ${UPDATE_FLAG}
+    npx playwright test ${ARGS}
   "
