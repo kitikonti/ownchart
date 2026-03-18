@@ -41,8 +41,11 @@ echo "Playwright ${PW_VERSION} | Docker image: ${IMAGE}"
 
 # --- Run ----------------------------------------------------------------------
 
-# All arguments are forwarded to `npx playwright test`
-ARGS="${*}"
+# Build a shell-safe argument string using printf %q to prevent injection
+SAFE_ARGS=""
+if [[ $# -gt 0 ]]; then
+  SAFE_ARGS=$(printf ' %q' "$@")
+fi
 
 # Run tests inside Docker; always fix ownership on exit, even on failure/crash.
 docker run --rm -v "$(pwd)":/app -w /app "${IMAGE}" \
@@ -50,5 +53,5 @@ docker run --rm -v "$(pwd)":/app -w /app "${IMAGE}" \
     cleanup() { chown -R ${HOST_UID}:${HOST_GID} ${OWNED_DIRS} 2>/dev/null || true; }
     trap cleanup EXIT
     npm ci --ignore-scripts &&
-    npx playwright test ${ARGS}
+    npx playwright test${SAFE_ARGS}
   "

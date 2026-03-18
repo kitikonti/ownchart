@@ -203,3 +203,91 @@ export async function assertDefaultColumnLayout(page: Page, taskName: string): P
 export function getGrid(page: Page): Locator {
   return page.getByRole('grid', { name: 'Task spreadsheet' });
 }
+
+// ---------------------------------------------------------------------------
+// Timeline selectors
+// ---------------------------------------------------------------------------
+
+/** CSS selector for the horizontal-scroll chart container. */
+export const CHART_CONTAINER = '.gantt-chart-scroll-container';
+
+/** CSS selector for the outer vertical-scroll driver. */
+export const OUTER_SCROLL = '[data-scroll-driver]';
+
+/** CSS selector for the today-marker SVG line. */
+export const TODAY_MARKER = '.today-marker line';
+
+/** CSS selector for task bar SVG groups. */
+export const TASK_BAR = 'g.task-bar';
+
+// ---------------------------------------------------------------------------
+// Timeline / scroll helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if an SVG element's bounding box overlaps the chart container's
+ * visible scroll viewport. Returns true if any part of the element is visible.
+ */
+export async function isSvgElementInViewport(
+  page: Page,
+  svgSelector: string,
+  containerSelector: string,
+): Promise<boolean> {
+  return page.evaluate(
+    ({ svgSel, contSel }) => {
+      const el = document.querySelector(svgSel);
+      const container = document.querySelector(contSel);
+      if (!el || !container) return false;
+
+      const bbox = (el as SVGGraphicsElement).getBBox();
+      const { scrollLeft, clientWidth } = container as HTMLElement;
+
+      return bbox.x + bbox.width >= scrollLeft && bbox.x <= scrollLeft + clientWidth;
+    },
+    { svgSel: svgSelector, contSel: containerSelector },
+  );
+}
+
+/**
+ * Scroll a container to a specific horizontal position and wait for it to settle.
+ */
+export async function scrollContainerTo(
+  page: Page,
+  containerSelector: string,
+  scrollLeft: number,
+): Promise<void> {
+  await page.evaluate(
+    ({ sel, left }) => {
+      const container = document.querySelector(sel) as HTMLElement;
+      if (container) container.scrollLeft = left;
+    },
+    { sel: containerSelector, left: scrollLeft },
+  );
+  await page.waitForTimeout(300);
+}
+
+// ---------------------------------------------------------------------------
+// Insert row helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Hover over a row number cell to reveal insert controls, then click the
+ * insert above or insert below button.
+ */
+export async function insertTaskViaRowButton(
+  page: Page,
+  taskName: string,
+  position: 'above' | 'below',
+  rowNumber: number,
+): Promise<void> {
+  const row = getTaskRow(page, taskName);
+  const rowNumberCell = row.getByRole('gridcell').first();
+
+  // Hover to reveal insert controls
+  await rowNumberCell.hover();
+
+  // Click the insert button
+  const insertButton = page.getByLabel(`Insert ${position} row ${rowNumber}`);
+  await expect(insertButton).toBeAttached();
+  await insertButton.click();
+}

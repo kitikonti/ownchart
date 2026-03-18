@@ -10,37 +10,18 @@
  * opened at CW52 2025 instead of showing today's date.
  */
 
-import { test, expect, createTask, createTasks } from './fixtures/helpers';
-const CHART_CONTAINER = '.gantt-chart-scroll-container';
-const OUTER_SCROLL = '[data-scroll-driver]';
-const TODAY_MARKER = '.today-marker line';
-const TASK_BAR = 'g.task-bar';
-
-/**
- * Check if an SVG element's bounding box overlaps the chart container's
- * visible scroll viewport. Returns true if any part of the element is visible.
- */
-async function isSvgElementInViewport(
-  page: import('@playwright/test').Page,
-  svgSelector: string,
-  containerSelector: string,
-): Promise<boolean> {
-  return page.evaluate(
-    ({ svgSel, contSel }) => {
-      const el = document.querySelector(svgSel);
-      const container = document.querySelector(contSel);
-      if (!el || !container) return false;
-
-      const bbox = (el as SVGGraphicsElement).getBBox();
-      const { scrollLeft, clientWidth } = container as HTMLElement;
-
-      // Element is visible if any part of its horizontal extent
-      // overlaps the container's visible scroll range
-      return bbox.x + bbox.width >= scrollLeft && bbox.x <= scrollLeft + clientWidth;
-    },
-    { svgSel: svgSelector, contSel: containerSelector },
-  );
-}
+import {
+  test,
+  expect,
+  createTask,
+  createTasks,
+  isSvgElementInViewport,
+  scrollContainerTo,
+  CHART_CONTAINER,
+  OUTER_SCROLL,
+  TODAY_MARKER,
+  TASK_BAR,
+} from './fixtures/helpers';
 
 test.describe('Timeline Scroll Positioning', () => {
   test('fresh app opens with today marker in the visible viewport', async ({ appPage: page }) => {
@@ -74,13 +55,7 @@ test.describe('Timeline Scroll Positioning', () => {
     expect(initiallyVisible).toBe(true);
 
     // 2. Scroll the timeline to the far left (away from today)
-    await page.evaluate((sel) => {
-      const container = document.querySelector(sel) as HTMLElement;
-      if (container) container.scrollLeft = 0;
-    }, CHART_CONTAINER);
-
-    // Wait for scroll to settle
-    await page.waitForTimeout(300);
+    await scrollContainerTo(page, CHART_CONTAINER, 0);
 
     // 3. Today marker should now be off-screen
     // (scrollLeft=0 shows dateRange.min which is ~90 days before today)
@@ -105,11 +80,7 @@ test.describe('Timeline Scroll Positioning', () => {
     await createTask(page, 'Anchor Task');
 
     // 2. Scroll the timeline to the far left (away from today)
-    await page.evaluate((sel) => {
-      const container = document.querySelector(sel) as HTMLElement;
-      if (container) container.scrollLeft = 0;
-    }, CHART_CONTAINER);
-    await page.waitForTimeout(300);
+    await scrollContainerTo(page, CHART_CONTAINER, 0);
 
     // 3. Today marker should be off-screen
     const todayMarker = page.locator(TODAY_MARKER);
@@ -207,11 +178,7 @@ test.describe('Scroll Position Restore', () => {
     expect(visibleBefore).toBe(true);
 
     // 3. Scroll timeline to the far left so the task bar goes off-screen
-    await page.evaluate((sel) => {
-      const container = document.querySelector(sel) as HTMLElement;
-      if (container) container.scrollLeft = 0;
-    }, CHART_CONTAINER);
-    await page.waitForTimeout(300);
+    await scrollContainerTo(page, CHART_CONTAINER, 0);
 
     // 4. Verify the task bar is now off-screen
     const offScreenBefore = await isSvgElementInViewport(page, TASK_BAR, CHART_CONTAINER);
