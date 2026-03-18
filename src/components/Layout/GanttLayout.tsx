@@ -28,6 +28,7 @@ import { useTableDimensions } from "@/hooks/useTableDimensions";
 import { useFlattenedTasks } from "@/hooks/useFlattenedTasks";
 import { useSyncScroll } from "@/hooks/useSyncScroll";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useScrollToDate } from "@/hooks/useScrollToDate";
 import { useContainerDimensions } from "@/hooks/useContainerDimensions";
 import { usePreventVerticalScroll } from "@/hooks/usePreventVerticalScroll";
 import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
@@ -94,7 +95,8 @@ export function GanttLayout(): JSX.Element {
   useSyncScroll(taskTableScrollRef, taskTableHeaderScrollRef);
   usePreventVerticalScroll(taskTableScrollRef);
 
-  // Vertical scroll: direct DOM updates to avoid React re-render per scroll tick
+  // Vertical scroll: direct DOM updates to avoid React re-render per scroll tick.
+  // Also tracks scrollTop in the store for scroll position persistence.
   useEffect(() => {
     const el = outerScrollRef.current;
     if (!el) return;
@@ -104,8 +106,16 @@ export function GanttLayout(): JSX.Element {
         taskTableTranslateRef.current.style.transform = `translateY(-${top}px)`;
       if (chartTranslateRef.current)
         chartTranslateRef.current.style.transform = `translateY(-${top}px)`;
+      // Track scrollTop in store for persistence (localStorage / file save)
+      useChartStore
+        .getState()
+        .setViewport(
+          useChartStore.getState().viewportScrollLeft,
+          useChartStore.getState().viewportWidth,
+          top
+        );
     };
-    el.addEventListener("scroll", handleScroll);
+    el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -125,6 +135,22 @@ export function GanttLayout(): JSX.Element {
     fileLoadCounter,
     extendDateRange,
   });
+
+  // --- Scroll to date (ensures newly created tasks are visible) ---
+  useScrollToDate(chartContainerRef, scale);
+
+  // --- Restore vertical scroll position after file load / app reload ---
+  useEffect(() => {
+    const el = outerScrollRef.current;
+    const pendingScrollTop = useChartStore.getState().pendingScrollTop;
+    if (!el || pendingScrollTop === null) return;
+
+    // Apply via rAF to ensure DOM is ready
+    requestAnimationFrame(() => {
+      el.scrollTop = pendingScrollTop;
+      useChartStore.setState({ pendingScrollTop: null });
+    });
+  }, [fileLoadCounter]);
 
   // --- Derived layout values ---
   const { totalContentHeight, timelineHeaderWidth, contentAreaHeight } =

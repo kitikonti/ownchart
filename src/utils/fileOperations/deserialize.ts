@@ -398,19 +398,32 @@ function sanitizeWorkingDaysConfig(
  * Protects against NaN/Infinity/wrong types propagating into app state.
  * Named "normalize" to distinguish from sanitize.ts which handles XSS stripping.
  */
+/** ISO date pattern (YYYY-MM-DD) for viewAnchorDate validation */
+const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
 function normalizeViewSettings(raw: ViewSettings): ViewSettings {
   const zoom = finiteOr(raw.zoom, 1);
   const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
 
+  // DEPRECATED: kept for backwards compat with older app versions
   const panOffset = {
     x: finiteOr(raw.panOffset?.x, 0),
     y: finiteOr(raw.panOffset?.y, 0),
   };
 
+  // viewAnchorDate: date-based scroll position (device-independent).
+  // Validate as ISO date string; discard invalid values.
+  const viewAnchorDate =
+    typeof raw.viewAnchorDate === "string" &&
+    ISO_DATE_REGEX.test(raw.viewAnchorDate)
+      ? raw.viewAnchorDate
+      : undefined;
+
   return {
     ...raw,
     zoom: clampedZoom,
     panOffset,
+    viewAnchorDate,
     taskTableWidth:
       raw.taskTableWidth === null
         ? null

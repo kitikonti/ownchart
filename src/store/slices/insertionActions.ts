@@ -11,6 +11,7 @@ import {
 } from "@/utils/hierarchy";
 import { toISODateString } from "@/utils/dateUtils";
 import { useFileStore } from "./fileSlice";
+import { useChartStore } from "./chartSlice";
 import { CommandType } from "@/types/command.types";
 import { COLORS } from "@/styles/design-tokens";
 import {
@@ -146,6 +147,9 @@ function insertTasksRelative(
   });
 
   useFileStore.getState().markDirty();
+
+  // Ensure the newly inserted task is visible in the timeline
+  useChartStore.getState().requestScrollToDate(tasksToInsert[0].startDate);
 
   // Read back final order values so recordCommand captures correct state
   const finalState = get();

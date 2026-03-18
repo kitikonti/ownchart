@@ -8,12 +8,13 @@
  * Handles ? (open help panel) — checked before shiftKey guard for US-keyboard compat
  * Handles D (toggle dependencies), T (toggle today marker)
  * Handles P (toggle progress column), H (toggle holidays)
- * Handles F (fit to view)
+ * Handles Alt+F (fit to view), Alt+T (go to today)
  * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (unhide hidden rows in selection)
  * Handles Ctrl+G (group), Ctrl+Shift+G (ungroup)
  */
 
 import { useEffect, useRef } from "react";
+import { format } from "date-fns";
 import { useHistoryStore } from "@/store/slices/historySlice";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
@@ -99,6 +100,7 @@ interface ViewContext {
   toggleProgress: () => void;
   toggleHolidays: () => void;
   fitToView: (tasks: Task[]) => void;
+  requestScrollToDate: (date: string) => void;
 }
 
 interface HideContext {
@@ -356,6 +358,33 @@ function handleHideShortcuts(
   return false;
 }
 
+// Alt+key shortcuts for navigation actions that must not conflict with
+// browser defaults (Ctrl+T = new tab, Ctrl+F = find, Ctrl+Shift+T = reopen tab).
+function handleAltShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!e.altKey || modKey || e.shiftKey) return false;
+  const key = e.key.toLowerCase();
+
+  if (key === "t") {
+    // Alt+T: scroll timeline to today without changing zoom
+    e.preventDefault();
+    ctx.requestScrollToDate(format(new Date(), "yyyy-MM-dd"));
+    return true;
+  }
+
+  if (key === "f") {
+    // Alt+F: fit all tasks in view
+    e.preventDefault();
+    ctx.fitToView(useTaskStore.getState().tasks);
+    return true;
+  }
+
+  return false;
+}
+
 // Handles view-toggle shortcuts (D, T, P, H, F) and the help-panel shortcut (?).
 // All require no modifier key and no active cell.  The ? key is checked before
 // the shared guard because on US keyboards it is produced by Shift+/, which
@@ -377,12 +406,13 @@ function handleViewToggleShortcuts(
   // View-toggle shortcuts — bare key, no modifier, no active cell.
   // `f` reads tasks via getState() so the handler doesn't subscribe to
   // `tasks` and trigger listener re-registration on every task mutation.
+  // Bare-key view toggles (no modifier). fitToView moved to Alt+F
+  // to avoid conflicting with browser Ctrl+F (find).
   const VIEW_TOGGLE_ACTIONS: Partial<Record<string, () => void>> = {
     d: () => ctx.toggleDependencies(),
     t: () => ctx.toggleTodayMarker(),
     p: () => ctx.toggleProgress(),
     h: () => ctx.toggleHolidays(),
-    f: () => ctx.fitToView(useTaskStore.getState().tasks),
   };
   const action = VIEW_TOGGLE_ACTIONS[key];
   if (action) {
@@ -463,12 +493,16 @@ function useViewContext(): ViewContext {
   const toggleProgress = useChartStore((state) => state.toggleProgress);
   const toggleHolidays = useChartStore((state) => state.toggleHolidays);
   const fitToView = useChartStore((state) => state.fitToView);
+  const requestScrollToDate = useChartStore(
+    (state) => state.requestScrollToDate
+  );
   return {
     toggleDependencies,
     toggleTodayMarker,
     toggleProgress,
     toggleHolidays,
     fitToView,
+    requestScrollToDate,
   };
 }
 
@@ -541,6 +575,7 @@ export function useKeyboardShortcuts(): void {
     if (handleIndentShortcuts(e, ctx)) return;
     if (handleGroupShortcuts(e, modKey, ctx)) return;
     if (handleHideShortcuts(e, modKey, ctx)) return;
+    if (handleAltShortcuts(e, modKey, ctx)) return;
     if (handleViewToggleShortcuts(e, modKey, ctx)) return;
   };
 

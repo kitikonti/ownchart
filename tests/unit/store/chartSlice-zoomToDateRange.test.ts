@@ -20,7 +20,7 @@ describe('chartSlice - zoomToDateRange', () => {
       containerWidth: 1000,
       dateRange: null,
       zoom: 1.0,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       lastFitToViewTime: 0,
     });
 
@@ -69,14 +69,14 @@ describe('chartSlice - zoomToDateRange', () => {
     expect(state.dateRange!.max).toBe(addDays('2025-02-28', DATE_RANGE_PADDING_DAYS));
   });
 
-  it('should reset pan offset to zero', () => {
-    // Set a non-zero pan offset first
-    useChartStore.setState({ panOffset: { x: 100, y: 50 } });
+  it('should clear viewAnchorDate', () => {
+    // Set a non-null anchor first
+    useChartStore.setState({ viewAnchorDate: '2025-03-15' });
 
     const { zoomToDateRange } = useChartStore.getState();
     zoomToDateRange('2025-02-01', '2025-02-28');
 
-    expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 });
+    expect(useChartStore.getState().viewAnchorDate).toBeNull();
   });
 
   it('should update lastFitToViewTime to block infinite scroll', () => {

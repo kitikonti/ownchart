@@ -13,7 +13,8 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { flushSync } from "react-dom";
 import type { TimelineScale } from "@/utils/timelineUtils";
-import { SCROLL_OFFSET_DAYS } from "@/utils/timelineUtils";
+import { SCROLL_OFFSET_DAYS, dateToPixel } from "@/utils/timelineUtils";
+import { useChartStore } from "@/store/slices/chartSlice";
 import {
   EXTEND_COOLDOWN_MS,
   FIT_TO_VIEW_BLOCK_MS,
@@ -143,6 +144,12 @@ export function useInfiniteScroll({
   const prevFitToViewTimeRef = useRef<number>(0);
   const prevFileLoadCounterRef = useRef<number>(fileLoadCounter);
 
+  // Pending scroll target — survives effect re-runs caused by scale changes.
+  // Without this, ChartCanvas.updateScale creates a new scale object → triggers
+  // re-render → effect cleanup cancels the pending rAF → scroll never applied.
+  // The ref preserves the target across re-runs so it can be re-scheduled.
+  const pendingScrollTargetRef = useRef<number | null>(null);
+
   // Set initial scroll position when a new file is loaded, or reset on fitToView
   useEffect(() => {
     const chartContainer = chartContainerRef.current;
@@ -167,33 +174,41 @@ export function useInfiniteScroll({
       if (fitScrollLeft < FIT_TO_VIEW_EDGE_THRESHOLD) {
         fitToViewScrollLockRef.current = true;
       }
-      // Double rAF to ensure DOM is fully updated.
-      // cancelled guard prevents writing to a detached node after unmount.
-      let cancelled = false;
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!cancelled) chartContainer.scrollLeft = fitScrollLeft;
-        });
-      });
+      pendingScrollTargetRef.current = fitScrollLeft;
       prevDateRangeRef.current = dateRangeKey;
-      return (): void => {
-        cancelled = true;
-      };
+    } else if (fileJustLoaded || prevDateRangeRef.current === null) {
+      // Scroll to show first task on initial load or when a new file is opened.
+      // viewAnchorDate: device-independent scroll restore from saved date.
+      // Falls back to SCROLL_OFFSET_DAYS (7 days before first task) for new
+      // charts or old files that don't have viewAnchorDate.
+      const viewAnchorDate = useChartStore.getState().viewAnchorDate;
+      pendingScrollTargetRef.current = viewAnchorDate
+        ? dateToPixel(viewAnchorDate, scale)
+        : SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+      prevDateRangeRef.current = dateRangeKey;
     }
 
-    // Scroll to show first task on initial load or when a new file is opened
-    const isNewDateRange = prevDateRangeRef.current === null;
-
-    if (isNewDateRange || fileJustLoaded) {
-      const initialScrollLeft = SCROLL_OFFSET_DAYS * scale.pixelsPerDay;
+    // Apply pending scroll position via double rAF (waits for DOM update).
+    // Using a ref ensures the target survives effect re-runs caused by
+    // scale re-derivation (ChartCanvas.updateScale creates a new scale
+    // object on every call, triggering a re-render + effect re-run).
+    if (pendingScrollTargetRef.current !== null) {
+      const scrollTarget = pendingScrollTargetRef.current;
       let cancelled = false;
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (!cancelled) chartContainer.scrollLeft = initialScrollLeft;
+          if (!cancelled) {
+            chartContainer.scrollLeft = scrollTarget;
+            pendingScrollTargetRef.current = null;
+          }
         });
       });
-      prevDateRangeRef.current = dateRangeKey;
+      if (!prevDateRangeRef.current) {
+        prevDateRangeRef.current = dateRangeKey;
+      }
       return (): void => {
+        // Only cancel the rAF write, but keep the pending target in the ref
+        // so the next effect run can re-schedule it.
         cancelled = true;
       };
     }

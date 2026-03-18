@@ -55,6 +55,8 @@ vi.mock('@/store/slices/chartSlice', () => ({
       updateScale: mockUpdateScale,
       signalFileLoaded: mockSignalFileLoaded,
     }),
+    // loadFromFile calls setState directly to clear stale dateRange
+    setState: vi.fn(),
   },
 }));
 

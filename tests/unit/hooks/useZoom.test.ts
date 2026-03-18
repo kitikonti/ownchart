@@ -40,7 +40,7 @@ describe('useZoom', () => {
       scale: null,
       containerWidth: 800,
       dateRange: null,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       showWeekends: true,
       showTodayMarker: true,
       isZooming: false,

@@ -19,6 +19,11 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     // Required fields — pass through as-is
     zoom: loaded.zoom,
     panOffset: loaded.panOffset,
+    // viewAnchorDate: date-based scroll position. Pass through from file;
+    // undefined means the file predates this field — useInfiniteScroll falls
+    // back to SCROLL_OFFSET_DAYS for positioning.
+    viewAnchorDate: loaded.viewAnchorDate,
+    scrollTop: loaded.scrollTop,
     showWeekends: loaded.showWeekends,
     showTodayMarker: loaded.showTodayMarker,
     taskTableWidth: loaded.taskTableWidth,

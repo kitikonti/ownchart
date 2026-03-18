@@ -92,7 +92,12 @@ export interface SerializedTask {
 export interface ViewSettings {
   // Navigation
   zoom: number;
+  // DEPRECATED: pixel-based, device-dependent. Kept for backwards-compat with older app versions.
   panOffset: { x: number; y: number };
+  // ISO date at left viewport edge — device-independent scroll position restore
+  viewAnchorDate?: string;
+  // Vertical scroll position in pixels (restored on outer scroll container)
+  scrollTop?: number;
   taskTableWidth: number | null;
   columnWidths?: Record<string, number>;
 

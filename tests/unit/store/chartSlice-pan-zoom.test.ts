@@ -15,7 +15,7 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       containerWidth: 800,
       dateRange: null,
       zoom: 1.0,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       showWeekends: true,
       showTodayMarker: true,
       isZooming: false,
@@ -79,7 +79,6 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       // Start at zoom 1.0, pan offset (0, 0)
       const initialState = useChartStore.getState();
       expect(initialState.zoom).toBe(1.0);
-      expect(initialState.panOffset).toEqual({ x: 0, y: 0 });
 
       // Call setZoom with anchor parameter
       const anchor = {
@@ -90,9 +89,6 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
 
       const state = useChartStore.getState();
       expect(state.zoom).toBe(2.0);
-
-      // Pan offset should remain unchanged (only scrollLeft is returned)
-      expect(state.panOffset).toEqual({ x: 0, y: 0 });
 
       // Result should contain newScrollLeft for scroll position adjustment
       expect(result.newScrollLeft).toBeDefined();
@@ -158,62 +154,15 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
     });
   });
 
-  describe('setPanOffset', () => {
-    it('should set pan offset', () => {
-      const { setPanOffset } = useChartStore.getState();
+  describe('setViewAnchorDate', () => {
+    it('should set view anchor date', () => {
+      const { setViewAnchorDate } = useChartStore.getState();
 
-      setPanOffset({ x: 100, y: 50 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 100, y: 50 });
+      setViewAnchorDate('2025-01-15');
+      expect(useChartStore.getState().viewAnchorDate).toBe('2025-01-15');
 
-      setPanOffset({ x: -200, y: -150 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: -200, y: -150 });
-    });
-
-    it('should silently reject NaN or Infinity values', () => {
-      const { setPanOffset } = useChartStore.getState();
-
-      setPanOffset({ x: NaN, y: 50 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 }); // Should not change
-
-      setPanOffset({ x: 100, y: Infinity });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 }); // Should not change
-    });
-  });
-
-  describe('panBy', () => {
-    it('should add delta to current pan offset', () => {
-      const { setPanOffset, panBy } = useChartStore.getState();
-
-      setPanOffset({ x: 100, y: 50 });
-      panBy({ x: 50, y: 25 });
-
-      expect(useChartStore.getState().panOffset).toEqual({ x: 150, y: 75 });
-
-      panBy({ x: -100, y: -50 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 50, y: 25 });
-    });
-
-    it('should reject NaN or Infinity deltas', () => {
-      const { setPanOffset, panBy } = useChartStore.getState();
-
-      setPanOffset({ x: 100, y: 50 });
-      panBy({ x: NaN, y: 10 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 100, y: 50 }); // Should not change
-
-      panBy({ x: 10, y: Infinity });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 100, y: 50 }); // Should not change
-    });
-  });
-
-  describe('resetPan', () => {
-    it('should reset pan offset to origin', () => {
-      const { setPanOffset, resetPan } = useChartStore.getState();
-
-      setPanOffset({ x: 200, y: 150 });
-      expect(useChartStore.getState().panOffset).toEqual({ x: 200, y: 150 });
-
-      resetPan();
-      expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 });
+      setViewAnchorDate(null);
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
     });
   });
 
@@ -254,30 +203,28 @@ describe('Chart Store - Pan/Zoom Navigation', () => {
       expect(state.zoom).toBeLessThanOrEqual(3.0);
     });
 
-    it('should reset zoom and pan when no tasks', () => {
-      const { setZoom, setPanOffset, fitToView } = useChartStore.getState();
+    it('should reset zoom when no tasks', () => {
+      const { setZoom, fitToView } = useChartStore.getState();
 
       setZoom(2.0);
-      setPanOffset({ x: 100, y: 50 });
 
       fitToView([]);
 
       expect(useChartStore.getState().zoom).toBe(1.0);
-      expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 });
     });
   });
 
   describe('resetView', () => {
-    it('should reset both zoom and pan offset', () => {
-      const { setZoom, setPanOffset, resetView } = useChartStore.getState();
+    it('should reset zoom and viewAnchorDate', () => {
+      const { setZoom, setViewAnchorDate, resetView } = useChartStore.getState();
 
       setZoom(2.5);
-      setPanOffset({ x: 200, y: 150 });
+      setViewAnchorDate('2025-06-15');
 
       resetView();
 
       expect(useChartStore.getState().zoom).toBe(1.0);
-      expect(useChartStore.getState().panOffset).toEqual({ x: 0, y: 0 });
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
     });
   });
 

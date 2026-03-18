@@ -33,6 +33,7 @@ import type { ExportOptions } from "@/utils/export/types";
 import type { ViewSettings } from "@/utils/fileOperations/types";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
+import { pixelToDate } from "@/utils/timelineUtils";
 
 const OWNCHART_FILE_EXTENSION = ".ownchart";
 const DEFAULT_UNTITLED_PREFIX = "untitled";
@@ -121,7 +122,9 @@ type TaskSliceNeeded = Pick<
 type ChartSliceNeeded = Pick<
   ReturnType<typeof useChartStore.getState>,
   | "zoom"
-  | "panOffset"
+  | "viewportScrollLeft"
+  | "viewportScrollTop"
+  | "scale"
   | "showWeekends"
   | "showTodayMarker"
   | "showHolidays"
@@ -185,7 +188,9 @@ function useTaskSliceState(): TaskSliceNeeded {
 
 function useChartSliceState(): ChartSliceNeeded {
   const zoom = useChartStore((s) => s.zoom);
-  const panOffset = useChartStore((s) => s.panOffset);
+  const viewportScrollLeft = useChartStore((s) => s.viewportScrollLeft);
+  const viewportScrollTop = useChartStore((s) => s.viewportScrollTop);
+  const scale = useChartStore((s) => s.scale);
   const showWeekends = useChartStore((s) => s.showWeekends);
   const showTodayMarker = useChartStore((s) => s.showTodayMarker);
   const showHolidays = useChartStore((s) => s.showHolidays);
@@ -207,7 +212,9 @@ function useChartSliceState(): ChartSliceNeeded {
   const resetView = useChartStore((s) => s.resetView);
   return {
     zoom,
-    panOffset,
+    viewportScrollLeft,
+    viewportScrollTop,
+    scale,
     showWeekends,
     showTodayMarker,
     showHolidays,
@@ -277,6 +284,10 @@ function useOperationalSliceState(): OperationalSliceNeeded {
  * Builds the layout/display portion of ViewSettings (panel sizes, column
  * widths, visibility toggles that affect layout).
  * Split from feature-flag settings so each sub-hook stays under 50 lines.
+ *
+ * viewAnchorDate is computed from viewportScrollLeft + scale so it's
+ * device-independent (date-based, not pixel-based). panOffset is kept as
+ * { x: 0, y: 0 } for backwards compatibility with older app versions.
  */
 function useLayoutViewSettings(
   task: TaskSliceNeeded,
@@ -285,6 +296,8 @@ function useLayoutViewSettings(
   ViewSettings,
   | "zoom"
   | "panOffset"
+  | "viewAnchorDate"
+  | "scrollTop"
   | "taskTableWidth"
   | "columnWidths"
   | "hiddenColumns"
@@ -294,15 +307,33 @@ function useLayoutViewSettings(
   const { taskTableWidth, columnWidths } = task;
   const {
     zoom,
-    panOffset,
+    viewportScrollLeft,
+    viewportScrollTop,
+    scale,
     hiddenColumns,
     isTaskTableCollapsed,
     hiddenTaskIds,
   } = chart;
+
+  // Compute viewAnchorDate from current scroll position — date-based for
+  // device independence (works across different screen sizes / DPI).
+  // When viewportScrollLeft is 0 and the store has a viewAnchorDate (just
+  // restored), preserve it — the scroll hasn't been applied to the DOM yet.
+  const storeAnchor = useChartStore.getState().viewAnchorDate;
+  const viewAnchorDate =
+    viewportScrollLeft === 0 && storeAnchor
+      ? storeAnchor
+      : scale
+        ? pixelToDate(viewportScrollLeft, scale)
+        : undefined;
+
   return useMemo(
     () => ({
       zoom,
-      panOffset,
+      // DEPRECATED: kept for backwards compat with older app versions
+      panOffset: { x: 0, y: 0 },
+      viewAnchorDate,
+      scrollTop: viewportScrollTop,
       taskTableWidth,
       columnWidths,
       hiddenColumns,
@@ -311,7 +342,8 @@ function useLayoutViewSettings(
     }),
     [
       zoom,
-      panOffset,
+      viewAnchorDate,
+      viewportScrollTop,
       taskTableWidth,
       columnWidths,
       hiddenColumns,

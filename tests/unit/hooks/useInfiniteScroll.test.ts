@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useChartStore } from "@/store/slices/chartSlice";
 import { type TimelineScale, SCROLL_OFFSET_DAYS } from "@/utils/timelineUtils";
 import {
   INITIAL_BLOCK_MS,
@@ -147,6 +148,89 @@ describe("useInfiniteScroll", () => {
     chartEl.scrollLeft = 999;
 
     rerender({ fileLoadCounter: 1 });
+    flushRAF();
+
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
+  });
+
+  it("should reposition scroll after fileLoadCounter bump with new dateRange", () => {
+    // Simulates: old project dateRange → resetView → new dateRange + fileLoadCounter bump
+    const { rerender } = renderHook(
+      ({
+        dateRange,
+        fileLoadCounter,
+      }: {
+        dateRange: { min: string; max: string };
+        fileLoadCounter: number;
+      }) =>
+        useInfiniteScroll({
+          chartContainerRef,
+          scale: createMockScale(10),
+          dateRange,
+          lastFitToViewTime: 0,
+          fileLoadCounter,
+          extendDateRange,
+        }),
+      {
+        initialProps: {
+          dateRange: { min: "2025-01-01", max: "2025-12-31" },
+          fileLoadCounter: 0,
+        },
+      }
+    );
+
+    flushRAF();
+    chartEl.scrollLeft = 2000; // User scrolled somewhere in old project
+
+    // Simulate File > New: resetView produces new dateRange + fileLoadCounter bump
+    rerender({
+      dateRange: { min: "2026-01-01", max: "2026-06-30" },
+      fileLoadCounter: 1,
+    });
+    flushRAF();
+
+    expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);
+  });
+
+  it("should use viewAnchorDate for scroll position when set", () => {
+    // Set viewAnchorDate in the store (simulates file load with saved position)
+    // "2025-04-11" is 100 days from scale minDate "2025-01-01"
+    useChartStore.getState().setViewAnchorDate("2025-04-11");
+
+    renderHook(() =>
+      useInfiniteScroll({
+        chartContainerRef,
+        scale: createMockScale(10), // pixelsPerDay = 10
+        dateRange: { min: "2025-01-01", max: "2025-12-31" },
+        lastFitToViewTime: 0,
+        fileLoadCounter: 0,
+        extendDateRange,
+      })
+    );
+
+    flushRAF();
+
+    // dateToPixel("2025-04-11", scale) = 100 days * 10 ppd = 1000
+    expect(chartEl.scrollLeft).toBe(1000);
+
+    // Cleanup
+    useChartStore.getState().setViewAnchorDate(null);
+  });
+
+  it("should fall back to SCROLL_OFFSET_DAYS when viewAnchorDate is null", () => {
+    useChartStore.getState().setViewAnchorDate(null);
+
+    renderHook(() =>
+      useInfiniteScroll({
+        chartContainerRef,
+        scale: createMockScale(10),
+        dateRange: { min: "2025-01-01", max: "2025-12-31" },
+        lastFitToViewTime: 0,
+        fileLoadCounter: 0,
+        extendDateRange,
+      })
+    );
+
     flushRAF();
 
     expect(chartEl.scrollLeft).toBe(SCROLL_OFFSET_DAYS * 10);

@@ -46,7 +46,12 @@ const TAB_ID_REGEX = /^tab-\d+-[a-z0-9]+$/;
 
 export interface ChartState {
   zoom: number;
+  // DEPRECATED: pixel-based, device-dependent. Kept for reading old localStorage entries.
   panOffset: { x: number; y: number };
+  // ISO date at left viewport edge — device-independent scroll position restore
+  viewAnchorDate?: string;
+  // Vertical scroll position in pixels (restored on outer scroll container)
+  scrollTop?: number;
   showWeekends: boolean;
   showTodayMarker: boolean;
   // Additional view settings (Sprint 1.5.9)
@@ -230,7 +235,12 @@ function isValidChartStateShape(cs: Record<string, unknown>): boolean {
     return false;
   }
   const po = cs.panOffset as Record<string, unknown>;
-  return typeof po.x === "number" && typeof po.y === "number";
+  if (typeof po.x !== "number" || typeof po.y !== "number") return false;
+  // viewAnchorDate is optional — if present, must be a string (ISO date)
+  if (cs.viewAnchorDate != null && typeof cs.viewAnchorDate !== "string") {
+    return false;
+  }
+  return true;
 }
 
 /**

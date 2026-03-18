@@ -7,6 +7,7 @@
 import { useCallback } from "react";
 import { parseISO, addDays } from "date-fns";
 import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import { toISODateString } from "@/utils/dateUtils";
 import { COLORS } from "@/styles/design-tokens";
 import { DEFAULT_TASK_DURATION } from "@/store/slices/taskSliceHelpers";
@@ -79,6 +80,11 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
         type: DEFAULT_TASK_TYPE,
         metadata: {},
       });
+
+      // Ensure the new task is visible in the timeline.
+      // If the user scrolled away from the task's date range, the timeline
+      // will scroll to show the task without changing the zoom level.
+      useChartStore.getState().requestScrollToDate(startDate);
     },
     [addTask]
   );

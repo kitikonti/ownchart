@@ -83,7 +83,7 @@ describe("useMultiTabPersistence", () => {
     // Reset all stores to defaults
     useChartStore.setState({
       zoom: 1,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       showWeekends: true,
       showTodayMarker: true,
       showHolidays: false,
@@ -154,6 +154,7 @@ describe("useMultiTabPersistence", () => {
       seedTabStorage("tab-1111111111-test001", {
         zoom: 2.5,
         panOffset: { x: 100, y: 50 },
+        viewAnchorDate: "2025-03-15",
         showWeekends: false,
       });
 
@@ -161,7 +162,7 @@ describe("useMultiTabPersistence", () => {
 
       const state = useChartStore.getState();
       expect(state.zoom).toBe(2.5);
-      expect(state.panOffset).toEqual({ x: 100, y: 50 });
+      expect(state.viewAnchorDate).toBe("2025-03-15");
       expect(state.showWeekends).toBe(false);
     });
 

@@ -565,17 +565,14 @@ describe('useKeyboardShortcuts', () => {
       expect(useChartStore.getState().showDependencies).toBe(false);
     });
 
-    it('should call fitToView on F key', () => {
+    it('should call fitToView on Alt+F', () => {
       const fitToViewSpy = vi.spyOn(useChartStore.getState(), 'fitToView');
       renderHook(() => useKeyboardShortcuts());
-      simulateKeyPress('f');
+      simulateKeyPress('f', { altKey: true });
       expect(fitToViewSpy).toHaveBeenCalledTimes(1);
     });
 
-    it('should not call fitToView when a cell is active', () => {
-      useTaskStore.setState({
-        activeCell: { taskId: 'task-1', field: 'name' },
-      });
+    it('should not call fitToView on bare F key (moved to Alt+F)', () => {
       const fitToViewSpy = vi.spyOn(useChartStore.getState(), 'fitToView');
       renderHook(() => useKeyboardShortcuts());
       simulateKeyPress('f');

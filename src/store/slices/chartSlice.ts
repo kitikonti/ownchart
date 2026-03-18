@@ -78,7 +78,12 @@ interface ChartState {
 
   // Navigation state (SINGLE SOURCE OF TRUTH - Sprint 1.2 Package 3)
   zoom: number; // 0.05 to 3.0 (5% to 300%)
-  panOffset: { x: number; y: number }; // Pan position in pixels
+
+  // Date-based scroll anchor — device-independent scroll position restore.
+  // Stores the ISO date at the left viewport edge. Persisted to file and
+  // localStorage so scroll position restores correctly across devices with
+  // different screen widths / DPI.
+  viewAnchorDate: string | null;
 
   // View settings (Project Settings - saved in .ownchart file)
   showWeekends: boolean;
@@ -112,8 +117,9 @@ interface ChartState {
   isPanning: boolean;
   lastFitToViewTime: number; // Timestamp to detect fitToView calls
 
-  // Viewport state (for visible range calculation in export)
+  // Viewport state (for visible range calculation in export + scroll restore)
   viewportScrollLeft: number;
+  viewportScrollTop: number;
   viewportWidth: number;
 
   // Multi-task drag state (shared for preview rendering)
@@ -124,13 +130,19 @@ interface ChartState {
 
   // File load signal (for scroll positioning on file open)
   fileLoadCounter: number;
+
+  // Scroll-to-date target (consumed by useScrollToDate hook)
+  scrollTargetDate: string | null;
+
+  // Pending vertical scroll position to restore (consumed by GanttLayout)
+  pendingScrollTop: number | null;
 }
 
 /** Fields that can be bulk-set from file load */
 type SettableViewFields = Pick<
   ChartState,
   | "zoom"
-  | "panOffset"
+  | "viewAnchorDate"
   | "showWeekends"
   | "showTodayMarker"
   | "showHolidays"
@@ -161,10 +173,8 @@ interface ChartActions {
   zoomOut: (anchor?: ZoomAnchor) => ZoomResult;
   resetZoom: (anchor?: ZoomAnchor) => ZoomResult;
 
-  // Pan actions (Sprint 1.2 Package 3)
-  setPanOffset: (offset: { x: number; y: number }) => void;
-  panBy: (delta: { x: number; y: number }) => void;
-  resetPan: () => void;
+  // View anchor date — date-based scroll position persistence
+  setViewAnchorDate: (date: string | null) => void;
 
   // Combined navigation
   fitToView: (tasks: Task[]) => void;
@@ -174,7 +184,7 @@ interface ChartActions {
   // Transient state
   setIsZooming: (isZooming: boolean) => void;
   setIsPanning: (isPanning: boolean) => void;
-  setViewport: (scrollLeft: number, width: number) => void;
+  setViewport: (scrollLeft: number, width: number, scrollTop?: number) => void;
 
   // Settings - View toggles
   toggleWeekends: () => void;
@@ -228,6 +238,10 @@ interface ChartActions {
 
   // File load signal (for scroll positioning)
   signalFileLoaded: () => void;
+
+  // Scroll-to-date (for ensuring newly created tasks are visible)
+  requestScrollToDate: (date: string) => void;
+  clearScrollTarget: () => void;
 }
 
 const DEFAULT_CONTAINER_WIDTH = 800;
@@ -261,7 +275,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     containerWidth: DEFAULT_CONTAINER_WIDTH,
     dateRange: null,
     zoom: DEFAULT_ZOOM,
-    panOffset: { x: 0, y: 0 },
+    viewAnchorDate: null,
 
     // View settings (Project Settings)
     showWeekends: true,
@@ -295,9 +309,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
     isPanning: false,
     lastFitToViewTime: 0,
     viewportScrollLeft: 0,
+    viewportScrollTop: 0,
     viewportWidth: 0,
     dragState: null,
     fileLoadCounter: 0,
+    scrollTargetDate: null,
+    pendingScrollTop: null,
 
     // Centralized scale calculation - updates dateRange from tasks, then derives scale
     updateScale: (tasks: Task[]): void => {
@@ -308,6 +325,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
         // This preserves custom dateRange set by zoomToDateRange/fitToView —
         // without this guard, any task edit (name, indent, etc.) would overwrite
         // the dateRange and cause the viewport to jump back to the default position.
+        //
+        // IMPORTANT: resetView() must set dateRange=null before updateScale() is
+        // called again, otherwise this guard prevents recalculation for File > New.
+        // See resetView() for details.
         if (
           !state.dateRange ||
           taskDateRange.min < state.dateRange.min ||
@@ -417,33 +438,11 @@ export const useChartStore = create<ChartState & ChartActions>()(
       return get().setZoom(DEFAULT_ZOOM, anchor);
     },
 
-    // Set pan offset (validates for NaN/Infinity)
-    setPanOffset: (offset: { x: number; y: number }): void => {
+    // Set view anchor date — date-based scroll position persistence.
+    // Stores the ISO date at the left viewport edge for device-independent restore.
+    setViewAnchorDate: (date: string | null): void => {
       set((state) => {
-        // Validate to prevent NaN or Infinity — silently ignore invalid values
-        if (isFinite(offset.x) && isFinite(offset.y)) {
-          state.panOffset = offset;
-        }
-      });
-    },
-
-    // Pan by delta amount
-    panBy: (delta: { x: number; y: number }): void => {
-      set((state) => {
-        const newX = state.panOffset.x + delta.x;
-        const newY = state.panOffset.y + delta.y;
-
-        if (isFinite(newX) && isFinite(newY)) {
-          state.panOffset.x = newX;
-          state.panOffset.y = newY;
-        }
-      });
-    },
-
-    // Reset pan to origin
-    resetPan: (): void => {
-      set((state) => {
-        state.panOffset = { x: 0, y: 0 };
+        state.viewAnchorDate = date;
       });
     },
 
@@ -451,7 +450,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
     fitToView: (tasks: Task[]): void => {
       if (tasks.length === 0) {
         get().resetZoom();
-        get().resetPan();
         return;
       }
 
@@ -509,7 +507,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
       set((state) => {
         state.dateRange = newDateRange;
         state.zoom = finalZoom;
-        state.panOffset = { x: 0, y: 0 };
+        state.viewAnchorDate = null; // fitToView recomputes scroll position
         state.scale = deriveScale(newDateRange, finalZoom);
         state.lastFitToViewTime = Date.now(); // Mark that fitToView was called
       });
@@ -543,19 +541,25 @@ export const useChartStore = create<ChartState & ChartActions>()(
       set((state) => {
         state.dateRange = newDateRange;
         state.zoom = finalZoom;
-        state.panOffset = { x: 0, y: 0 };
+        state.viewAnchorDate = null; // zoomToDateRange recomputes scroll position
         state.scale = deriveScale(newDateRange, finalZoom);
         state.lastFitToViewTime = Date.now();
       });
     },
 
-    // Reset to default view
+    // Reset to default view — called by File > New.
+    // IMPORTANT: dateRange and scale MUST be cleared to null here.
+    // updateScale() has a guard that prevents shrinking dateRange
+    // (to preserve zoom-to-selection). Clearing to null ensures the
+    // next updateScale() recalculates from scratch. fileLoadCounter
+    // bump triggers useInfiniteScroll to reposition to today.
     resetView: (): void => {
       set((state) => {
         state.zoom = DEFAULT_ZOOM;
-        state.panOffset = { x: 0, y: 0 };
-
-        // Don't recalculate scale here - let updateScale handle it
+        state.viewAnchorDate = null; // New chart has no anchor
+        state.dateRange = null;
+        state.scale = null;
+        state.fileLoadCounter += 1;
       });
     },
 
@@ -572,10 +576,15 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    setViewport: (scrollLeft: number, width: number): void => {
+    setViewport: (
+      scrollLeft: number,
+      width: number,
+      scrollTop?: number
+    ): void => {
       set((state) => {
         state.viewportScrollLeft = scrollLeft;
         state.viewportWidth = width;
+        if (scrollTop !== undefined) state.viewportScrollTop = scrollTop;
       });
     },
 
@@ -927,8 +936,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setViewSettings: (settings: Partial<SettableViewFields>): void => {
       set((state) => {
         if (settings.zoom !== undefined) state.zoom = settings.zoom;
-        if (settings.panOffset !== undefined)
-          state.panOffset = settings.panOffset;
+        if (settings.viewAnchorDate !== undefined)
+          state.viewAnchorDate = settings.viewAnchorDate;
         if (settings.showWeekends !== undefined)
           state.showWeekends = settings.showWeekends;
         if (settings.showTodayMarker !== undefined)
@@ -990,6 +999,21 @@ export const useChartStore = create<ChartState & ChartActions>()(
     signalFileLoaded: (): void => {
       set((state) => {
         state.fileLoadCounter += 1;
+      });
+    },
+
+    // Request scrolling the timeline to show a specific date.
+    // Used by task creation to ensure newly created tasks are visible.
+    // Consumed by useScrollToDate hook in GanttLayout.
+    requestScrollToDate: (date: string): void => {
+      set((state) => {
+        state.scrollTargetDate = date;
+      });
+    },
+
+    clearScrollTarget: (): void => {
+      set((state) => {
+        state.scrollTargetDate = null;
       });
     },
   }))

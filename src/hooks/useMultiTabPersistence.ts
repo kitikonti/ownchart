@@ -22,6 +22,7 @@ import {
   type ChartState,
   type TabChartData,
 } from "@/utils/multiTabStorage";
+import { pixelToDate } from "@/utils/timelineUtils";
 
 const SAVE_DEBOUNCE_MS = 200;
 const ACTIVITY_UPDATE_INTERVAL_MS = 60_000;
@@ -82,7 +83,6 @@ function restoreChartState(chartState: ChartState): void {
 
   // Always-present fields
   store.setZoom(chartState.zoom);
-  store.setPanOffset(chartState.panOffset);
   store.setShowWeekends(chartState.showWeekends);
   store.setShowTodayMarker(chartState.showTodayMarker);
 
@@ -98,6 +98,12 @@ function restoreChartState(chartState: ChartState): void {
   applyIfDefined(chartState.isTaskTableCollapsed, store.setTaskTableCollapsed);
   applyIfDefined(chartState.hiddenTaskIds, store.setHiddenTaskIds);
   applyIfDefined(chartState.colorModeState, store.setColorModeState);
+  // viewAnchorDate: date-based scroll position restore (replaces panOffset)
+  applyIfDefined(chartState.viewAnchorDate, store.setViewAnchorDate);
+  // Vertical scroll position — stored as pending, applied by GanttLayout
+  if (chartState.scrollTop !== undefined && chartState.scrollTop > 0) {
+    useChartStore.setState({ pendingScrollTop: chartState.scrollTop });
+  }
 
   // Cannot use applyIfDefined — setWorkingDaysConfig auto-derives workingDaysMode
   // from the config object and must always be called as a unit.
@@ -134,6 +140,14 @@ function restoreStateFromChart(savedChart: TabChartData): void {
   restoreTableState(savedChart.tableState);
   restoreChartState(savedChart.chartState);
   restoreFileState(savedChart.fileState);
+
+  // Clear stale dateRange and recalculate scale from restored tasks BEFORE
+  // signaling file loaded. useInfiniteScroll (in GanttLayout, parent) fires
+  // before ChartCanvas.updateScale (child effect), so without this explicit
+  // call, the scroll positioning would use a stale scale with wrong minDate.
+  useChartStore.setState({ dateRange: null, scale: null });
+  useChartStore.getState().updateScale(savedChart.tasks);
+  useChartStore.getState().signalFileLoaded();
 }
 
 /**
@@ -152,7 +166,23 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
     dependencies: dependencyState.dependencies,
     chartState: {
       zoom: chartState.zoom,
-      panOffset: chartState.panOffset,
+      // DEPRECATED: kept for compatibility with older localStorage entries
+      panOffset: { x: 0, y: 0 },
+      // viewAnchorDate: date-based scroll position (device-independent).
+      // Computed from current viewport scroll position and scale.
+      // When viewportScrollLeft is 0 and a viewAnchorDate already exists in the
+      // store (just restored), preserve it — the scroll positioning via double
+      // rAF hasn't fired yet and viewportScrollLeft hasn't been updated.
+      viewAnchorDate:
+        chartState.viewportScrollLeft === 0 && chartState.viewAnchorDate
+          ? chartState.viewAnchorDate
+          : chartState.scale
+            ? pixelToDate(chartState.viewportScrollLeft, chartState.scale)
+            : undefined,
+      // Vertical scroll position (pixel-based, restored directly on the
+      // outer scroll container). Unlike horizontal scroll, vertical position
+      // does not need date-based conversion — row heights are deterministic.
+      scrollTop: chartState.viewportScrollTop,
       showWeekends: chartState.showWeekends,
       showTodayMarker: chartState.showTodayMarker,
       showHolidays: chartState.showHolidays,

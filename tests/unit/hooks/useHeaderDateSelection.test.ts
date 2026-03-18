@@ -88,7 +88,7 @@ describe("useHeaderDateSelection", () => {
       containerWidth: 1000,
       dateRange: null,
       zoom: 1.0,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       lastFitToViewTime: 0,
     });
 

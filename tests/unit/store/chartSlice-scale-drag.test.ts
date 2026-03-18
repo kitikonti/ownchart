@@ -29,7 +29,7 @@ describe("Chart Store - Scale & Date Range", () => {
       containerWidth: 800,
       dateRange: null,
       zoom: 1.0,
-      panOffset: { x: 0, y: 0 },
+      viewAnchorDate: null,
       dragState: null,
       fileLoadCounter: 0,
     });
@@ -233,6 +233,119 @@ describe("Chart Store - Scale & Date Range", () => {
       const state = useChartStore.getState();
       expect(state.viewportScrollLeft).toBe(250);
       expect(state.viewportWidth).toBe(1024);
+    });
+  });
+
+  describe("resetView", () => {
+    it("should clear dateRange and scale to null", () => {
+      const store = useChartStore.getState();
+      store.updateScale([
+        makeTask({ id: "1", startDate: "2025-03-01", endDate: "2025-03-10" }),
+      ]);
+      expect(useChartStore.getState().dateRange).not.toBeNull();
+      expect(useChartStore.getState().scale).not.toBeNull();
+
+      store.resetView();
+
+      const state = useChartStore.getState();
+      expect(state.dateRange).toBeNull();
+      expect(state.scale).toBeNull();
+      expect(state.zoom).toBe(1.0);
+      expect(state.viewAnchorDate).toBeNull();
+    });
+
+    it("should increment fileLoadCounter so scroll repositions", () => {
+      const before = useChartStore.getState().fileLoadCounter;
+
+      useChartStore.getState().resetView();
+
+      expect(useChartStore.getState().fileLoadCounter).toBe(before + 1);
+    });
+
+    it("should allow updateScale to recalculate dateRange from scratch", () => {
+      const store = useChartStore.getState();
+
+      // Set wide dateRange from old project
+      store.updateScale([
+        makeTask({
+          id: "1",
+          startDate: "2025-01-01",
+          endDate: "2025-12-31",
+        }),
+      ]);
+      const oldRange = useChartStore.getState().dateRange!;
+
+      // File > New: resetView then updateScale with empty tasks
+      store.resetView();
+      store.updateScale([]);
+
+      const newRange = useChartStore.getState().dateRange!;
+      // dateRange should be recalculated (centered on today, not old range)
+      expect(newRange.min).not.toBe(oldRange.min);
+      expect(newRange.max).not.toBe(oldRange.max);
+    });
+  });
+
+  describe("scrollTargetDate", () => {
+    it("should set scrollTargetDate via requestScrollToDate", () => {
+      expect(useChartStore.getState().scrollTargetDate).toBeNull();
+
+      useChartStore.getState().requestScrollToDate("2025-06-15");
+
+      expect(useChartStore.getState().scrollTargetDate).toBe("2025-06-15");
+    });
+
+    it("should clear scrollTargetDate via clearScrollTarget", () => {
+      useChartStore.getState().requestScrollToDate("2025-06-15");
+      expect(useChartStore.getState().scrollTargetDate).not.toBeNull();
+
+      useChartStore.getState().clearScrollTarget();
+
+      expect(useChartStore.getState().scrollTargetDate).toBeNull();
+    });
+  });
+
+  describe("viewAnchorDate", () => {
+    it("should set viewAnchorDate via setViewAnchorDate", () => {
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
+
+      useChartStore.getState().setViewAnchorDate("2025-06-15");
+
+      expect(useChartStore.getState().viewAnchorDate).toBe("2025-06-15");
+    });
+
+    it("should clear viewAnchorDate via setViewAnchorDate(null)", () => {
+      useChartStore.getState().setViewAnchorDate("2025-06-15");
+
+      useChartStore.getState().setViewAnchorDate(null);
+
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
+    });
+
+    it("should be set by setViewSettings", () => {
+      useChartStore.getState().setViewSettings({
+        viewAnchorDate: "2025-09-01",
+      });
+
+      expect(useChartStore.getState().viewAnchorDate).toBe("2025-09-01");
+    });
+
+    it("should be cleared to null by resetView", () => {
+      useChartStore.getState().setViewAnchorDate("2025-06-15");
+
+      useChartStore.getState().resetView();
+
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
+    });
+
+    it("should be cleared to null by fitToView", () => {
+      useChartStore.getState().setViewAnchorDate("2025-06-15");
+
+      useChartStore.getState().fitToView([
+        makeTask({ id: "1", startDate: "2025-03-01", endDate: "2025-03-10" }),
+      ]);
+
+      expect(useChartStore.getState().viewAnchorDate).toBeNull();
     });
   });
 });

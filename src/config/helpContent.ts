@@ -141,7 +141,8 @@ const SHORTCUT_KEYS = {
 
   VIEW_ZOOM_RESET: "{mod}+0",
   VIEW_ZOOM_WHEEL: "{mod}+Wheel",
-  VIEW_FIT: "F",
+  VIEW_FIT: "Alt+F",
+  VIEW_GO_TODAY: "Alt+T",
   VIEW_TODAY: "T",
   VIEW_DEPS: "D",
   VIEW_PROGRESS: "P",
@@ -348,6 +349,12 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         title: "Fit timeline to tasks",
         description: "Adjust zoom so all tasks fit in the viewport.",
         shortcuts: [SHORTCUT_KEYS.VIEW_FIT],
+      },
+      {
+        id: "sc-go-today",
+        title: "Go to today",
+        description: "Scroll the timeline to show today's date.",
+        shortcuts: [SHORTCUT_KEYS.VIEW_GO_TODAY],
       },
       {
         id: "sc-toggle-today",
