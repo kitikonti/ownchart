@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.3.0](https://github.com/kitikonti/ownchart/compare/v1.2.21...v1.3.0) (2026-03-18)
+
+
+### Features
+
+* add alternative ways to change task type ([#74](https://github.com/kitikonti/ownchart/issues/74)) ([9e6e851](https://github.com/kitikonti/ownchart/commit/9e6e8518ae56efea1dcba154d17f359a8d863ec8))
+
+
+### Code Refactoring
+
+* address review findings for task type feature ([c78dd14](https://github.com/kitikonti/ownchart/commit/c78dd149e6495f227ac896fb2b40595fe65d8e64))
+
 ## [1.2.21](https://github.com/kitikonti/ownchart/compare/v1.2.20...v1.2.21) (2026-03-18)
 
 
