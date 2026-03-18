@@ -749,6 +749,16 @@ select:focus-visible {
   flex-shrink: 0;
 }
 
+.context-menu-item-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: theme("colors.slate.500");
+  padding-left: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .context-menu-separator {
   border-bottom: 0.667px solid theme("colors.slate.200");
   margin: 3px 0;

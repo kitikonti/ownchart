@@ -678,7 +678,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-hier-milestone",
         title: "Milestones",
         description:
-          "A milestone is a zero-duration task that represents a key date. It renders as a diamond shape in the timeline. Set duration to 0 or change the task type to Milestone.",
+          "A milestone is a zero-duration task that represents a key date. It renders as a diamond shape in the timeline. Change the task type via the icon in the name column, the right-click context menu (Task Type submenu), or the Type dropdown in the ribbon toolbar.",
         keywords: ["milestone", "diamond", "zero duration", "key date"],
       },
     ],

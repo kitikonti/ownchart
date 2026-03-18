@@ -35,6 +35,8 @@ interface DropdownTriggerProps {
   "aria-haspopup"?: "true" | "listbox" | "menu" | "dialog";
   /** Visual border state for active config (e.g. WorkingDays) */
   isActive?: boolean;
+  /** Whether the trigger is disabled */
+  disabled?: boolean;
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
   labelPriority?: number;
   /** Callback ref for focus management (from useDropdown.triggerRef) */
@@ -50,6 +52,7 @@ export function DropdownTrigger({
   title,
   "aria-haspopup": ariaHaspopup = "true",
   isActive = false,
+  disabled = false,
   labelPriority,
   triggerRef,
 }: DropdownTriggerProps): ReactElement {
@@ -68,12 +71,13 @@ export function DropdownTrigger({
       ref={triggerRef}
       type="button"
       onClick={onClick}
+      disabled={disabled}
       // Fall back to label text so icon-only state is still accessible
       aria-label={ariaLabel ?? label}
       aria-haspopup={ariaHaspopup}
       aria-expanded={isOpen}
       title={effectiveTitle}
-      className={`dropdown-trigger inline-flex items-center justify-center gap-1 rounded px-1.5 py-1 text-sm font-normal leading-5 text-slate-800 cursor-pointer select-none whitespace-nowrap${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
+      className={`dropdown-trigger inline-flex items-center justify-center gap-1 rounded px-1.5 py-1 text-sm font-normal leading-5 text-slate-800 select-none whitespace-nowrap${disabled ? " opacity-40 cursor-default" : " cursor-pointer"}${isActive && !isOpen ? " dropdown-trigger-active" : ""}`}
       style={{
         // Height is a design token value — cannot be expressed as a static Tailwind class
         height: `${TOOLBAR.buttonHeight}px`,

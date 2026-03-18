@@ -13,6 +13,7 @@ import { useClipboardOperations } from "./useClipboardOperations";
 import { useHideOperations } from "./useHideOperations";
 import { useNewTaskCreation } from "./useNewTaskCreation";
 import { DEFAULT_TASK_NAME } from "@/store/slices/taskSliceHelpers";
+import type { TaskType } from "@/types/chart.types";
 
 interface HomeTabActions {
   // History
@@ -50,12 +51,19 @@ interface HomeTabActions {
   canHide: boolean;
   hiddenInSelectionCount: number;
   totalHiddenCount: number;
+  // Task Type
+  currentTaskType: TaskType;
+  canChangeType: boolean;
+  hasSelectedChildren: boolean;
+  handleSetTaskType: (type: TaskType) => void;
 }
 
 export function useHomeTabActions(): HomeTabActions {
   // Task store
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
   const activeCell = useTaskStore((state) => state.activeCell);
+  const tasks = useTaskStore((state) => state.tasks);
+  const updateTask = useTaskStore((state) => state.updateTask);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
   const deleteSelectedTasks = useTaskStore(
@@ -133,6 +141,24 @@ export function useHomeTabActions(): HomeTabActions {
   const canDelete = selectedTaskIds.length > 0;
   const canHide = selectedTaskIds.length > 0;
 
+  // Task type — derived from the single selected task
+  const selectedTask = useMemo(
+    () =>
+      singleSelectedTaskId
+        ? (tasks.find((t) => t.id === singleSelectedTaskId) ?? null)
+        : null,
+    [tasks, singleSelectedTaskId]
+  );
+  const currentTaskType: TaskType = selectedTask?.type ?? "task";
+  const canChangeType = selectedTask !== null;
+  const hasSelectedChildren = useMemo(
+    () =>
+      singleSelectedTaskId
+        ? tasks.some((t) => t.parent === singleSelectedTaskId)
+        : false,
+    [tasks, singleSelectedTaskId]
+  );
+
   // Handlers
   const handleAddTask = useCallback((): void => {
     createTask(DEFAULT_TASK_NAME);
@@ -153,6 +179,15 @@ export function useHomeTabActions(): HomeTabActions {
   const handleUnhideSelection = useCallback((): void => {
     unhideSelection(selectedTaskIds);
   }, [unhideSelection, selectedTaskIds]);
+
+  const handleSetTaskType = useCallback(
+    (type: TaskType): void => {
+      if (singleSelectedTaskId) {
+        updateTask(singleSelectedTaskId, { type });
+      }
+    },
+    [updateTask, singleSelectedTaskId]
+  );
 
   return {
     undo,
@@ -185,5 +220,9 @@ export function useHomeTabActions(): HomeTabActions {
     canHide,
     hiddenInSelectionCount,
     totalHiddenCount,
+    currentTaskType,
+    canChangeType,
+    hasSelectedChildren,
+    handleSetTaskType,
   };
 }

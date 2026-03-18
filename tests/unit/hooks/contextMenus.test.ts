@@ -122,10 +122,10 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     return result;
   }
 
-  it("should have 11 items in 4 groups (no unhide)", () => {
+  it("should have 12 items in 5 groups (no unhide)", () => {
     const result = openRowMenu("t1");
 
-    expect(result.current.contextMenuItems).toHaveLength(11);
+    expect(result.current.contextMenuItems).toHaveLength(12);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
@@ -133,6 +133,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
       "insertAbove",
       "insertBelow",
       "delete",
+      "taskType",
       "indent",
       "outdent",
       "group",
@@ -141,7 +142,7 @@ describe("Zone 1: Task Table Row Context Menu", () => {
     ]);
   });
 
-  it("should show 12 items when unhide is available", () => {
+  it("should show 13 items when unhide is available", () => {
     useTaskStore.getState().setTasks([task1, task2, task3]);
     useTaskStore.getState().setSelectedTaskIds(["t1", "t3"]);
     useChartStore.getState().setHiddenTaskIds(["t2"]);
@@ -160,9 +161,9 @@ describe("Zone 1: Task Table Row Context Menu", () => {
       result.current.handleRowContextMenu(mockMouseEvent(200, 300), "t1");
     });
 
-    expect(result.current.contextMenuItems).toHaveLength(12);
-    expect(result.current.contextMenuItems[11].id).toBe("unhide");
-    expect(result.current.contextMenuItems[11].label).toBe("Unhide 1 Row");
+    expect(result.current.contextMenuItems).toHaveLength(13);
+    expect(result.current.contextMenuItems[12].id).toBe("unhide");
+    expect(result.current.contextMenuItems[12].label).toBe("Unhide 1 Row");
   });
 
   it("should have separators after paste, delete, and group", () => {
@@ -523,10 +524,10 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
     return result;
   }
 
-  it("should have 11 items in 4 groups (same as Zone 1)", () => {
+  it("should have 12 items in 5 groups (same as Zone 1)", () => {
     const result = openBarMenu("t1");
 
-    expect(result.current.contextMenuItems).toHaveLength(11);
+    expect(result.current.contextMenuItems).toHaveLength(12);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
@@ -534,6 +535,7 @@ describe("Zone 3: Timeline Bar Context Menu", () => {
       "insertAbove",
       "insertBelow",
       "delete",
+      "taskType",
       "indent",
       "outdent",
       "group",
@@ -713,7 +715,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
       result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
     });
 
-    expect(result.current.contextMenuItems).toHaveLength(11);
+    expect(result.current.contextMenuItems).toHaveLength(12);
     expect(result.current.contextMenuItems.map((i) => i.id)).toEqual([
       "cut",
       "copy",
@@ -721,6 +723,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
       "insertAbove",
       "insertBelow",
       "delete",
+      "taskType",
       "indent",
       "outdent",
       "group",
@@ -811,7 +814,7 @@ describe("Zone 4: Timeline Empty Area Context Menu", () => {
       result.current.handleAreaContextMenu(mockMouseEvent(500, 10));
     });
 
-    expect(result.current.contextMenuItems).toHaveLength(12);
+    expect(result.current.contextMenuItems).toHaveLength(13);
     const unhideItem = result.current.contextMenuItems.find(
       (i) => i.id === "unhide"
     );

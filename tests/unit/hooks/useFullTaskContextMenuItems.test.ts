@@ -87,9 +87,9 @@ describe("useFullTaskContextMenuItems", () => {
       const { result } = renderHook(() => useFullTaskContextMenuItems());
       const items = result.current.buildItems("t1");
 
-      // Base items: cut, copy, paste, insertAbove, insertBelow, delete,
-      // indent, outdent, group, ungroup, hide = 11 items
-      expect(items).toHaveLength(11);
+      // Base items: cut, copy, paste, insertAbove, insertBelow, delete, taskType,
+      // indent, outdent, group, ungroup, hide = 12 items
+      expect(items).toHaveLength(12);
     });
 
     it("should include the unhide item when task is in multi-selection with hidden rows in range", () => {
@@ -116,7 +116,7 @@ describe("useFullTaskContextMenuItems", () => {
 
       const unhideItem = items.find((i) => i.id === "unhide");
       expect(unhideItem).toBeDefined();
-      expect(items).toHaveLength(12);
+      expect(items).toHaveLength(13);
     });
   });
 
@@ -179,6 +179,7 @@ describe("useFullTaskContextMenuItems", () => {
         "insertAbove",
         "insertBelow",
         "delete",
+        "taskType",
         "indent",
         "outdent",
         "group",

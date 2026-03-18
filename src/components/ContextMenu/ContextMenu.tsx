@@ -1,19 +1,20 @@
 /**
  * ContextMenu - Reusable portal-based context menu component.
  * Positioned at mouse cursor, accessible with keyboard navigation.
- * Future-proof: can be extended with Cut/Copy/Paste, Delete, Indent/Outdent, etc.
+ * Supports single-level submenus (flyout panels) via the `children` property.
  */
 
 import {
   useEffect,
   useRef,
   useCallback,
+  useState,
   memo,
   Fragment,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check } from "@phosphor-icons/react";
+import { Check, CaretRight } from "@phosphor-icons/react";
 import { CONTEXT_MENU, Z_INDEX } from "@/styles/design-tokens";
 
 /** CSS class applied to the menu root div; exported so callers can exclude it from outside-click detection. */
@@ -21,6 +22,9 @@ export const CONTEXT_MENU_CONTAINER_CLASS = "context-menu-container";
 
 /** Pixel gap kept between the menu edge and the viewport boundary. */
 const VIEWPORT_EDGE_MARGIN_PX = 4;
+
+/** Size of the submenu arrow indicator (CaretRight). */
+const SUBMENU_ARROW_SIZE = 12;
 
 export interface ContextMenuItem {
   id: string;
@@ -33,6 +37,8 @@ export interface ContextMenuItem {
   separator?: boolean;
   /** When defined, renders a checkmark area instead of icon. true = Check icon, false = empty spacer */
   checked?: boolean;
+  /** Submenu items — when present, this item acts as a submenu trigger (onClick is ignored). */
+  children?: ContextMenuItem[];
 }
 
 export interface ContextMenuPosition {
@@ -48,6 +54,285 @@ interface ContextMenuProps {
   ariaLabel: string;
 }
 
+// ─── Shared keyboard navigation helpers ───
+
+/** Returns the index of the next enabled item after `from`, wrapping around.
+ *  Returns `from` unchanged when all items are disabled. */
+function findNextEnabledIndex(items: ContextMenuItem[], from: number): number {
+  let next = from + 1;
+  while (next < items.length && items[next].disabled) next++;
+  if (next >= items.length) {
+    next = items.findIndex((item) => !item.disabled);
+    if (next < 0) return from;
+  }
+  return next;
+}
+
+/** Returns the index of the previous enabled item before `from`, wrapping around.
+ *  Returns `from` unchanged when all items are disabled. */
+function findPrevEnabledIndex(items: ContextMenuItem[], from: number): number {
+  let prev = from - 1;
+  while (prev >= 0 && items[prev].disabled) prev--;
+  if (prev < 0) {
+    prev = items.length - 1;
+    while (prev >= 0 && items[prev].disabled) prev--;
+    if (prev < 0) return from;
+  }
+  return prev;
+}
+
+// ─── Shared item rendering ───
+
+interface MenuItemRowProps {
+  item: ContextMenuItem;
+  index: number;
+  /** data-attribute name used for DOM queries ("data-index" or "data-subindex"). */
+  dataAttr: string;
+  onItemClick: (item: ContextMenuItem) => void;
+  onMouseEnter?: (index: number, item: ContextMenuItem) => void;
+  /** Ref callback to capture the button element (used by parent menu for submenu positioning). */
+  buttonRef?: (el: HTMLElement | null) => void;
+  /** Whether this item's submenu is currently open. */
+  isSubmenuOpen?: boolean;
+}
+
+/** Renders a single menu item button. Shared between ContextMenu and SubmenuPanel. */
+const MenuItemRow = memo(function MenuItemRow({
+  item,
+  index,
+  dataAttr,
+  onItemClick,
+  onMouseEnter,
+  buttonRef,
+  isSubmenuOpen,
+}: MenuItemRowProps): JSX.Element {
+  const dataProps = { [dataAttr]: index };
+
+  return (
+    <button
+      ref={buttonRef}
+      {...dataProps}
+      role={
+        item.children
+          ? "menuitem"
+          : item.checked !== undefined
+            ? "menuitemcheckbox"
+            : "menuitem"
+      }
+      aria-haspopup={item.children ? "menu" : undefined}
+      aria-expanded={item.children ? (isSubmenuOpen ?? false) : undefined}
+      aria-checked={item.checked !== undefined ? item.checked : undefined}
+      // aria-keyshortcuts surfaces the keyboard shortcut hint to screen
+      // readers; the visual <span> is aria-hidden to avoid double-reading.
+      aria-keyshortcuts={item.shortcut}
+      tabIndex={-1}
+      aria-disabled={item.disabled}
+      className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+      onClick={() => onItemClick(item)}
+      onMouseEnter={
+        onMouseEnter ? (): void => onMouseEnter(index, item) : undefined
+      }
+    >
+      {item.checked !== undefined ? (
+        <span className="context-menu-item-check" aria-hidden="true">
+          {item.checked && (
+            <Check
+              size={CONTEXT_MENU.iconSize}
+              weight={CONTEXT_MENU.iconWeight}
+            />
+          )}
+        </span>
+      ) : (
+        item.icon && (
+          <span className="context-menu-item-icon" aria-hidden="true">
+            {item.icon}
+          </span>
+        )
+      )}
+      <span className="context-menu-item-label">{item.label}</span>
+      {item.children ? (
+        <span className="context-menu-item-arrow" aria-hidden="true">
+          <CaretRight size={SUBMENU_ARROW_SIZE} weight="bold" />
+        </span>
+      ) : (
+        item.shortcut && (
+          // aria-hidden: the shortcut hint is supplementary visual info;
+          // screen readers receive it via aria-keyshortcuts on the button.
+          <span className="context-menu-item-shortcut" aria-hidden="true">
+            {item.shortcut}
+          </span>
+        )
+      )}
+    </button>
+  );
+});
+
+// ─── Submenu Panel ───
+
+interface SubmenuPanelProps {
+  items: ContextMenuItem[];
+  parentItemEl: HTMLElement | null;
+  onClose: () => void;
+  /** Called when a leaf item is clicked — closes the entire menu tree. */
+  onCloseAll: () => void;
+}
+
+/**
+ * Renders a flyout submenu panel positioned to the right of the parent item.
+ * Flips to the left if it would overflow the viewport.
+ */
+const SubmenuPanel = memo(function SubmenuPanel({
+  items,
+  parentItemEl,
+  onClose,
+  onCloseAll,
+}: SubmenuPanelProps): JSX.Element | null {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const focusedIndexRef = useRef(0);
+
+  const focusItem = useCallback((index: number): void => {
+    const el = panelRef.current?.querySelector(
+      `[data-subindex="${index}"]`
+    ) as HTMLElement | null;
+    el?.focus();
+    focusedIndexRef.current = index;
+  }, []);
+
+  // Position the submenu relative to the parent item
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || !parentItemEl) return;
+
+    const parentRect = parentItemEl.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Default: right of parent, aligned to top
+    let left = parentRect.right;
+    let top = parentRect.top;
+
+    // Flip left if overflowing right edge
+    if (left + panelRect.width > viewportWidth - VIEWPORT_EDGE_MARGIN_PX) {
+      left = parentRect.left - panelRect.width;
+    }
+
+    // Clamp vertical position
+    if (top + panelRect.height > viewportHeight - VIEWPORT_EDGE_MARGIN_PX) {
+      top = viewportHeight - panelRect.height - VIEWPORT_EDGE_MARGIN_PX;
+    }
+
+    panel.style.left = `${Math.max(0, left)}px`;
+    panel.style.top = `${Math.max(0, top)}px`;
+    panel.style.visibility = "visible";
+
+    // Focus first enabled item
+    const firstEnabled = items.findIndex((item) => !item.disabled);
+    if (firstEnabled >= 0) focusItem(firstEnabled);
+  }, [items, parentItemEl, focusItem]);
+
+  const handleItemClick = useCallback(
+    (item: ContextMenuItem): void => {
+      if (!item.disabled) {
+        item.onClick();
+        onCloseAll();
+      }
+    },
+    [onCloseAll]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      if (e.key === "Escape" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        focusItem(findNextEnabledIndex(items, focusedIndexRef.current));
+        return;
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        focusItem(findPrevEnabledIndex(items, focusedIndexRef.current));
+        return;
+      }
+
+      if (e.key === "Home") {
+        e.preventDefault();
+        const first = items.findIndex((item) => !item.disabled);
+        if (first >= 0) focusItem(first);
+        return;
+      }
+
+      if (e.key === "End") {
+        e.preventDefault();
+        let last = items.length - 1;
+        while (last >= 0 && items[last].disabled) last--;
+        if (last >= 0) focusItem(last);
+        return;
+      }
+
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        e.stopPropagation();
+        const item = items[focusedIndexRef.current];
+        if (item && !item.disabled) {
+          item.onClick();
+          onCloseAll();
+        }
+        return;
+      }
+
+      // Prevent Tab from escaping — close the whole menu instead.
+      if (e.key === "Tab") {
+        e.preventDefault();
+        onCloseAll();
+        return;
+      }
+    },
+    [items, focusItem, onClose, onCloseAll]
+  );
+
+  return createPortal(
+    <div
+      ref={panelRef}
+      className={`${CONTEXT_MENU_CONTAINER_CLASS} fixed`}
+      style={{
+        visibility: "hidden",
+        zIndex: Z_INDEX.contextMenu + 1,
+        minWidth: CONTEXT_MENU.minWidth,
+      }}
+      role="menu"
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
+    >
+      {items.map((item, index) => (
+        <Fragment key={item.id}>
+          <div role="none">
+            <MenuItemRow
+              item={item}
+              index={index}
+              dataAttr="data-subindex"
+              onItemClick={handleItemClick}
+            />
+          </div>
+          {item.separator && (
+            <div role="separator" className="context-menu-separator" />
+          )}
+        </Fragment>
+      ))}
+    </div>,
+    document.body
+  );
+});
+
+// ─── Main ContextMenu ───
+
 export const ContextMenu = memo(function ContextMenu({
   items,
   position,
@@ -57,6 +342,11 @@ export const ContextMenu = memo(function ContextMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const focusedIndexRef = useRef(0);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [openSubmenuIndex, setOpenSubmenuIndex] = useState<number | null>(null);
+  const submenuTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Refs for submenu trigger elements so SubmenuPanel can position itself.
+  const itemRefs = useRef<Map<number, HTMLElement>>(new Map());
 
   // Keep a ref to onClose so the outside-click handler never captures a stale closure.
   const onCloseRef = useRef(onClose);
@@ -132,6 +422,13 @@ export const ContextMenu = memo(function ContextMenu({
   useEffect(() => {
     const handleClick = (e: MouseEvent): void => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        // Also check if the click is inside a submenu portal
+        const submenuPanels = document.querySelectorAll(
+          `.${CONTEXT_MENU_CONTAINER_CLASS}`
+        );
+        for (const panel of submenuPanels) {
+          if (panel.contains(e.target as Node)) return;
+        }
         onCloseRef.current();
       }
     };
@@ -146,56 +443,43 @@ export const ContextMenu = memo(function ContextMenu({
     };
   }, []);
 
+  // Clean up submenu timer on unmount
+  useEffect(() => {
+    return () => {
+      if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current);
+    };
+  }, []);
+
   // Unified click handler — keeps mouse and keyboard paths consistent.
-  // Uses onCloseRef to avoid re-creating the callback when the parent
-  // re-renders with a new onClose identity (same pattern as outside-click handler).
   const handleItemClick = useCallback((item: ContextMenuItem): void => {
+    // Items with children act as submenu triggers — don't close on click.
+    if (item.children) return;
     if (!item.disabled) {
       item.onClick();
       onCloseRef.current();
     }
   }, []);
 
-  /** Returns the index of the next enabled item after `from`, wrapping around.
-   *  Returns `from` unchanged when all items are disabled (nothing to navigate to). */
-  const findNextEnabled = useCallback(
-    (from: number): number => {
-      let next = from + 1;
-      while (next < items.length && items[next].disabled) next++;
-      if (next >= items.length) {
-        // Wrap around: find first enabled item from the beginning
-        next = items.findIndex((item) => !item.disabled);
-        // All items are disabled — stay put.
-        if (next < 0) return from;
+  // Submenu open/close via mouse hover with a small delay.
+  const handleItemMouseEnter = useCallback(
+    (index: number, item: ContextMenuItem): void => {
+      if (submenuTimerRef.current) clearTimeout(submenuTimerRef.current);
+      if (item.children && !item.disabled) {
+        submenuTimerRef.current = setTimeout(() => {
+          setOpenSubmenuIndex(index);
+        }, 80);
+      } else {
+        // Close any open submenu when hovering a non-submenu item
+        submenuTimerRef.current = setTimeout(() => {
+          setOpenSubmenuIndex(null);
+        }, 80);
       }
-      return next;
     },
-    [items]
-  );
-
-  /** Returns the index of the previous enabled item before `from`, wrapping around.
-   *  Returns `from` unchanged when all items are disabled (nothing to navigate to). */
-  const findPrevEnabled = useCallback(
-    (from: number): number => {
-      let prev = from - 1;
-      while (prev >= 0 && items[prev].disabled) prev--;
-      if (prev < 0) {
-        // Wrap around: find last enabled item from the end
-        prev = items.length - 1;
-        while (prev >= 0 && items[prev].disabled) prev--;
-        // All items are disabled — stay put.
-        if (prev < 0) return from;
-      }
-      return prev;
-    },
-    [items]
+    []
   );
 
   // Close on Escape, handle arrow keys (WAI-ARIA menu keyboard pattern).
   // Tab closes the menu and restores focus — standard context menu behaviour.
-  // Uses onCloseRef throughout (same pattern as handleItemClick and outside-click
-  // handler) so the callback is never recreated when the parent re-renders with
-  // a new onClose identity.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent): void => {
       if (e.key === "Escape") {
@@ -215,15 +499,23 @@ export const ContextMenu = memo(function ContextMenu({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        const next = findNextEnabled(focusedIndexRef.current);
-        if (next >= 0) focusItem(next);
+        focusItem(findNextEnabledIndex(items, focusedIndexRef.current));
         return;
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        const prev = findPrevEnabled(focusedIndexRef.current);
-        if (prev >= 0) focusItem(prev);
+        focusItem(findPrevEnabledIndex(items, focusedIndexRef.current));
+        return;
+      }
+
+      // ArrowRight: open submenu if current item has children
+      if (e.key === "ArrowRight") {
+        const item = items[focusedIndexRef.current];
+        if (item?.children && !item.disabled) {
+          e.preventDefault();
+          setOpenSubmenuIndex(focusedIndexRef.current);
+        }
         return;
       }
 
@@ -246,14 +538,30 @@ export const ContextMenu = memo(function ContextMenu({
         e.preventDefault();
         const item = items[focusedIndexRef.current];
         if (item && !item.disabled) {
-          item.onClick();
-          onCloseRef.current();
+          if (item.children) {
+            setOpenSubmenuIndex(focusedIndexRef.current);
+          } else {
+            item.onClick();
+            onCloseRef.current();
+          }
         }
         return;
       }
     },
-    [items, focusItem, findNextEnabled, findPrevEnabled]
+    [items, focusItem]
   );
+
+  // Called when the submenu closes via Escape/ArrowLeft — restore focus to the parent trigger.
+  const handleSubmenuClose = useCallback(() => {
+    setOpenSubmenuIndex(null);
+    // Restore focus to the parent trigger item
+    focusItem(focusedIndexRef.current);
+  }, [focusItem]);
+
+  // Called when a submenu leaf item is clicked — close the entire menu tree.
+  const handleCloseAll = useCallback(() => {
+    onCloseRef.current();
+  }, []);
 
   return createPortal(
     <div
@@ -284,52 +592,31 @@ export const ContextMenu = memo(function ContextMenu({
         // role="menu" or role="menubar".
         <Fragment key={item.id}>
           <div role="none">
-            <button
-              data-index={index}
-              role={
-                item.checked !== undefined ? "menuitemcheckbox" : "menuitem"
-              }
-              aria-checked={
-                item.checked !== undefined ? item.checked : undefined
-              }
-              // aria-keyshortcuts surfaces the keyboard shortcut hint to screen
-              // readers; the visual <span> is aria-hidden to avoid double-reading.
-              aria-keyshortcuts={item.shortcut}
-              tabIndex={-1}
-              aria-disabled={item.disabled}
-              className="context-menu-item text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
-              onClick={() => handleItemClick(item)}
-            >
-              {item.checked !== undefined ? (
-                <span className="context-menu-item-check" aria-hidden="true">
-                  {item.checked && (
-                    <Check
-                      size={CONTEXT_MENU.iconSize}
-                      weight={CONTEXT_MENU.iconWeight}
-                    />
-                  )}
-                </span>
-              ) : (
-                item.icon && (
-                  <span className="context-menu-item-icon" aria-hidden="true">
-                    {item.icon}
-                  </span>
-                )
-              )}
-              <span className="context-menu-item-label">{item.label}</span>
-              {item.shortcut && (
-                // aria-hidden: the shortcut hint is supplementary visual info;
-                // screen readers receive it via aria-keyshortcuts on the button.
-                <span className="context-menu-item-shortcut" aria-hidden="true">
-                  {item.shortcut}
-                </span>
-              )}
-            </button>
+            <MenuItemRow
+              item={item}
+              index={index}
+              dataAttr="data-index"
+              onItemClick={handleItemClick}
+              onMouseEnter={handleItemMouseEnter}
+              buttonRef={(el) => {
+                if (el) itemRefs.current.set(index, el);
+                else itemRefs.current.delete(index);
+              }}
+              isSubmenuOpen={openSubmenuIndex === index}
+            />
           </div>
           {item.separator && (
             // Rendered as a Fragment sibling (not inside role="none") so it is a
             // direct child of role="menu", conforming to WAI-ARIA §6.10.
             <div role="separator" className="context-menu-separator" />
+          )}
+          {item.children && openSubmenuIndex === index && (
+            <SubmenuPanel
+              items={item.children}
+              parentItemEl={itemRefs.current.get(index) ?? null}
+              onClose={handleSubmenuClose}
+              onCloseAll={handleCloseAll}
+            />
           )}
         </Fragment>
       ))}

@@ -9,6 +9,7 @@ import type {
   ContextMenuPosition,
 } from "@/components/ContextMenu/ContextMenu";
 import type { TaskId } from "@/types/branded.types";
+import type { TaskType } from "@/types/chart.types";
 import { getModKey } from "@/config/helpContent";
 
 // Computed once at module load — platform is stable for the page lifetime.
@@ -246,5 +247,60 @@ export function buildUnhideItem(
     icon: params.icon,
     shortcut: "Ctrl+Shift+H",
     onClick: () => params.unhideSelection(params.selectedTaskIds),
+  };
+}
+
+// ─── Task Type Submenu ───
+
+export interface TaskTypeSubmenuParams {
+  currentType: TaskType;
+  hasChildren: boolean;
+  taskId: TaskId;
+  updateTask: (id: TaskId, updates: { type: TaskType }) => void;
+  taskIcon: ReactNode;
+  summaryIcon: ReactNode;
+  milestoneIcon: ReactNode;
+  icon: ReactNode;
+}
+
+/** Display labels for task types. */
+const TYPE_LABELS: Record<TaskType, string> = {
+  task: "Task",
+  summary: "Summary",
+  milestone: "Milestone",
+};
+
+/**
+ * Build a "Task Type" submenu item with three child options (Task, Summary, Milestone).
+ * The current type is shown with a checkmark; Milestone is disabled for tasks with children.
+ */
+export function buildTaskTypeSubmenu(
+  params: TaskTypeSubmenuParams
+): ContextMenuItem {
+  const typeEntries: { type: TaskType; icon: ReactNode }[] = [
+    { type: "task", icon: params.taskIcon },
+    { type: "summary", icon: params.summaryIcon },
+    { type: "milestone", icon: params.milestoneIcon },
+  ];
+
+  return {
+    id: "taskType",
+    label: "Type",
+    icon: params.icon,
+    // onClick is a no-op — submenu items handle actions.
+    onClick: (): void => {},
+    separator: true,
+    children: typeEntries.map(({ type, icon }) => ({
+      id: `taskType-${type}`,
+      label: TYPE_LABELS[type],
+      icon,
+      checked: params.currentType === type,
+      onClick: (): void => {
+        if (type !== params.currentType) {
+          params.updateTask(params.taskId, { type });
+        }
+      },
+      disabled: type === "milestone" && params.hasChildren,
+    })),
   };
 }

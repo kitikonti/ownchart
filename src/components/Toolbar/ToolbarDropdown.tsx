@@ -36,6 +36,8 @@ interface ToolbarDropdownProps<T extends string = string> {
   "aria-label"?: string;
   /** Tooltip */
   title?: string;
+  /** Whether the dropdown is disabled */
+  disabled?: boolean;
   /** Collapse priority: lower numbers hide first. Omit to never collapse. */
   labelPriority?: number;
 }
@@ -48,6 +50,7 @@ function ToolbarDropdownInner<T extends string = string>({
   labelPrefix = "",
   "aria-label": ariaLabel,
   title,
+  disabled = false,
   labelPriority,
 }: ToolbarDropdownProps<T>): ReactElement {
   const { isOpen, toggle, close, containerRef, triggerRef } = useDropdown();
@@ -135,6 +138,7 @@ function ToolbarDropdownInner<T extends string = string>({
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         title={title}
+        disabled={disabled}
         labelPriority={labelPriority}
         triggerRef={triggerRef}
       />

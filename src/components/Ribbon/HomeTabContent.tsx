@@ -7,6 +7,7 @@
  * Pure presentational component — all logic lives in useHomeTabActions.
  */
 
+import { useMemo } from "react";
 import {
   Plus,
   ArrowCounterClockwise,
@@ -21,7 +22,9 @@ import {
   TextIndent,
   EyeSlash,
   Eye,
+  CheckSquare,
 } from "@phosphor-icons/react";
+import type { TaskType } from "@/types/chart.types";
 import GroupIcon from "@/assets/icons/group-light.svg?react";
 import UngroupIcon from "@/assets/icons/ungroup-light.svg?react";
 
@@ -30,6 +33,8 @@ import {
   ToolbarGroup,
   ToolbarSeparator,
 } from "@/components/Toolbar/ToolbarPrimitives";
+import { ToolbarDropdown } from "@/components/Toolbar/ToolbarDropdown";
+import type { DropdownOption } from "@/types/ui.types";
 import { ColorDropdown } from "./ColorDropdown";
 import { useHomeTabActions } from "@/hooks/useHomeTabActions";
 import { COLORS, TOOLBAR } from "@/styles/design-tokens";
@@ -101,7 +106,24 @@ export function HomeTabContent(): JSX.Element {
     canHide,
     hiddenInSelectionCount,
     totalHiddenCount,
+    currentTaskType,
+    canChangeType,
+    hasSelectedChildren,
+    handleSetTaskType,
   } = useHomeTabActions();
+
+  const taskTypeOptions: DropdownOption<TaskType>[] = useMemo(
+    () => [
+      { value: "task", label: "Task" },
+      { value: "summary", label: "Summary" },
+      {
+        value: "milestone",
+        label: "Milestone",
+        disabled: hasSelectedChildren,
+      },
+    ],
+    [hasSelectedChildren]
+  );
 
   return (
     <>
@@ -218,6 +240,17 @@ export function HomeTabContent(): JSX.Element {
           title="Ungroup selected tasks (Ctrl+Shift+G)"
           aria-label="Ungroup selected tasks"
           icon={<UngroupIcon width={ICON_SIZE} height={ICON_SIZE} />}
+        />
+        <ToolbarDropdown
+          value={currentTaskType}
+          options={taskTypeOptions}
+          onChange={handleSetTaskType}
+          icon={<CheckSquare size={ICON_SIZE} weight="light" />}
+          labelPrefix="Type"
+          aria-label="Task type"
+          title="Change task type"
+          disabled={!canChangeType}
+          labelPriority={2}
         />
         <ToolbarButton
           onClick={handleHideRows}

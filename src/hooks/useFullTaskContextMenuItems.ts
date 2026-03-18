@@ -1,5 +1,5 @@
 /**
- * Shared hook for building the full task context menu (11-12 items).
+ * Shared hook for building the full task context menu (12-13 items).
  * Used by Zone 1 (TaskTable row), Zone 3 (Timeline bar), and Zone 4 (Timeline area on selected row).
  * Bundles all store subscriptions and provides a buildItems(taskId) function.
  */
@@ -16,6 +16,9 @@ import {
   TextOutdent,
   EyeSlash,
   Eye,
+  CheckSquare,
+  Folder,
+  Diamond,
 } from "@phosphor-icons/react";
 import GroupIcon from "@/assets/icons/group-light.svg?react";
 import UngroupIcon from "@/assets/icons/ungroup-light.svg?react";
@@ -30,6 +33,7 @@ import {
   buildClipboardItems,
   buildInsertItems,
   buildDeleteItem,
+  buildTaskTypeSubmenu,
   buildHierarchyItems,
   buildHideItem,
   buildUnhideItem,
@@ -61,6 +65,9 @@ const ICONS = {
   ungroup: createElement(UngroupIcon, SVG_ICON_PROPS),
   eyeSlash: createElement(EyeSlash, ICON_PROPS),
   eye: createElement(Eye, ICON_PROPS),
+  typeTask: createElement(CheckSquare, ICON_PROPS),
+  typeSummary: createElement(Folder, ICON_PROPS),
+  typeMilestone: createElement(Diamond, ICON_PROPS),
 } as const;
 
 interface UseFullTaskContextMenuItemsResult {
@@ -69,7 +76,7 @@ interface UseFullTaskContextMenuItemsResult {
 }
 
 /**
- * Build the full 11–12 item context menu for any task in the chart.
+ * Build the full 12–13 item context menu for any task in the chart.
  *
  * Aggregates all store subscriptions (clipboard, hierarchy, hide/unhide) and
  * returns a stable `buildItems(taskId)` function. Callers invoke `buildItems`
@@ -78,6 +85,8 @@ interface UseFullTaskContextMenuItemsResult {
  */
 export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult {
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
+  const tasks = useTaskStore((state) => state.tasks);
+  const updateTask = useTaskStore((state) => state.updateTask);
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
   const deleteSelectedTasks = useTaskStore(
@@ -153,6 +162,24 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
         })
       );
 
+      // Group 2b: Task Type (submenu)
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        const hasChildren = tasks.some((t) => t.parent === taskId);
+        items.push(
+          buildTaskTypeSubmenu({
+            currentType: task.type ?? "task",
+            hasChildren,
+            taskId,
+            updateTask,
+            taskIcon: ICONS.typeTask,
+            summaryIcon: ICONS.typeSummary,
+            milestoneIcon: ICONS.typeMilestone,
+            icon: ICONS.typeTask,
+          })
+        );
+      }
+
       // Group 3: Hierarchy
       items.push(
         ...buildHierarchyItems({
@@ -199,6 +226,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
     },
     [
       selectedTaskIds,
+      tasks,
       canCopyOrCut,
       canPaste,
       canIndent,
@@ -213,6 +241,7 @@ export function useFullTaskContextMenuItems(): UseFullTaskContextMenuItemsResult
       insertTaskBelow,
       deleteSelectedTasks,
       deleteTask,
+      updateTask,
       indentSelectedTasks,
       outdentSelectedTasks,
       groupSelectedTasks,
