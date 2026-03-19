@@ -60,10 +60,21 @@ test.describe('Timeline Scroll Positioning', () => {
     // 2. Scroll the timeline to the far left (away from today)
     await scrollContainerTo(page, CHART_CONTAINER, 0);
 
+    // Confirm scrollLeft actually reached 0 (webkit may need time to settle)
+    await page.waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLElement;
+        return el ? el.scrollLeft < 10 : false;
+      },
+      CHART_CONTAINER,
+      { timeout: 3000 },
+    );
+
     // 3. Today marker should now be off-screen
     // (scrollLeft=0 shows dateRange.min which is ~90 days before today)
-    const afterScrollVisible = await isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER);
-    expect(afterScrollVisible).toBe(false);
+    await expect
+      .poll(() => isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER), { timeout: 3000 })
+      .toBe(false);
 
     // 4. Create a task (defaults to today's date on empty chart)
     await createTask(page, 'After Scroll Task');
