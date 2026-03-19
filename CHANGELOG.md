@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.3.1](https://github.com/kitikonti/ownchart/compare/v1.3.0...v1.3.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* resolve CI failures (npm audit + E2E docker-in-docker) ([c1419f4](https://github.com/kitikonti/ownchart/commit/c1419f479e1347395926a5aafa7e0bfde6198f46))
+
 ## [1.3.0](https://github.com/kitikonti/ownchart/compare/v1.2.21...v1.3.0) (2026-03-18)
 
 
