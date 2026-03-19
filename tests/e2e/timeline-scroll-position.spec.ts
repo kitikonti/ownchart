@@ -29,9 +29,11 @@ test.describe('Timeline Scroll Positioning', () => {
     const todayMarker = page.locator(TODAY_MARKER);
     await expect(todayMarker).toBeAttached();
 
-    // Verify it's actually within the visible scroll range, not just in the DOM
-    const isVisible = await isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER);
-    expect(isVisible).toBe(true);
+    // Verify it's actually within the visible scroll range, not just in the DOM.
+    // Use expect.poll to retry — webkit needs time to settle the initial scroll position.
+    await expect
+      .poll(() => isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER), { timeout: 5000 })
+      .toBe(true);
   });
 
   test('creating the first task shows the task bar in the viewport', async ({ appPage: page }) => {
@@ -48,11 +50,12 @@ test.describe('Timeline Scroll Positioning', () => {
   });
 
   test('creating a task after scrolling away auto-scrolls to show the task bar', async ({ appPage: page }) => {
-    // 1. Verify today marker is initially visible
+    // 1. Verify today marker is initially visible (poll for webkit scroll settling)
     const todayMarker = page.locator(TODAY_MARKER);
     await expect(todayMarker).toBeAttached();
-    const initiallyVisible = await isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER);
-    expect(initiallyVisible).toBe(true);
+    await expect
+      .poll(() => isSvgElementInViewport(page, TODAY_MARKER, CHART_CONTAINER), { timeout: 5000 })
+      .toBe(true);
 
     // 2. Scroll the timeline to the far left (away from today)
     await scrollContainerTo(page, CHART_CONTAINER, 0);
@@ -68,11 +71,11 @@ test.describe('Timeline Scroll Positioning', () => {
     // 5. Wait for the task bar to render and auto-scroll to settle
     const taskBar = page.locator(TASK_BAR).first();
     await expect(taskBar).toBeAttached();
-    await page.waitForTimeout(200);
 
-    // 6. Verify the task bar is now visible in the viewport
-    const taskBarVisible = await isSvgElementInViewport(page, TASK_BAR, CHART_CONTAINER);
-    expect(taskBarVisible).toBe(true);
+    // 6. Verify the task bar is now visible in the viewport (poll for scroll settling)
+    await expect
+      .poll(() => isSvgElementInViewport(page, TASK_BAR, CHART_CONTAINER), { timeout: 5000 })
+      .toBe(true);
   });
 
   test('Alt+T scrolls timeline to show today', async ({ appPage: page }) => {
