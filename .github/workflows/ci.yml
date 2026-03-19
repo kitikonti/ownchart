@@ -68,7 +68,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
-      - run: npm run test:e2e -- --project=${{ matrix.browser }}
+      - run: npm run test:e2e:ci -- --project=${{ matrix.browser }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
