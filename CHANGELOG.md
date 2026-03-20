@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.3.2](https://github.com/kitikonti/ownchart/compare/v1.3.1...v1.3.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* skip programmatic-scroll tests on webkit in CI ([4828ec6](https://github.com/kitikonti/ownchart/commit/4828ec65e7bf6cbaf4d2e852dbfa54a31df32dee))
+* stabilize timeline scroll E2E tests for webkit ([6780576](https://github.com/kitikonti/ownchart/commit/67805768738c8f2faa7ba973138361a8ca66405f))
+* stabilize webkit scroll assertion with waitForFunction guard ([e638cc8](https://github.com/kitikonti/ownchart/commit/e638cc885220a2c7727390ea2003f40d224fb275))
+
+
+### UI/UX
+
+* make PDF the default and first option in export dialog ([e451f5a](https://github.com/kitikonti/ownchart/commit/e451f5ad0359f368800f257b0d33469270978c9a))
+
 ## [1.3.1](https://github.com/kitikonti/ownchart/compare/v1.3.0...v1.3.1) (2026-03-19)
 
 
