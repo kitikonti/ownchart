@@ -119,7 +119,7 @@ export const useUIStore = create<UIStore>()(
     return {
       // Initial state
       isExportDialogOpen: false,
-      selectedExportFormat: "png",
+      selectedExportFormat: "pdf",
       exportOptions: { ...DEFAULT_EXPORT_OPTIONS },
       pdfExportOptions: { ...DEFAULT_PDF_OPTIONS },
       svgExportOptions: { ...DEFAULT_SVG_OPTIONS },

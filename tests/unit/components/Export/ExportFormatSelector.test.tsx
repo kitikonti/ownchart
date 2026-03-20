@@ -36,8 +36,8 @@ describe("ExportFormatSelector", () => {
       render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
 
       const radios = screen.getAllByRole("radio");
-      expect(radios[0]).toHaveAttribute("aria-checked", "true"); // PNG
-      expect(radios[1]).toHaveAttribute("aria-checked", "false"); // PDF
+      expect(radios[0]).toHaveAttribute("aria-checked", "false"); // PDF
+      expect(radios[1]).toHaveAttribute("aria-checked", "true"); // PNG
       expect(radios[2]).toHaveAttribute("aria-checked", "false"); // SVG
     });
 
@@ -139,50 +139,50 @@ describe("ExportFormatSelector", () => {
   });
 
   describe("keyboard navigation", () => {
-    it("moves selection to PDF on ArrowRight from PNG", () => {
-      const onFormatChange = vi.fn();
-      render(
-        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
-      );
-
-      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
-      expect(onFormatChange).toHaveBeenCalledWith("pdf");
-    });
-
-    it("moves selection to SVG on ArrowRight from PDF", () => {
+    it("moves selection to PNG on ArrowRight from PDF", () => {
       const onFormatChange = vi.fn();
       render(
         <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+      expect(onFormatChange).toHaveBeenCalledWith("png");
+    });
+
+    it("moves selection to SVG on ArrowRight from PNG", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
       );
 
       fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
       expect(onFormatChange).toHaveBeenCalledWith("svg");
     });
 
-    it("wraps from SVG back to PNG on ArrowRight", () => {
+    it("wraps from SVG back to PDF on ArrowRight", () => {
       const onFormatChange = vi.fn();
       render(
         <ExportFormatSelector selectedFormat="svg" onFormatChange={onFormatChange} />
       );
 
       fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
-      expect(onFormatChange).toHaveBeenCalledWith("png");
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
     });
 
-    it("moves selection to PNG on ArrowLeft from PDF", () => {
-      const onFormatChange = vi.fn();
-      render(
-        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
-      );
-
-      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
-      expect(onFormatChange).toHaveBeenCalledWith("png");
-    });
-
-    it("wraps from PNG to SVG on ArrowLeft", () => {
+    it("moves selection to PDF on ArrowLeft from PNG", () => {
       const onFormatChange = vi.fn();
       render(
         <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+      );
+
+      fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+    });
+
+    it("wraps from PDF to SVG on ArrowLeft", () => {
+      const onFormatChange = vi.fn();
+      render(
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
       );
 
       fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
@@ -192,21 +192,21 @@ describe("ExportFormatSelector", () => {
     it("also navigates on ArrowDown (same as ArrowRight)", () => {
       const onFormatChange = vi.fn();
       render(
-        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
+        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
       );
 
       fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowDown" });
-      expect(onFormatChange).toHaveBeenCalledWith("pdf");
+      expect(onFormatChange).toHaveBeenCalledWith("png");
     });
 
     it("also navigates on ArrowUp (same as ArrowLeft)", () => {
       const onFormatChange = vi.fn();
       render(
-        <ExportFormatSelector selectedFormat="pdf" onFormatChange={onFormatChange} />
+        <ExportFormatSelector selectedFormat="png" onFormatChange={onFormatChange} />
       );
 
       fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowUp" });
-      expect(onFormatChange).toHaveBeenCalledWith("png");
+      expect(onFormatChange).toHaveBeenCalledWith("pdf");
     });
 
     it("does not call onFormatChange for non-navigation keys", () => {

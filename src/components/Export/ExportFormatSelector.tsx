@@ -28,16 +28,16 @@ interface FormatOption {
 
 const FORMAT_OPTIONS: FormatOption[] = [
   {
-    format: "png",
-    icon: Image,
-    label: "PNG",
-    helpText: "Best for presentations and sharing. High quality raster image.",
-  },
-  {
     format: "pdf",
     icon: FilePdf,
     label: "PDF",
     helpText: "Best for printing and professional documentation.",
+  },
+  {
+    format: "png",
+    icon: Image,
+    label: "PNG",
+    helpText: "Best for presentations and sharing. High quality raster image.",
   },
   {
     format: "svg",
