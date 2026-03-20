@@ -9,7 +9,7 @@ import { ExportFormatSelector } from "@/components/Export/ExportFormatSelector";
 
 describe("ExportFormatSelector", () => {
   const defaultProps = {
-    selectedFormat: "png" as const,
+    selectedFormat: "pdf" as const,
     onFormatChange: vi.fn(),
   };
 
@@ -33,19 +33,19 @@ describe("ExportFormatSelector", () => {
     });
 
     it("renders radio buttons with correct aria-checked state", () => {
-      render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
+      render(<ExportFormatSelector {...defaultProps} />);
 
       const radios = screen.getAllByRole("radio");
-      expect(radios[0]).toHaveAttribute("aria-checked", "false"); // PDF
-      expect(radios[1]).toHaveAttribute("aria-checked", "true"); // PNG
+      expect(radios[0]).toHaveAttribute("aria-checked", "true"); // PDF
+      expect(radios[1]).toHaveAttribute("aria-checked", "false"); // PNG
       expect(radios[2]).toHaveAttribute("aria-checked", "false"); // SVG
     });
 
     it("shows help text for selected format", () => {
-      render(<ExportFormatSelector {...defaultProps} selectedFormat="png" />);
+      render(<ExportFormatSelector {...defaultProps} />);
 
       expect(
-        screen.getByText(/Best for presentations and sharing/i)
+        screen.getByText(/Best for printing and professional documentation/i)
       ).toBeInTheDocument();
     });
   });

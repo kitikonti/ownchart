@@ -1,6 +1,6 @@
 /**
  * Export format selector component.
- * Allows users to choose between PNG, PDF, and SVG export formats.
+ * Allows users to choose between PDF, PNG, and SVG export formats.
  * Figma-style: Selected card has solid brand-600 background.
  */
 
