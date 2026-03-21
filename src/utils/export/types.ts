@@ -162,7 +162,7 @@ export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
   footer: {
     showProjectName: false,
     showAuthor: false,
-    showExportDate: false,
+    showExportDate: true,
     showLogo: false,
   },
   metadata: {},
@@ -378,11 +378,11 @@ export const MAX_FIT_WIDTH_PX = 20000;
  * Default export options.
  */
 export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
-  zoomMode: "currentView",
+  zoomMode: "fitToWidth",
   timelineZoom: EXPORT_ZOOM_PRESETS.STANDARD,
   fitToWidth: DEFAULT_FIT_TO_WIDTH_PX,
   dateRangeMode: "all",
-  selectedColumns: [],
+  selectedColumns: ["color", "name", "startDate", "endDate"],
   includeHeader: true,
   includeTodayMarker: true,
   includeDependencies: true,
@@ -391,7 +391,7 @@ export const DEFAULT_EXPORT_OPTIONS: ExportOptions = {
   includeHolidays: true,
   taskLabelPosition: "inside",
   background: "white",
-  density: "comfortable",
+  density: "normal",
 };
 
 // =============================================================================

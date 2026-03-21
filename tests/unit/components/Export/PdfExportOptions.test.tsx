@@ -313,11 +313,11 @@ describe("PdfExportOptions", () => {
       const onChange = vi.fn();
       render(<PdfExportOptions {...createDefaultProps({ onChange })} />);
 
-      // Click second "Export date" checkbox (footer)
+      // Click second "Export date" checkbox (footer) — default is true, toggling produces false
       const exportDateLabels = screen.getAllByText("Export date");
       fireEvent.click(exportDateLabels[1]);
       expect(onChange).toHaveBeenCalledWith({
-        footer: expect.objectContaining({ showExportDate: true }),
+        footer: expect.objectContaining({ showExportDate: false }),
       });
     });
   });

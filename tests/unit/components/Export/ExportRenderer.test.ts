@@ -242,6 +242,7 @@ describe("calculateExportDimensions", () => {
       tasks,
       options: {
         ...DEFAULT_EXPORT_OPTIONS,
+        zoomMode: "currentView",
         selectedColumns: ["name", "startDate"],
       },
       currentAppZoom: 1.0,
@@ -250,7 +251,11 @@ describe("calculateExportDimensions", () => {
 
     const withoutColumns = calculateExportDimensions({
       tasks,
-      options: { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] },
+      options: {
+        ...DEFAULT_EXPORT_OPTIONS,
+        zoomMode: "currentView",
+        selectedColumns: [],
+      },
       currentAppZoom: 1.0,
       projectDateRange,
     });

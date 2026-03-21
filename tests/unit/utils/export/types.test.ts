@@ -175,7 +175,7 @@ describe("export types", () => {
       expect(DEFAULT_PDF_OPTIONS.footer).toBeDefined();
       expect(DEFAULT_PDF_OPTIONS.footer.showProjectName).toBe(false);
       expect(DEFAULT_PDF_OPTIONS.footer.showAuthor).toBe(false);
-      expect(DEFAULT_PDF_OPTIONS.footer.showExportDate).toBe(false);
+      expect(DEFAULT_PDF_OPTIONS.footer.showExportDate).toBe(true);
     });
 
     it("has metadata object", () => {
@@ -222,16 +222,21 @@ describe("export types", () => {
   });
 
   describe("DEFAULT_EXPORT_OPTIONS", () => {
-    it("has currentView as default zoom mode", () => {
-      expect(DEFAULT_EXPORT_OPTIONS.zoomMode).toBe("currentView");
+    it("has fitToWidth as default zoom mode", () => {
+      expect(DEFAULT_EXPORT_OPTIONS.zoomMode).toBe("fitToWidth");
     });
 
     it("has all as default date range mode", () => {
       expect(DEFAULT_EXPORT_OPTIONS.dateRangeMode).toBe("all");
     });
 
-    it("has empty selected columns by default", () => {
-      expect(DEFAULT_EXPORT_OPTIONS.selectedColumns).toEqual([]);
+    it("has default selected columns", () => {
+      expect(DEFAULT_EXPORT_OPTIONS.selectedColumns).toEqual([
+        "color",
+        "name",
+        "startDate",
+        "endDate",
+      ]);
     });
 
     it("includes header by default", () => {
@@ -266,8 +271,8 @@ describe("export types", () => {
       expect(DEFAULT_EXPORT_OPTIONS.taskLabelPosition).toBe("inside");
     });
 
-    it("uses comfortable density", () => {
-      expect(DEFAULT_EXPORT_OPTIONS.density).toBe("comfortable");
+    it("uses normal density", () => {
+      expect(DEFAULT_EXPORT_OPTIONS.density).toBe("normal");
     });
   });
 

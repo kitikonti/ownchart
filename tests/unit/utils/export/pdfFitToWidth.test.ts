@@ -143,7 +143,7 @@ describe("calculatePdfFitToWidth", () => {
   });
 
   it("accounts for margins", () => {
-    const tasks = createTasks(30);
+    const tasks = createTasks(50);
 
     const normalMargins = calculatePdfFitToWidth(
       tasks,
