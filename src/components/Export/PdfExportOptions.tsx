@@ -295,9 +295,9 @@ export interface PdfExportOptionsProps {
   exportOptions: ExportOptions;
   onExportOptionsChange: (options: Partial<ExportOptions>) => void;
   currentAppZoom: number;
+  projectTitle: string;
   projectAuthor: string;
   onProjectAuthorChange: (author: string) => void;
-  projectTitle: string;
   projectLogo: ProjectLogo | null;
   onProjectLogoChange: (logo: ProjectLogo | null) => void;
 }
@@ -317,13 +317,6 @@ export function PdfExportOptions({
   // Stable IDs for aria-labelledby on each section landmark
   const pageSetupId = useId();
   const headerFooterId = useId();
-
-  // Warnings for enabled-but-missing header/footer content
-  const showTitleWarning =
-    (options.header.showProjectName || options.footer.showProjectName) &&
-    !projectTitle;
-  const showLogoWarning =
-    (options.header.showLogo || options.footer.showLogo) && !projectLogo;
 
   // Logo upload state
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -357,6 +350,12 @@ export function PdfExportOptions({
   }, [onProjectLogoChange]);
 
   const showLogoSection = options.header.showLogo || options.footer.showLogo;
+
+  // Warnings for enabled-but-missing header/footer content
+  const showTitleWarning =
+    (options.header.showProjectName || options.footer.showProjectName) &&
+    !projectTitle;
+  const showLogoWarning = showLogoSection && !projectLogo;
 
   const pageDims =
     options.pageSize === "custom"
