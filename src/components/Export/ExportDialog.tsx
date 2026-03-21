@@ -279,6 +279,7 @@ export function ExportDialog(): JSX.Element {
                 exportOptions={exportOptions}
                 onExportOptionsChange={setExportOptions}
                 currentAppZoom={currentAppZoom}
+                projectTitle={projectTitle}
                 projectAuthor={projectAuthor}
                 onProjectAuthorChange={setProjectAuthor}
                 projectLogo={projectLogo}

@@ -28,6 +28,7 @@ import {
   SegmentedControl,
   type SegmentedControlOption,
 } from "@/components/common/SegmentedControl";
+import { Alert } from "@/components/common/Alert";
 import { ZoomModeSelector } from "./ZoomModeSelector";
 import {
   processLogoFile,
@@ -296,6 +297,7 @@ export interface PdfExportOptionsProps {
   currentAppZoom: number;
   projectAuthor: string;
   onProjectAuthorChange: (author: string) => void;
+  projectTitle: string;
   projectLogo: ProjectLogo | null;
   onProjectLogoChange: (logo: ProjectLogo | null) => void;
 }
@@ -306,6 +308,7 @@ export function PdfExportOptions({
   exportOptions,
   onExportOptionsChange,
   currentAppZoom,
+  projectTitle,
   projectAuthor,
   onProjectAuthorChange,
   projectLogo,
@@ -314,6 +317,13 @@ export function PdfExportOptions({
   // Stable IDs for aria-labelledby on each section landmark
   const pageSetupId = useId();
   const headerFooterId = useId();
+
+  // Warnings for enabled-but-missing header/footer content
+  const showTitleWarning =
+    (options.header.showProjectName || options.footer.showProjectName) &&
+    !projectTitle;
+  const showLogoWarning =
+    (options.header.showLogo || options.footer.showLogo) && !projectLogo;
 
   // Logo upload state
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -464,6 +474,20 @@ export function PdfExportOptions({
             onValuesChange={(footer) => onChange({ footer })}
           />
         </div>
+
+        {/* Warnings for enabled-but-missing content */}
+        {showTitleWarning && (
+          <Alert variant="warning" className="mt-3">
+            Project title is enabled but not yet defined. To set a title, use
+            the title field in the top bar.
+          </Alert>
+        )}
+        {showLogoWarning && (
+          <Alert variant="warning" className="mt-3">
+            Logo is enabled but no image has been uploaded yet. Use the upload
+            area below to add a logo.
+          </Alert>
+        )}
 
         {/* Author input - shown when any "Author" checkbox is enabled */}
         {(options.header.showAuthor || options.footer.showAuthor) && (
