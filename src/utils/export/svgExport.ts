@@ -47,7 +47,7 @@ import {
   type SvgExportOptions,
   type ExportColumnKey,
   type ExportBackground,
-  DEFAULT_EXPORT_COLUMNS,
+  DEFAULT_EXPORT_OPTIONS,
 } from "./types";
 import type {
   TaskTableHeaderOptions,
@@ -270,7 +270,7 @@ export function extractSvgElements(
  * Separates the "what to render" decision from the "how to compose it" logic
  * in {@link buildCompleteSvg}.
  *
- * Falls back to DEFAULT_EXPORT_COLUMNS when the caller passes an empty array.
+ * Falls back to DEFAULT_EXPORT_OPTIONS.selectedColumns when the caller passes an empty array.
  * A future timeline-only mode (no task table at all) should be modelled with
  * an explicit ExportOptions flag rather than by passing an empty
  * selectedColumns array.
@@ -286,7 +286,8 @@ export function resolveExportLayout(
 } {
   // Guard against undefined (e.g. loose casts from JS callers or future optional paths).
   const cols: ExportColumnKey[] = options.selectedColumns ?? [];
-  const selectedColumns = cols.length > 0 ? cols : DEFAULT_EXPORT_COLUMNS;
+  const selectedColumns =
+    cols.length > 0 ? cols : DEFAULT_EXPORT_OPTIONS.selectedColumns;
   const taskTableWidth = calculateTaskTableWidth(
     selectedColumns,
     columnWidths,
@@ -507,7 +508,7 @@ export function buildCompleteSvg(
   const bodyYOffset = options.includeHeader ? HEADER_HEIGHT : 0;
 
   // selectedColumns is always non-empty after resolveExportLayout's fallback
-  // to DEFAULT_EXPORT_COLUMNS, so the task table section is always rendered.
+  // to DEFAULT_EXPORT_OPTIONS.selectedColumns, so the task table section is always rendered.
   // A future timeline-only mode should use an explicit ExportOptions flag.
   renderTaskTableSection(svg, {
     flattenedTasks,

@@ -372,10 +372,10 @@ describe("resolveExportLayout", () => {
     progress: 80,
   };
 
-  it("uses DEFAULT_EXPORT_COLUMNS when selectedColumns is empty", () => {
+  it("falls back to DEFAULT_EXPORT_OPTIONS.selectedColumns when selectedColumns is empty", () => {
     const options: ExportOptions = { ...DEFAULT_EXPORT_OPTIONS, selectedColumns: [] };
     const { selectedColumns } = resolveExportLayout(options, columnWidths);
-    expect(selectedColumns.length).toBeGreaterThan(0);
+    expect(selectedColumns).toEqual(DEFAULT_EXPORT_OPTIONS.selectedColumns);
   });
 
   it("uses provided selectedColumns when non-empty", () => {

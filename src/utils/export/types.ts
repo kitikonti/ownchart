@@ -225,21 +225,6 @@ export type ExportColumnKey =
  */
 export type ExportDataColumnKey = Exclude<ExportColumnKey, "color" | "name">;
 
-/**
- * Default columns shown when no explicit selection has been made.
- * Used as fallback in ExportRenderer and SVG export when selectedColumns is empty.
- *
- * This is an intentional subset of ExportColumnKey — "color" and "duration" are
- * omitted from the default to keep the exported table compact. When new column keys
- * are added to ExportColumnKey, consider whether they should appear here by default.
- */
-export const DEFAULT_EXPORT_COLUMNS: ExportColumnKey[] = [
-  "name",
-  "startDate",
-  "endDate",
-  "progress",
-];
-
 /** Zoom mode for export */
 export type ExportZoomMode = "currentView" | "custom" | "fitToWidth";
 
