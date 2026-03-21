@@ -10,6 +10,7 @@ Checkliste für Test Coverage, Error Handling, Testing Best Practices und Loggin
 - [ ] Prüfe dass Edge Cases abgedeckt sind: leere Werte, null, undefined, Extremwerte, leere Arrays/Objects
 - [ ] Prüfe dass Error Cases getestet sind: Was passiert bei ungültigen Inputs?
 - [ ] Prüfe ob Integration Tests für Feature-Flows existieren
+- [ ] Prüfe ob E2E Tests (Playwright) für user-facing Features sinnvoll wären — insbesondere für: neue UI-Workflows (Dialoge, Upload-Flows, Multi-Step-Interaktionen), kritische User-Journeys (Export, File Save/Load), Features mit Browser-API-Abhängigkeiten (File Input, Drag&Drop, Clipboard). Nicht jedes Feature braucht E2E Tests, aber Features die reales User-Verhalten über mehrere Komponenten hinweg involvieren sollten bevorzugt mit E2E statt Unit Tests abgedeckt werden
 
 ## Error Handling
 

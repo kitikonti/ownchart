@@ -389,12 +389,11 @@ function sanitizeWorkingDaysConfig(
   };
 }
 
-/** Allowed MIME types for project logos */
-const VALID_LOGO_MIME_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/svg+xml",
-]);
+/** Reuse the canonical MIME type set and size limit from logoUpload */
+import {
+  ALLOWED_LOGO_MIME_TYPES,
+  MAX_LOGO_FILE_SIZE,
+} from "@/utils/logoUpload";
 
 /** Base64 character validation pattern (standard Base64 alphabet + padding) */
 const BASE64_REGEX = /^[A-Za-z0-9+/=]+$/;
@@ -410,10 +409,12 @@ function sanitizeProjectLogo(
   const obj = raw as Record<string, unknown>;
 
   if (typeof obj.data !== "string" || obj.data.length === 0) return undefined;
+  // Base64 expands ~37% over raw bytes; enforce the same limit as upload validation
+  if (obj.data.length > MAX_LOGO_FILE_SIZE * 1.37) return undefined;
   if (!BASE64_REGEX.test(obj.data)) return undefined;
   if (
     typeof obj.mimeType !== "string" ||
-    !VALID_LOGO_MIME_TYPES.has(obj.mimeType)
+    !ALLOWED_LOGO_MIME_TYPES.has(obj.mimeType)
   )
     return undefined;
   if (typeof obj.fileName !== "string") return undefined;

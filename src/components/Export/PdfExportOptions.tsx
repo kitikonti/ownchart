@@ -524,11 +524,15 @@ export function PdfExportOptions({
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={isUploading}
+                  aria-describedby="logo-upload-help"
                   className="w-full px-3 py-2 text-sm text-slate-600 border border-dashed border-slate-300 rounded-md hover:border-slate-400 hover:text-slate-700 transition-colors"
                 >
                   {isUploading ? "Uploading..." : "Upload Logo (PNG, JPG, SVG)"}
                 </button>
-                <p className="text-xs text-slate-500 mt-1">
+                <p
+                  id="logo-upload-help"
+                  className="text-xs text-slate-500 mt-1"
+                >
                   Max 512 KB. Saved with the project file.
                 </p>
               </div>

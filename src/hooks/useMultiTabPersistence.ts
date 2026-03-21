@@ -23,6 +23,7 @@ import {
   type TabChartData,
 } from "@/utils/multiTabStorage";
 import { pixelToDate } from "@/utils/timelineUtils";
+import { MAX_LOGO_FILE_SIZE } from "@/utils/logoUpload";
 
 const SAVE_DEBOUNCE_MS = 200;
 const ACTIVITY_UPDATE_INTERVAL_MS = 60_000;
@@ -196,10 +197,10 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
       holidayRegion: chartState.holidayRegion,
       projectTitle: chartState.projectTitle,
       projectAuthor: chartState.projectAuthor,
-      // Skip logo data if too large for localStorage (Base64 > 500KB)
+      // Skip logo data if too large for localStorage
       projectLogo:
         chartState.projectLogo &&
-        chartState.projectLogo.data.length <= 500 * 1024
+        chartState.projectLogo.data.length <= MAX_LOGO_FILE_SIZE
           ? chartState.projectLogo
           : undefined,
       hiddenColumns: chartState.hiddenColumns,
