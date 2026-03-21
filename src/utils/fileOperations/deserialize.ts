@@ -389,6 +389,56 @@ function sanitizeWorkingDaysConfig(
   };
 }
 
+/** Allowed MIME types for project logos */
+const VALID_LOGO_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/svg+xml",
+]);
+
+/** Base64 character validation pattern (standard Base64 alphabet + padding) */
+const BASE64_REGEX = /^[A-Za-z0-9+/=]+$/;
+
+/**
+ * Validate and sanitize a projectLogo field.
+ * Returns undefined if the value is invalid (graceful degradation).
+ */
+function sanitizeProjectLogo(
+  raw: unknown
+): import("@/types/logo.types").ProjectLogo | undefined {
+  if (!isPlainObject(raw)) return undefined;
+  const obj = raw as Record<string, unknown>;
+
+  if (typeof obj.data !== "string" || obj.data.length === 0) return undefined;
+  if (!BASE64_REGEX.test(obj.data)) return undefined;
+  if (
+    typeof obj.mimeType !== "string" ||
+    !VALID_LOGO_MIME_TYPES.has(obj.mimeType)
+  )
+    return undefined;
+  if (typeof obj.fileName !== "string") return undefined;
+  if (
+    typeof obj.width !== "number" ||
+    !Number.isFinite(obj.width) ||
+    obj.width <= 0
+  )
+    return undefined;
+  if (
+    typeof obj.height !== "number" ||
+    !Number.isFinite(obj.height) ||
+    obj.height <= 0
+  )
+    return undefined;
+
+  return {
+    data: obj.data,
+    mimeType: obj.mimeType as import("@/types/logo.types").LogoMimeType,
+    fileName: String(obj.fileName),
+    width: obj.width,
+    height: obj.height,
+  };
+}
+
 // =============================================================================
 // ViewSettings & ExportSettings normalization
 // =============================================================================
@@ -454,6 +504,7 @@ function normalizeViewSettings(raw: ViewSettings): ViewSettings {
     colorModeState: sanitizeColorModeState(raw.colorModeState),
     hiddenColumns: filterStringArray(raw.hiddenColumns),
     hiddenTaskIds: filterStringArray(raw.hiddenTaskIds)?.map(toTaskId),
+    projectLogo: sanitizeProjectLogo(raw.projectLogo),
   };
 }
 

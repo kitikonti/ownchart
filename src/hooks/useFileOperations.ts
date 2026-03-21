@@ -140,8 +140,10 @@ type ChartSliceNeeded = Pick<
   | "hiddenTaskIds"
   | "projectTitle"
   | "projectAuthor"
+  | "projectLogo"
   | "setProjectTitle"
   | "setProjectAuthor"
+  | "setProjectLogo"
   | "setHiddenTaskIds"
   | "resetView"
 >;
@@ -206,8 +208,10 @@ function useChartSliceState(): ChartSliceNeeded {
   const hiddenTaskIds = useChartStore((s) => s.hiddenTaskIds);
   const projectTitle = useChartStore((s) => s.projectTitle);
   const projectAuthor = useChartStore((s) => s.projectAuthor);
+  const projectLogo = useChartStore((s) => s.projectLogo);
   const setProjectTitle = useChartStore((s) => s.setProjectTitle);
   const setProjectAuthor = useChartStore((s) => s.setProjectAuthor);
+  const setProjectLogo = useChartStore((s) => s.setProjectLogo);
   const setHiddenTaskIds = useChartStore((s) => s.setHiddenTaskIds);
   const resetView = useChartStore((s) => s.resetView);
   return {
@@ -230,8 +234,10 @@ function useChartSliceState(): ChartSliceNeeded {
     hiddenTaskIds,
     projectTitle,
     projectAuthor,
+    projectLogo,
     setProjectTitle,
     setProjectAuthor,
+    setProjectLogo,
     setHiddenTaskIds,
     resetView,
   };
@@ -375,6 +381,7 @@ function useFeatureViewSettings(
   | "holidayRegion"
   | "projectTitle"
   | "projectAuthor"
+  | "projectLogo"
   | "colorModeState"
 > {
   const {
@@ -389,6 +396,7 @@ function useFeatureViewSettings(
     holidayRegion,
     projectTitle,
     projectAuthor,
+    projectLogo,
     colorModeState,
   } = chart;
   return useMemo(
@@ -404,6 +412,7 @@ function useFeatureViewSettings(
       holidayRegion,
       projectTitle,
       projectAuthor,
+      projectLogo: projectLogo ?? undefined,
       colorModeState,
     }),
     [
@@ -418,6 +427,7 @@ function useFeatureViewSettings(
       holidayRegion,
       projectTitle,
       projectAuthor,
+      projectLogo,
       colorModeState,
     ]
   );
@@ -583,6 +593,9 @@ interface NewOperationDeps {
   resetExportOptions: () => void;
   setProjectTitle: (title: string) => void;
   setProjectAuthor: (author: string) => void;
+  setProjectLogo: (
+    logo: import("@/types/logo.types").ProjectLogo | null
+  ) => void;
   setHiddenTaskIds: (ids: TaskId[]) => void;
   resetView: () => void;
   clearHistory: () => void;
@@ -596,6 +609,7 @@ function useNewOperation({
   resetExportOptions,
   setProjectTitle,
   setProjectAuthor,
+  setProjectLogo,
   setHiddenTaskIds,
   resetView,
   clearHistory,
@@ -610,6 +624,7 @@ function useNewOperation({
     resetExportOptions();
     setProjectTitle("");
     setProjectAuthor("");
+    setProjectLogo(null);
     // Per-file row visibility resets with the file.
     // Column visibility and table layout are user preferences that intentionally
     // persist across new charts — only task-specific hidden rows are cleared.
@@ -627,6 +642,7 @@ function useNewOperation({
     resetExportOptions,
     setProjectTitle,
     setProjectAuthor,
+    setProjectLogo,
     setHiddenTaskIds,
     resetView,
     clearHistory,
@@ -648,8 +664,13 @@ function useNewOperationDeps(
   op: OperationalSliceNeeded
 ): NewOperationDeps {
   const { setTasks } = task;
-  const { setProjectTitle, setProjectAuthor, setHiddenTaskIds, resetView } =
-    chart;
+  const {
+    setProjectTitle,
+    setProjectAuthor,
+    setProjectLogo,
+    setHiddenTaskIds,
+    resetView,
+  } = chart;
   const {
     isDirty,
     clearDependencies,
@@ -664,6 +685,7 @@ function useNewOperationDeps(
     resetExportOptions,
     setProjectTitle,
     setProjectAuthor,
+    setProjectLogo,
     setHiddenTaskIds,
     resetView,
     clearHistory,

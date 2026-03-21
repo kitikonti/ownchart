@@ -3,7 +3,7 @@
  * Provides controls for page size, orientation, scale, margins, and header/footer.
  */
 
-import { useCallback, useId } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import type {
   PdfExportOptions as PdfOptions,
   PdfPageSize,
@@ -13,6 +13,7 @@ import type {
   PdfCustomPageSize,
   ExportOptions,
 } from "@/utils/export/types";
+import type { ProjectLogo } from "@/types/logo.types";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
@@ -28,6 +29,12 @@ import {
   type SegmentedControlOption,
 } from "@/components/common/SegmentedControl";
 import { ZoomModeSelector } from "./ZoomModeSelector";
+import {
+  processLogoFile,
+  formatFileSize,
+  LOGO_ACCEPT,
+  logoToDataUrl,
+} from "@/utils/logoUpload";
 
 // =============================================================================
 // Constants
@@ -131,6 +138,7 @@ const HEADER_FOOTER_OPTIONS = [
   { key: "showProjectName", label: "Project title" },
   { key: "showAuthor", label: "Author" },
   { key: "showExportDate", label: "Export date" },
+  { key: "showLogo", label: "Logo" },
 ] as const;
 
 // =============================================================================
@@ -288,6 +296,8 @@ export interface PdfExportOptionsProps {
   currentAppZoom: number;
   projectAuthor: string;
   onProjectAuthorChange: (author: string) => void;
+  projectLogo: ProjectLogo | null;
+  onProjectLogoChange: (logo: ProjectLogo | null) => void;
 }
 
 export function PdfExportOptions({
@@ -298,10 +308,45 @@ export function PdfExportOptions({
   currentAppZoom,
   projectAuthor,
   onProjectAuthorChange,
+  projectLogo,
+  onProjectLogoChange,
 }: PdfExportOptionsProps): JSX.Element {
   // Stable IDs for aria-labelledby on each section landmark
   const pageSetupId = useId();
   const headerFooterId = useId();
+
+  // Logo upload state
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleLogoUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      setLogoError(null);
+      setIsUploading(true);
+      try {
+        const logo = await processLogoFile(file);
+        onProjectLogoChange(logo);
+      } catch (err) {
+        setLogoError(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setIsUploading(false);
+        // Reset the input so the same file can be re-selected
+        if (logoInputRef.current) logoInputRef.current.value = "";
+      }
+    },
+    [onProjectLogoChange]
+  );
+
+  const handleLogoRemove = useCallback((): void => {
+    onProjectLogoChange(null);
+    setLogoError(null);
+  }, [onProjectLogoChange]);
+
+  const showLogoSection = options.header.showLogo || options.footer.showLogo;
 
   const pageDims =
     options.pageSize === "custom"
@@ -431,6 +476,66 @@ export function PdfExportOptions({
               onChange={(e) => onProjectAuthorChange(e.target.value)}
               placeholder="Your name"
             />
+          </div>
+        )}
+
+        {/* Logo upload - shown when any "Logo" checkbox is enabled */}
+        {showLogoSection && (
+          <div className="mt-4">
+            <FieldLabel>Logo</FieldLabel>
+            {projectLogo ? (
+              <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-md border border-slate-200">
+                <img
+                  src={logoToDataUrl(projectLogo)}
+                  alt="Project logo"
+                  className="h-8 w-auto object-contain flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-700 truncate">
+                    {projectLogo.fileName}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {projectLogo.width} × {projectLogo.height} px
+                    {" · "}
+                    {formatFileSize(Math.ceil(projectLogo.data.length * 0.75))}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLogoRemove}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline flex-shrink-0"
+                  aria-label="Remove logo"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept={LOGO_ACCEPT}
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                  id="logo-upload"
+                  aria-label="Upload logo"
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="w-full px-3 py-2 text-sm text-slate-600 border border-dashed border-slate-300 rounded-md hover:border-slate-400 hover:text-slate-700 transition-colors"
+                >
+                  {isUploading ? "Uploading..." : "Upload Logo (PNG, JPG, SVG)"}
+                </button>
+                <p className="text-xs text-slate-500 mt-1">
+                  Max 512 KB. Saved with the project file.
+                </p>
+              </div>
+            )}
+            {logoError && (
+              <p className="text-xs text-red-600 mt-1">{logoError}</p>
+            )}
           </div>
         )}
       </section>

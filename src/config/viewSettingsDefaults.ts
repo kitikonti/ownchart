@@ -46,6 +46,7 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     hiddenColumns: loaded.hiddenColumns ?? [],
     isTaskTableCollapsed: loaded.isTaskTableCollapsed ?? false,
     hiddenTaskIds: loaded.hiddenTaskIds ?? [],
+    projectLogo: loaded.projectLogo,
   };
 }
 

@@ -160,6 +160,10 @@ export interface UseExportDialogResult {
   projectTitle: string;
   projectAuthor: string;
   setProjectAuthor: (author: string) => void;
+  projectLogo: import("@/types/logo.types").ProjectLogo | null;
+  setProjectLogo: (
+    logo: import("@/types/logo.types").ProjectLogo | null
+  ) => void;
   hiddenTaskCount: number;
 
   // Computed values
@@ -211,6 +215,8 @@ export function useExportDialog(): UseExportDialogResult {
   const projectTitle = useChartStore((state) => state.projectTitle);
   const projectAuthor = useChartStore((state) => state.projectAuthor);
   const setProjectAuthor = useChartStore((state) => state.setProjectAuthor);
+  const projectLogo = useChartStore((state) => state.projectLogo);
+  const setProjectLogo = useChartStore((state) => state.setProjectLogo);
   const scale = useChartStore((state) => state.scale);
   const viewportScrollLeft = useChartStore((state) => state.viewportScrollLeft);
   const viewportWidth = useChartStore((state) => state.viewportWidth);
@@ -354,6 +360,7 @@ export function useExportDialog(): UseExportDialogResult {
           projectName,
           projectTitle,
           projectAuthor,
+          projectLogo: projectLogo ?? undefined,
           dateFormat,
           colorModeState,
           onProgress: setExportProgress,
@@ -397,6 +404,7 @@ export function useExportDialog(): UseExportDialogResult {
     projectName,
     projectTitle,
     projectAuthor,
+    projectLogo,
     dateFormat,
     colorModeState,
     closeExportDialog,
@@ -425,6 +433,8 @@ export function useExportDialog(): UseExportDialogResult {
     projectTitle,
     projectAuthor,
     setProjectAuthor,
+    projectLogo,
+    setProjectLogo,
     effectiveExportOptions,
     estimatedDimensions,
     taskTableWidth,

@@ -18,8 +18,8 @@ const defaultPdfOptions: PdfExportOptions = {
   pageSize: "a4",
   orientation: "landscape",
   marginPreset: "normal",
-  header: { showProjectName: false, showAuthor: false, showExportDate: false },
-  footer: { showProjectName: false, showAuthor: false, showExportDate: false },
+  header: { showProjectName: false, showAuthor: false, showExportDate: false, showLogo: false },
+  footer: { showProjectName: false, showAuthor: false, showExportDate: false, showLogo: false },
   metadata: {},
 };
 
@@ -132,8 +132,8 @@ describe("calculatePdfFitToWidth", () => {
       defaultExportOptions,
       {
         ...defaultPdfOptions,
-        header: { showProjectName: true, showAuthor: false, showExportDate: true },
-        footer: { showProjectName: true, showAuthor: false, showExportDate: true },
+        header: { showProjectName: true, showAuthor: false, showExportDate: true, showLogo: false },
+        footer: { showProjectName: true, showAuthor: false, showExportDate: true, showLogo: false },
       }
     );
 

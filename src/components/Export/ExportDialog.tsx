@@ -16,6 +16,7 @@ import { PdfExportOptions } from "./PdfExportOptions";
 import { ExportPreview } from "./ExportPreview";
 import { useExportPreview } from "@/hooks/useExportPreview";
 import { useExportDialog } from "@/hooks/useExportDialog";
+import { logoToDataUrl } from "@/utils/logoUpload";
 
 /** Layout constants for the export dialog */
 const CONTENT_HEIGHT = "h-[65vh]";
@@ -128,6 +129,8 @@ export function ExportDialog(): JSX.Element {
     projectTitle,
     projectAuthor,
     setProjectAuthor,
+    projectLogo,
+    setProjectLogo,
     effectiveExportOptions,
     estimatedDimensions,
     effectiveZoom,
@@ -191,6 +194,7 @@ export function ExportDialog(): JSX.Element {
               pdfOptions={pdfExportOptions}
               projectTitle={projectTitle || undefined}
               projectAuthor={projectAuthor || undefined}
+              logoDataUrl={projectLogo ? logoToDataUrl(projectLogo) : undefined}
               effectiveZoom={effectiveZoom}
               readabilityStatus={readabilityStatus}
             />
@@ -277,6 +281,8 @@ export function ExportDialog(): JSX.Element {
                 currentAppZoom={currentAppZoom}
                 projectAuthor={projectAuthor}
                 onProjectAuthorChange={setProjectAuthor}
+                projectLogo={projectLogo}
+                onProjectLogoChange={setProjectLogo}
               />
             )}
 

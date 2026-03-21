@@ -113,7 +113,10 @@ const HEX_FALLBACK_GRAY_CHANNEL = 128;
  */
 export function hasHeaderFooterContent(section: PdfHeaderFooter): boolean {
   return (
-    section.showProjectName || section.showAuthor || section.showExportDate
+    section.showProjectName ||
+    section.showAuthor ||
+    section.showExportDate ||
+    section.showLogo
   );
 }
 

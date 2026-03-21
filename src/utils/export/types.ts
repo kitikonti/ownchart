@@ -69,6 +69,7 @@ export interface PdfHeaderFooter {
   showProjectName: boolean;
   showAuthor: boolean;
   showExportDate: boolean;
+  showLogo: boolean;
 }
 
 /** PDF document metadata (title, author, subject) */
@@ -156,11 +157,13 @@ export const DEFAULT_PDF_OPTIONS: PdfExportOptions = {
     showProjectName: true,
     showAuthor: false,
     showExportDate: false,
+    showLogo: false,
   },
   footer: {
     showProjectName: false,
     showAuthor: false,
     showExportDate: false,
+    showLogo: false,
   },
   metadata: {},
 };

@@ -12,6 +12,7 @@ import type {
   WorkingDaysConfig,
 } from "@/types/preferences.types";
 import type { ColorModeState } from "@/types/colorMode.types";
+import type { ProjectLogo } from "@/types/logo.types";
 
 export interface GanttFile {
   // Format identification
@@ -131,6 +132,9 @@ export interface ViewSettings {
 
   // Hidden task IDs (Hide/Show Rows)
   hiddenTaskIds?: TaskId[];
+
+  // Project logo (Base64-encoded image for export embedding)
+  projectLogo?: ProjectLogo;
 }
 
 // Validation error types

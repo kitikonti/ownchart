@@ -26,6 +26,7 @@ type PdfPreviewVariant = SharedPreviewProps & {
   pdfOptions: PdfExportOptions;
   projectTitle?: string;
   projectAuthor?: string;
+  logoDataUrl?: string;
 };
 
 type RasterPreviewVariant = SharedPreviewProps & {
@@ -64,6 +65,7 @@ export const ExportPreview = memo(function ExportPreview(
         pdfOptions={props.pdfOptions}
         projectTitle={props.projectTitle}
         projectAuthor={props.projectAuthor}
+        logoDataUrl={props.logoDataUrl}
         isRendering={isRendering}
         error={error}
         effectiveZoom={effectiveZoom}

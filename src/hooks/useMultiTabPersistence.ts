@@ -98,6 +98,9 @@ function restoreChartState(chartState: ChartState): void {
   applyIfDefined(chartState.isTaskTableCollapsed, store.setTaskTableCollapsed);
   applyIfDefined(chartState.hiddenTaskIds, store.setHiddenTaskIds);
   applyIfDefined(chartState.colorModeState, store.setColorModeState);
+  if (chartState.projectLogo !== undefined) {
+    store.setProjectLogo(chartState.projectLogo);
+  }
   // viewAnchorDate: date-based scroll position restore (replaces panOffset)
   applyIfDefined(chartState.viewAnchorDate, store.setViewAnchorDate);
   // Vertical scroll position — stored as pending, applied by GanttLayout
@@ -193,6 +196,12 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
       holidayRegion: chartState.holidayRegion,
       projectTitle: chartState.projectTitle,
       projectAuthor: chartState.projectAuthor,
+      // Skip logo data if too large for localStorage (Base64 > 500KB)
+      projectLogo:
+        chartState.projectLogo &&
+        chartState.projectLogo.data.length <= 500 * 1024
+          ? chartState.projectLogo
+          : undefined,
       hiddenColumns: chartState.hiddenColumns,
       isTaskTableCollapsed: chartState.isTaskTableCollapsed,
       hiddenTaskIds: chartState.hiddenTaskIds,

@@ -266,9 +266,10 @@ describe("pdfExport", () => {
             showProjectName: true,
             showAuthor: false,
             showExportDate: false,
+            showLogo: false,
           },
           // Disable default footer to isolate assertions
-          footer: { showProjectName: false, showAuthor: false, showExportDate: false },
+          footer: { showProjectName: false, showAuthor: false, showExportDate: false, showLogo: false },
         },
         columnWidths: {},
         currentAppZoom: 1,
@@ -296,11 +297,12 @@ describe("pdfExport", () => {
         pdfOptions: {
           ...defaultPdfOptions,
           // Disable default header to isolate footer assertions
-          header: { showProjectName: false, showAuthor: false, showExportDate: false },
+          header: { showProjectName: false, showAuthor: false, showExportDate: false, showLogo: false },
           footer: {
             showProjectName: true,
             showAuthor: false,
             showExportDate: false,
+            showLogo: false,
           },
         },
         columnWidths: {},

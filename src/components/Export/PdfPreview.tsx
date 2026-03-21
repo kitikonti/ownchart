@@ -30,6 +30,8 @@ export interface PdfPreviewProps {
   pdfOptions: PdfExportOptions;
   projectTitle?: string;
   projectAuthor?: string;
+  /** Data URL of the project logo (when configured) */
+  logoDataUrl?: string;
   isRendering: boolean;
   error: string | null;
   /** Effective zoom for timeline (for readability indicator) */
@@ -49,10 +51,12 @@ function buildSectionContent(
   section: PdfHeaderFooter,
   projectTitle: string | undefined,
   projectAuthor: string | undefined,
-  formattedDate: string
-): { left: string[]; right: string[] } {
+  formattedDate: string,
+  logoDataUrl: string | undefined
+): { left: string[]; right: string[]; showLogo: boolean } {
   const left: string[] = [];
   const right: string[] = [];
+  const showLogo = section.showLogo && !!logoDataUrl;
 
   if (section.showProjectName && projectTitle) {
     left.push(projectTitle);
@@ -64,7 +68,7 @@ function buildSectionContent(
     right.push(formattedDate);
   }
 
-  return { left, right };
+  return { left, right, showLogo };
 }
 
 /**
@@ -107,22 +111,46 @@ interface SectionStripProps {
   left: string[];
   right: string[];
   border: "top" | "bottom";
+  logoDataUrl?: string;
+  /** Strip height as a fraction of the content area (0–1), matching PDF reserved space */
+  heightFraction: number;
 }
 
 /** Dot-separated row in the header or footer strip */
-function SectionStrip({ left, right, border }: SectionStripProps): JSX.Element {
-  const borderClass =
-    border === "bottom"
-      ? "border-b border-slate-300"
-      : "border-t border-slate-300";
+function SectionStrip({
+  left,
+  right,
+  border,
+  logoDataUrl,
+  heightFraction,
+}: SectionStripProps): JSX.Element {
+  const isHeader = border === "bottom";
+  const borderClass = isHeader
+    ? "border-b border-slate-300"
+    : "border-t border-slate-300";
+  // Header: content near bottom border (separator). Footer: near top border.
+  // Fixed padding creates a small visual gap from the separator line,
+  // approximating the PDF's 2mm/10mm spacing at preview scale.
+  const alignClass = isHeader ? "items-end pb-0.5" : "items-start pt-0.5";
   return (
     <div
-      className={`flex items-center justify-between px-1 py-0.5 ${borderClass} shrink-0`}
+      className={`flex justify-between px-1 ${borderClass} ${alignClass} shrink-0`}
+      style={{ height: `${heightFraction * 100}%` }}
     >
-      <span className="text-[6px] text-slate-600 truncate">
-        {left.join(DOT_SEPARATOR)}
+      <span
+        className={`text-[6px] leading-none text-slate-600 flex ${isHeader ? "items-end" : "items-start"} gap-0.5 min-w-0`}
+      >
+        {logoDataUrl && (
+          <img
+            src={logoDataUrl}
+            alt=""
+            className="w-auto object-contain shrink-0"
+            style={{ height: "1.5em" }}
+          />
+        )}
+        <span className="truncate">{left.join(DOT_SEPARATOR)}</span>
       </span>
-      <span className="text-[6px] text-slate-600 truncate">
+      <span className="text-[6px] leading-none text-slate-600 truncate">
         {right.join(DOT_SEPARATOR)}
       </span>
     </div>
@@ -254,6 +282,7 @@ export function PdfPreview({
   pdfOptions,
   projectTitle,
   projectAuthor,
+  logoDataUrl,
   isRendering,
   error,
   effectiveZoom,
@@ -290,13 +319,15 @@ export function PdfPreview({
     pdfOptions.header,
     projectTitle,
     projectAuthor,
-    formattedDate
+    formattedDate,
+    logoDataUrl
   );
   const footerContent = buildSectionContent(
     pdfOptions.footer,
     projectTitle,
     projectAuthor,
-    formattedDate
+    formattedDate,
+    logoDataUrl
   );
 
   // Margin padding as percentages of page dimensions for responsive scaling
@@ -343,6 +374,8 @@ export function PdfPreview({
                   left={headerContent.left}
                   right={headerContent.right}
                   border="bottom"
+                  logoDataUrl={headerContent.showLogo ? logoDataUrl : undefined}
+                  heightFraction={headerHeightMm / contentHeightMm}
                 />
               )}
 
@@ -407,6 +440,8 @@ export function PdfPreview({
                   left={footerContent.left}
                   right={footerContent.right}
                   border="top"
+                  logoDataUrl={footerContent.showLogo ? logoDataUrl : undefined}
+                  heightFraction={footerHeightMm / contentHeightMm}
                 />
               )}
             </div>

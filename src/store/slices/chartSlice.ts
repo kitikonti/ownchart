@@ -24,6 +24,7 @@ import type {
   TaskLabelPosition,
   WorkingDaysConfig,
 } from "@/types/preferences.types";
+import type { ProjectLogo } from "@/types/logo.types";
 import type {
   ColorModeState,
   ColorMode,
@@ -99,6 +100,7 @@ interface ChartState {
   // Project metadata (saved in .ownchart file)
   projectTitle: string;
   projectAuthor: string;
+  projectLogo: ProjectLogo | null;
 
   // Column visibility (user-hidden date/duration columns)
   hiddenColumns: string[];
@@ -153,6 +155,7 @@ type SettableViewFields = Pick<
   | "holidayRegion"
   | "projectTitle"
   | "projectAuthor"
+  | "projectLogo"
   | "colorModeState"
   | "hiddenColumns"
   | "isTaskTableCollapsed"
@@ -203,6 +206,7 @@ interface ChartActions {
   // Project metadata setters
   setProjectTitle: (title: string) => void;
   setProjectAuthor: (author: string) => void;
+  setProjectLogo: (logo: ProjectLogo | null) => void;
 
   // Column visibility actions
   toggleColumnVisibility: (columnId: string) => void;
@@ -300,6 +304,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Project metadata
     projectTitle: "",
     projectAuthor: "",
+    projectLogo: null,
 
     // Column visibility
     hiddenColumns: [] as string[],
@@ -709,6 +714,13 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
+    // Set project logo
+    setProjectLogo: (logo: ProjectLogo | null): void => {
+      set((state) => {
+        state.projectLogo = logo;
+      });
+    },
+
     // Column visibility actions
     toggleColumnVisibility: (columnId: string): void => {
       // Only allow toggling hideable columns
@@ -968,6 +980,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.projectTitle = settings.projectTitle;
         if (settings.projectAuthor !== undefined)
           state.projectAuthor = settings.projectAuthor;
+        if (settings.projectLogo !== undefined)
+          state.projectLogo = settings.projectLogo;
         if (settings.colorModeState !== undefined)
           state.colorModeState = settings.colorModeState;
         if (settings.hiddenColumns !== undefined)

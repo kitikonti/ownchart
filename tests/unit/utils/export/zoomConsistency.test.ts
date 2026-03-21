@@ -20,8 +20,8 @@ const defaultPdfOptions: PdfExportOptions = {
   pageSize: "a4",
   orientation: "landscape",
   marginPreset: "normal",
-  header: { showProjectName: false, showExportDate: false },
-  footer: { showProjectName: false, showExportDate: false },
+  header: { showProjectName: false, showExportDate: false, showAuthor: false, showLogo: false },
+  footer: { showProjectName: false, showExportDate: false, showAuthor: false, showLogo: false },
   metadata: {},
 };
 

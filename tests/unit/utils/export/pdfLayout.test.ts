@@ -422,6 +422,7 @@ describe("pdfLayout", () => {
           showProjectName: false,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         })
       ).toBe(false);
     });
@@ -432,6 +433,7 @@ describe("pdfLayout", () => {
           showProjectName: true,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         })
       ).toBe(true);
     });
@@ -442,6 +444,7 @@ describe("pdfLayout", () => {
           showProjectName: false,
           showAuthor: true,
           showExportDate: false,
+          showLogo: false,
         })
       ).toBe(true);
     });
@@ -452,6 +455,7 @@ describe("pdfLayout", () => {
           showProjectName: false,
           showAuthor: false,
           showExportDate: true,
+          showLogo: false,
         })
       ).toBe(true);
     });
@@ -462,6 +466,7 @@ describe("pdfLayout", () => {
           showProjectName: true,
           showAuthor: true,
           showExportDate: true,
+          showLogo: false,
         })
       ).toBe(true);
     });

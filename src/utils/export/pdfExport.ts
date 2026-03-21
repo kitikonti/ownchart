@@ -64,6 +64,8 @@ import {
   type TaskTableRowsOptions,
 } from "./taskTableRenderer";
 import type { ColorModeState } from "@/types/colorMode.types";
+import type { ProjectLogo } from "@/types/logo.types";
+import { logoToDataUrl, MAX_LOGO_DISPLAY_HEIGHT_PT } from "@/utils/logoUpload";
 
 // =============================================================================
 // PDF Rendering Constants
@@ -81,22 +83,36 @@ const PDF_TEXT_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.textSecondary);
 
 /**
  * Separator line color.
- * Derived from EXPORT_COLORS.border (slate-200) — same token used by the
- * task-table header borders in the SVG export path.
+ * Derived from EXPORT_COLORS.separator (slate-300) — stronger than the SVG
+ * border token (slate-200) for reliable visibility in print.
  */
-const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.border);
+const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.separator);
 
 /** Separator line width in millimeters */
 const PDF_SEPARATOR_LINE_WIDTH_MM = 0.1;
 
-/** Header text vertical offset from the top margin edge in mm */
-const PDF_HEADER_TEXT_OFFSET_MM = 6;
+/**
+ * Distance (mm) from the separator line to the text baseline / logo bottom edge.
+ * Both text and logo are positioned relative to the separator line for
+ * consistent baseline alignment (print-standard approach).
+ */
+const PDF_BANNER_LINE_GAP_MM = 2;
 
-/** Footer text vertical offset from the bottom margin edge in mm */
-const PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM = 4;
+/**
+ * Approximate cap-height ratio for Inter at banner font size.
+ * Used to position footer text so its visual bottom sits at the correct
+ * distance below the separator line (mirroring the header layout).
+ */
+const PDF_BANNER_CAP_HEIGHT_RATIO = 0.7;
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";
+
+/** Gap (mm) between the logo and the project name text */
+const PDF_LOGO_TEXT_GAP_MM = 2;
+
+/** Maximum logo width (mm) — prevents wide logos from overlapping right-aligned text */
+const MAX_LOGO_DISPLAY_WIDTH_MM = 30;
 
 /** Default PDF document title when neither projectTitle nor projectName is set */
 const DEFAULT_PDF_TITLE = "Project Timeline";
@@ -138,6 +154,7 @@ export interface ExportToPdfParams {
   projectName?: string;
   projectTitle?: string;
   projectAuthor?: string;
+  projectLogo?: ProjectLogo;
   dateFormat: DateFormat;
   colorModeState: ColorModeState;
   onProgress?: (progress: number) => void;
@@ -204,6 +221,7 @@ interface BannerRenderContext {
   /** Page height in mm */
   pageHeight: number;
   dateFormat: DateFormat;
+  projectLogo?: ProjectLogo;
 }
 
 /** Document-level settings for PDF generation */
@@ -212,6 +230,7 @@ interface PdfDocumentSettings {
   pdfOptions: PdfExportOptions;
   dateFormat: DateFormat;
   projectName?: string;
+  projectLogo?: ProjectLogo;
 }
 
 /** Scaled placement of the chart SVG within a PDF page */
@@ -245,6 +264,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     projectName,
     projectTitle,
     projectAuthor,
+    projectLogo,
     dateFormat,
     colorModeState,
     onProgress,
@@ -296,6 +316,7 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
       pdfOptions,
       dateFormat,
       projectName,
+      projectLogo,
     },
     onProgress
   );
@@ -434,7 +455,8 @@ async function buildAndSavePdf(
   settings: PdfDocumentSettings,
   onProgress?: (progress: number) => void
 ): Promise<void> {
-  const { pdfOptions, dateFormat, projectName, metadata } = settings;
+  const { pdfOptions, dateFormat, projectName, projectLogo, metadata } =
+    settings;
   const pageDims = getPageDimensions(pdfOptions);
   const margins = getMargins(pdfOptions);
   const reserved: ReservedSpace = {
@@ -455,13 +477,14 @@ async function buildAndSavePdf(
 
   onProgress?.(EXPORT_PROGRESS.SVG_EMBEDDED);
 
-  renderBanners(
+  await renderBanners(
     {
       doc,
       margins,
       pageWidth: pageDims.width,
       pageHeight: pageDims.height,
       dateFormat,
+      projectLogo,
     },
     pdfOptions,
     metadata,
@@ -485,6 +508,7 @@ function createPdfDocument(
     orientation: pdfOptions.orientation,
     unit: "mm",
     format: [pageDims.width, pageDims.height],
+    putOnlyUsedFonts: true,
   });
 
   // Register Inter font for consistent rendering across all platforms
@@ -569,41 +593,47 @@ export function computeChartPlacement(
  * Render header and/or footer banners on the PDF document if any fields
  * are enabled in the respective PdfHeaderFooter config.
  */
-function renderBanners(
+async function renderBanners(
   ctx: BannerRenderContext,
   pdfOptions: PdfExportOptions,
   metadata: PdfMetadata,
   reserved: ReservedSpace
-): void {
+): Promise<void> {
   if (hasHeaderFooterContent(pdfOptions.header)) {
-    renderPdfBanner(ctx, pdfOptions.header, metadata, {
-      textY: ctx.margins.top + PDF_HEADER_TEXT_OFFSET_MM,
-      lineY: ctx.margins.top + reserved.header,
+    const headerLineY = ctx.margins.top + reserved.header;
+    await renderPdfBanner(ctx, pdfOptions.header, metadata, {
+      textY: headerLineY - PDF_BANNER_LINE_GAP_MM,
+      lineY: headerLineY,
       lineBelowText: true,
     });
   }
 
   if (hasHeaderFooterContent(pdfOptions.footer)) {
-    renderPdfBanner(ctx, pdfOptions.footer, metadata, {
-      textY:
-        ctx.pageHeight - ctx.margins.bottom - PDF_FOOTER_TEXT_BOTTOM_OFFSET_MM,
-      lineY: ctx.pageHeight - ctx.margins.bottom - reserved.footer,
+    const footerLineY = ctx.pageHeight - ctx.margins.bottom - reserved.footer;
+    // Position text so its visual bottom sits GAP mm below the line.
+    // jsPDF text() uses the baseline, so we add the cap height.
+    const capHeightMm =
+      ((PDF_BANNER_FONT_SIZE_PT * PDF_BANNER_CAP_HEIGHT_RATIO) / 72) * 25.4;
+    await renderPdfBanner(ctx, pdfOptions.footer, metadata, {
+      textY: footerLineY + PDF_BANNER_LINE_GAP_MM + capHeightMm,
+      lineY: footerLineY,
       lineBelowText: false,
     });
   }
 }
 
 /**
- * Render a single banner strip: left-aligned title, right-aligned author/date,
- * and a separator line (below text for headers, above text for footers).
+ * Render a single banner strip: optional logo on the left, left-aligned title
+ * (shifted right when logo is present), right-aligned author/date, and a
+ * separator line (below text for headers, above text for footers).
  */
-function renderPdfBanner(
+async function renderPdfBanner(
   ctx: BannerRenderContext,
   sectionOptions: PdfHeaderFooter,
   metadata: PdfMetadata,
   layout: BannerLayout
-): void {
-  const { doc, margins, pageWidth, dateFormat } = ctx;
+): Promise<void> {
+  const { doc, margins, pageWidth, dateFormat, projectLogo } = ctx;
 
   doc.setFontSize(PDF_BANNER_FONT_SIZE_PT);
   doc.setTextColor(PDF_TEXT_COLOR.r, PDF_TEXT_COLOR.g, PDF_TEXT_COLOR.b);
@@ -620,8 +650,22 @@ function renderPdfBanner(
     );
   }
 
+  // Track left offset — logo shifts title text to the right
+  let leftX = margins.left;
+
+  // Render logo if enabled and available
+  if (sectionOptions.showLogo && projectLogo) {
+    const logoOffsetX = await renderBannerLogo(
+      doc,
+      projectLogo,
+      margins.left,
+      layout
+    );
+    leftX += logoOffsetX;
+  }
+
   if (sectionOptions.showProjectName && metadata.title) {
-    doc.text(metadata.title, margins.left, layout.textY);
+    doc.text(metadata.title, leftX, layout.textY);
   }
 
   const rightParts: string[] = [];
@@ -646,6 +690,102 @@ function renderPdfBanner(
       layout.lineY
     );
   }
+}
+
+/**
+ * Render a logo image in the banner strip.
+ * SVG logos are rasterized to PNG via an offscreen canvas because jsPDF's
+ * addImage does not accept SVG data URLs.
+ *
+ * Sizing: the logo is fit into a bounding box of MAX_LOGO_DISPLAY_WIDTH_MM ×
+ * MAX_LOGO_DISPLAY_HEIGHT_PT (in mm) while preserving aspect ratio.
+ *
+ * Positioning: baseline-aligned to the separator line — logo bottom edge sits
+ * PDF_BANNER_LINE_GAP_MM above (header) or below (footer) the separator.
+ *
+ * @returns The horizontal space consumed (logo width + gap) in mm.
+ */
+async function renderBannerLogo(
+  doc: jsPDF,
+  logo: ProjectLogo,
+  marginLeft: number,
+  layout: BannerLayout
+): Promise<number> {
+  // Fit logo into bounding box preserving aspect ratio
+  const maxHeightMm = (MAX_LOGO_DISPLAY_HEIGHT_PT / 72) * 25.4;
+  const aspectRatio = logo.width / logo.height;
+  const logoHeightMm = Math.min(
+    maxHeightMm,
+    MAX_LOGO_DISPLAY_WIDTH_MM / aspectRatio
+  );
+  const logoWidthMm = logoHeightMm * aspectRatio;
+
+  // Position logo relative to separator line with consistent gap.
+  // Header: logo bottom = lineY - gap (grows upward)
+  // Footer: logo top = lineY + gap (grows downward)
+  const logoY = layout.lineBelowText
+    ? layout.lineY - PDF_BANNER_LINE_GAP_MM - logoHeightMm
+    : layout.lineY + PDF_BANNER_LINE_GAP_MM;
+
+  try {
+    let imageData: string;
+    let format: "PNG" | "JPEG";
+
+    if (logo.mimeType === "image/svg+xml") {
+      // jsPDF cannot decode SVG data URLs — rasterize to PNG first
+      imageData = await rasterizeSvgToPngDataUrl(logo);
+      format = "PNG";
+    } else {
+      imageData = logoToDataUrl(logo);
+      format = logo.mimeType === "image/png" ? "PNG" : "JPEG";
+    }
+
+    doc.addImage(
+      imageData,
+      format,
+      marginLeft,
+      logoY,
+      logoWidthMm,
+      logoHeightMm
+    );
+  } catch {
+    // If logo embedding fails, skip silently — the export should still succeed
+    if (import.meta.env.DEV) {
+      console.warn("[pdfExport] Failed to embed logo in PDF banner");
+    }
+    return 0;
+  }
+
+  return logoWidthMm + PDF_LOGO_TEXT_GAP_MM;
+}
+
+/**
+ * Rasterize an SVG logo to a PNG data URL via an offscreen canvas.
+ * Renders at 2× the intrinsic size for crisp output on HiDPI screens.
+ */
+function rasterizeSvgToPngDataUrl(logo: ProjectLogo): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const scale = 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = logo.width * scale;
+    canvas.height = logo.height * scale;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      reject(new Error("Canvas 2D context unavailable"));
+      return;
+    }
+
+    const img = new Image();
+    img.onload = (): void => {
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = (): void => {
+      reject(new Error("Failed to rasterize SVG logo"));
+    };
+    img.src = logoToDataUrl(logo);
+  });
 }
 
 // =============================================================================

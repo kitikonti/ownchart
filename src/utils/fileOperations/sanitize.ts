@@ -66,6 +66,10 @@ function sanitizeViewSettings(
     holidayRegion: vs.holidayRegion
       ? sanitizeString(vs.holidayRegion)
       : vs.holidayRegion,
+    // Sanitize logo fileName (data is Base64, mimeType is validated by deserialize)
+    projectLogo: vs.projectLogo
+      ? { ...vs.projectLogo, fileName: sanitizeString(vs.projectLogo.fileName) }
+      : vs.projectLogo,
   };
 }
 

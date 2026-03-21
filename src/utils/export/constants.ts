@@ -36,6 +36,8 @@ export const EXPORT_COLORS = {
   textSummary: COLORS.slate[500],
   /** slate-200 — header borders */
   border: COLORS.slate[200],
+  /** slate-300 — PDF header/footer separator (stronger than border for print) */
+  separator: COLORS.slate[300],
   /** slate-100 — row borders */
   borderLight: COLORS.slate[100],
   /** slate-50 — header background */

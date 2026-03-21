@@ -118,6 +118,7 @@ describe("PdfPreview", () => {
           showProjectName: true,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         },
       };
       render(
@@ -133,6 +134,7 @@ describe("PdfPreview", () => {
           showProjectName: false,
           showAuthor: true,
           showExportDate: false,
+          showLogo: false,
         },
       };
       render(
@@ -148,11 +150,13 @@ describe("PdfPreview", () => {
           showProjectName: false,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         },
         footer: {
           showProjectName: false,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         },
       };
       render(
