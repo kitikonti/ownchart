@@ -1,47 +1,47 @@
 # OwnChart-Specific Architecture
 
-Checkliste für projektspezifische Patterns: Zustand State Management, .ownchart File Format, Undo/Redo, Component Architecture und Tailwind.
+Checklist for project-specific patterns: Zustand state management, .ownchart file format, undo/redo, component architecture, and Tailwind.
 
 ## State Management (Zustand)
 
-- [ ] Prüfe dass Slices den Projekt-Patterns folgen: Actions sind semantisch (`addTask()` nicht `setState()`), Selectors sind extrahiert
-- [ ] Prüfe dass Immer Middleware korrekt verwendet wird — KEIN manuelles Object-Spreading in Immer-Actions, direkte Mutation des Draft-State ist korrekt
-- [ ] Stelle sicher dass KEINE direkte State-Mutation außerhalb von Immer stattfindet
-- [ ] Prüfe dass State normalisiert ist — keine verschachtelten Arrays/Objects die Daten duplizieren
-- [ ] Prüfe dass Store-Zugriffe über Hooks erfolgen: `useTaskStore()`, `useChartStore()` etc.
-- [ ] Prüfe dass Cross-Store-Zugriffe über `getState()` erfolgen wo nötig (z.B. in navigateCell)
+- [ ] Check that slices follow the project patterns: Actions are semantic (`addTask()` not `setState()`), selectors are extracted
+- [ ] Check that Immer middleware is used correctly — NO manual object spreading in Immer actions, direct mutation of the draft state is correct
+- [ ] Ensure that NO direct state mutation happens outside of Immer
+- [ ] Check that state is normalized — no nested arrays/objects that duplicate data
+- [ ] Check that store access happens through hooks: `useTaskStore()`, `useChartStore()` etc.
+- [ ] Check that cross-store access uses `getState()` where needed (e.g., in navigateCell)
 
 ## File Format Compatibility (.ownchart)
 
-- [ ] Prüfe dass Änderungen Rückwärtskompatibilität mit bestehenden .ownchart Dateien wahren
-- [ ] Prüfe dass Validation fehlerhafte Daten graceful abfängt (keine Crashes bei alten Dateien)
-- [ ] Stelle sicher dass KEINE Breaking Changes ohne Migrationsstrategie eingeführt werden
-- [ ] Prüfe dass die File-Format-Version getrackt wird wenn strukturelle Änderungen gemacht werden
-- [ ] Prüfe Round-Trip-Konsistenz: Save → Load → Save produziert identische Datei
+- [ ] Check that changes maintain backward compatibility with existing .ownchart files
+- [ ] Check that validation handles faulty data gracefully (no crashes on old files)
+- [ ] Ensure that NO breaking changes are introduced without a migration strategy
+- [ ] Check that the file format version is tracked when structural changes are made
+- [ ] Check round-trip consistency: Save → Load → Save produces identical file
 
 ## Undo/Redo System (historySlice)
 
-- [ ] Prüfe dass ALLE user-initiierten Mutationen in die History integriert sind
-- [ ] Prüfe dass das Command Pattern korrekt befolgt wird: Jede Operation muss invertierbar sein
-- [ ] Prüfe dass die History KEINE intermediate Drag-States erfasst — nur den finalen State
-- [ ] Prüfe dass die History Stack Size limitiert ist — keine Memory Leaks bei langen Sessions
+- [ ] Check that ALL user-initiated mutations are integrated into the history
+- [ ] Check that the Command Pattern is correctly followed: Every operation must be invertible
+- [ ] Check that the history does NOT capture intermediate drag states — only the final state
+- [ ] Check that the history stack size is limited — no memory leaks during long sessions
 
 ## Component Architecture
 
-- [ ] Prüfe dass SVAR-style Layout-Patterns eingehalten werden: Sticky Headers, synchronisiertes Scrollen
-- [ ] Prüfe dass D3.js NUR für das verwendet wird was React nicht effizient kann (Scales, SVG-Helpers, Axis-Rendering)
-- [ ] Prüfe dass Timeline-Rendering optimiert ist — nur der sichtbare Bereich sollte gerendert werden bei >1000 Tasks
-- [ ] Prüfe dass Refs angemessen verwendet werden: DOM-Zugriff, D3-Integration, Performance-kritische DOM-Manipulation (z.B. SplitPane Drag)
+- [ ] Check that SVAR-style layout patterns are followed: Sticky headers, synchronized scrolling
+- [ ] Check that D3.js is ONLY used for what React cannot handle efficiently (scales, SVG helpers, axis rendering)
+- [ ] Check that timeline rendering is optimized — only the visible area should be rendered for >1000 tasks
+- [ ] Check that refs are used appropriately: DOM access, D3 integration, performance-critical DOM manipulation (e.g., SplitPane drag)
 
 ## TailwindCSS Usage
 
-- [ ] Prüfe dass Tailwind-Klassen verwendet werden, NICHT Inline-Styles oder separates CSS
-- [ ] Prüfe dass Custom Classes in `index.css` NUR für wirklich wiederverwendbare Utilities sind
-- [ ] Stelle sicher dass KEINE hardcodierten Farben existieren — Tailwind Color System oder Custom Theme nutzen
-- [ ] Prüfe ob Responsive Design mit Tailwind Breakpoints nötig ist
+- [ ] Check that Tailwind classes are used, NOT inline styles or separate CSS
+- [ ] Check that custom classes in `index.css` are ONLY for truly reusable utilities
+- [ ] Ensure that NO hardcoded colors exist — use the Tailwind color system or custom theme
+- [ ] Check whether responsive design with Tailwind breakpoints is needed
 
 ## Import Organization
 
-- [ ] Prüfe dass absolute Imports von `src/` verwendet werden (nicht relative Pfade wie `../../../`)
-- [ ] Prüfe Import-Gruppierung: React/Libraries zuerst, dann lokale Imports, dann Types
-- [ ] Prüfe auf zirkuläre Imports — verwende bei Bedarf `madge --circular src/` zur Überprüfung
+- [ ] Check that absolute imports from `src/` are used (not relative paths like `../../../`)
+- [ ] Check import grouping: React/libraries first, then local imports, then types
+- [ ] Check for circular imports — if needed, use `madge --circular src/` to verify

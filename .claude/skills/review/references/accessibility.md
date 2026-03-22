@@ -1,34 +1,34 @@
 # Accessibility (a11y)
 
-Checkliste für Semantic HTML, Keyboard Navigation, Screen Reader Support und Farb-Kontraste.
+Checklist for semantic HTML, keyboard navigation, screen reader support, and color contrast.
 
 ## Semantic HTML
 
-- [ ] Prüfe korrekte Heading-Hierarchie: h1 → h2 → h3, keine Ebenen überspringen
-- [ ] Prüfe dass `<button>` für Aktionen und `<a>` für Navigation verwendet wird — NICHT div/span mit onClick
-- [ ] Prüfe dass `<form>` mit korrektem Submit-Handling verwendet wird wo Formulare existieren
-- [ ] Prüfe dass native Elemente bevorzugt werden: `<input>` statt custom Text-Fields, `<select>` statt custom Dropdowns (wo möglich)
+- [ ] Check correct heading hierarchy: h1 → h2 → h3, no skipping levels
+- [ ] Check that `<button>` is used for actions and `<a>` for navigation — NOT div/span with onClick
+- [ ] Check that `<form>` with correct submit handling is used where forms exist
+- [ ] Check that native elements are preferred: `<input>` instead of custom text fields, `<select>` instead of custom dropdowns (where possible)
 
 ## Keyboard Navigation
 
-- [ ] Prüfe dass ALLE interaktiven Elemente per Keyboard erreichbar sind (Tab, Enter, Space)
-- [ ] Prüfe dass Focus-Styles sichtbar sind — KEIN `outline: none` ohne alternative Focus-Indikation
-- [ ] Prüfe dass die Tab-Reihenfolge logisch ist und der visuellen Reihenfolge folgt
-- [ ] Prüfe Focus Trapping in Modals — Focus darf nicht hinter dem Modal landen
-- [ ] Prüfe dass Escape Modals/Dropdowns schließt
-- [ ] Prüfe dass Arrow Keys in Menüs/Listen funktionieren
+- [ ] Check that ALL interactive elements are reachable via keyboard (Tab, Enter, Space)
+- [ ] Check that focus styles are visible — NO `outline: none` without alternative focus indication
+- [ ] Check that the tab order is logical and follows the visual order
+- [ ] Check focus trapping in modals — focus must not land behind the modal
+- [ ] Check that Escape closes modals/dropdowns
+- [ ] Check that arrow keys work in menus/lists
 
 ## Screen Reader Support
 
-- [ ] Prüfe dass Icon-Buttons ARIA Labels haben (`aria-label="Save"`, `aria-label="Close"`)
-- [ ] Prüfe dass Bilder Alt-Text haben (leerer Alt für dekorative: `alt=""`)
-- [ ] Prüfe dass Custom Widgets ARIA Roles haben (`role="dialog"`, `role="menu"`, `role="tablist"`)
-- [ ] Prüfe ob Live Regions für dynamischen Content sinnvoll wären (`aria-live="polite"` für Status-Updates)
-- [ ] Prüfe dass ARIA States korrekt gesetzt werden: `aria-expanded`, `aria-selected`, `aria-disabled`, `aria-checked`
+- [ ] Check that icon buttons have ARIA labels (`aria-label="Save"`, `aria-label="Close"`)
+- [ ] Check that images have alt text (empty alt for decorative: `alt=""`)
+- [ ] Check that custom widgets have ARIA roles (`role="dialog"`, `role="menu"`, `role="tablist"`)
+- [ ] Check whether live regions would be useful for dynamic content (`aria-live="polite"` for status updates)
+- [ ] Check that ARIA states are correctly set: `aria-expanded`, `aria-selected`, `aria-disabled`, `aria-checked`
 
 ## Color & Contrast
 
-- [ ] Prüfe dass Farbe NICHT der einzige Informationsträger ist — zusätzlich Icons und/oder Text verwenden
-- [ ] Prüfe Kontrastverhältnis: ≥ 4.5:1 für normalen Text, ≥ 3:1 für großen Text (18px+ oder 14px+ bold)
-- [ ] Prüfe Focus-Indikatoren: Sichtbar und mit ausreichendem Kontrast für Keyboard-User
-- [ ] Berücksichtige Farbenblindheit: Rot/Grün-Kombinationen vermeiden als einzigen Unterscheidungsfaktor
+- [ ] Check that color is NOT the only information carrier — additionally use icons and/or text
+- [ ] Check contrast ratio: ≥ 4.5:1 for normal text, ≥ 3:1 for large text (18px+ or 14px+ bold)
+- [ ] Check focus indicators: Visible and with sufficient contrast for keyboard users
+- [ ] Consider color blindness: Avoid red/green combinations as the sole differentiating factor

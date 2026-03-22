@@ -1,43 +1,43 @@
 # Performance & Optimization
 
-Checkliste für React Performance, algorithmische Effizienz, Bundle Size und Memory Management.
+Checklist for React performance, algorithmic efficiency, bundle size, and memory management.
 
 ## React Performance Patterns
 
-- [ ] Prüfe ob `React.memo()` auf teuren Komponenten verwendet wird — insbesondere Komponenten die häufig re-rendern aber selten neue Props bekommen
-- [ ] Prüfe ob `useMemo()` für teure Berechnungen verwendet wird — aber NICHT für triviale Operationen (premature optimization)
-- [ ] Prüfe ob `useCallback()` für Event-Handler verwendet wird die an memoized Children übergeben werden
-- [ ] Prüfe Dependency Arrays auf Korrektheit — fehlende Dependencies = Bugs, unnötige Dependencies = überflüssige Re-Renders
-- [ ] Prüfe dass List-Items stabile, eindeutige Keys haben — NICHT den Array-Index wenn die Liste umsortiert werden kann
-- [ ] Prüfe ob Lazy Loading für schwere Komponenten sinnvoll wäre (`React.lazy` + Suspense)
+- [ ] Check whether `React.memo()` is used on expensive components — especially components that re-render frequently but rarely receive new props
+- [ ] Check whether `useMemo()` is used for expensive calculations — but NOT for trivial operations (premature optimization)
+- [ ] Check whether `useCallback()` is used for event handlers passed to memoized children
+- [ ] Check dependency arrays for correctness — missing dependencies = bugs, unnecessary dependencies = superfluous re-renders
+- [ ] Check that list items have stable, unique keys — NOT the array index if the list can be reordered
+- [ ] Check whether lazy loading would be useful for heavy components (`React.lazy` + Suspense)
 
 ## Algorithmic Efficiency
 
-- [ ] Prüfe auf O(n²) nested Loops wo O(n) möglich wäre — nutze Map/Set für Lookups statt Array.find/Array.includes in Schleifen
-- [ ] Prüfe dass schwere Berechnungen NICHT im Render-Pfad stattfinden — nutze useMemo/useEffect
-- [ ] Prüfe ob Debouncing/Throttling für häufige Events verwendet wird (scroll, resize, input)
-- [ ] Prüfe ob effiziente Datenstrukturen genutzt werden: Map für Lookups, Set für Einzigartigkeit
-- [ ] Prüfe auf Early Returns — unnötige Arbeit frühzeitig vermeiden
-- [ ] Prüfe ob Pagination/Virtualisierung für lange Listen nötig ist (>100 Items)
+- [ ] Check for O(n²) nested loops where O(n) would be possible — use Map/Set for lookups instead of Array.find/Array.includes in loops
+- [ ] Check that expensive calculations do NOT happen in the render path — use useMemo/useEffect
+- [ ] Check whether debouncing/throttling is used for frequent events (scroll, resize, input)
+- [ ] Check whether efficient data structures are used: Map for lookups, Set for uniqueness
+- [ ] Check for early returns — avoid unnecessary work early
+- [ ] Check whether pagination/virtualization is needed for long lists (>100 items)
 
 ## Bundle Size & Loading
 
-- [ ] Prüfe auf ungenutzte Library-Imports — Tree-Shaking funktioniert nur wenn keine Side-Effects importiert werden
-- [ ] Prüfe ob große Dependencies Code-Split werden können
-- [ ] Stelle sicher dass KEINE ganzen Libraries importiert werden wenn nur Teile benötigt werden (`import debounce from 'lodash/debounce'` NICHT `import _ from 'lodash'`)
-- [ ] Prüfe ob Bilder optimiert sind (WebP, komprimiert, responsive Sizes)
+- [ ] Check for unused library imports — tree-shaking only works when no side effects are imported
+- [ ] Check whether large dependencies can be code-split
+- [ ] Ensure that NO entire libraries are imported when only parts are needed (`import debounce from 'lodash/debounce'` NOT `import _ from 'lodash'`)
+- [ ] Check whether images are optimized (WebP, compressed, responsive sizes)
 
 ## Memory Management
 
-- [ ] Prüfe dass Event Listeners in useEffect Cleanup aufgeräumt werden (return-Funktion)
-- [ ] Prüfe dass Timer/Intervals bei Unmount gecleaned werden (clearTimeout, clearInterval)
-- [ ] Prüfe dass Subscriptions unsubscribed werden
-- [ ] Prüfe auf Memory Leaks: Große Objekte die nicht freigegeben werden, wachsende Arrays/Maps ohne Limit
-- [ ] Prüfe dass keine Closures über veraltete State-Werte schließen (stale closures)
+- [ ] Check that event listeners are cleaned up in useEffect cleanup (return function)
+- [ ] Check that timers/intervals are cleaned up on unmount (clearTimeout, clearInterval)
+- [ ] Check that subscriptions are unsubscribed
+- [ ] Check for memory leaks: Large objects that are not freed, growing arrays/maps without limits
+- [ ] Check that no closures close over stale state values (stale closures)
 
 ## Render Optimization
 
-- [ ] Prüfe ob teure Renders mit React DevTools Profiler analysiert werden sollten
-- [ ] Prüfe ob Virtualisierung für lange Listen nötig ist (react-window/react-virtual)
-- [ ] Prüfe ob Suspense Boundaries für Loading-States sinnvoll sind
-- [ ] Prüfe ob DOM-Updates minimiert werden — Batch-Updates nutzen wo möglich
+- [ ] Check whether expensive renders should be analyzed with React DevTools Profiler
+- [ ] Check whether virtualization is needed for long lists (react-window/react-virtual)
+- [ ] Check whether Suspense boundaries would be useful for loading states
+- [ ] Check whether DOM updates are minimized — use batch updates where possible

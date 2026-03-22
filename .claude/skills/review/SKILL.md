@@ -1,29 +1,29 @@
 ---
 name: review
-description: "Comprehensive code review using OwnChart review checklist (Issue #44). /review for full review, /review quick for pre-commit check, /review <category> for focused review. Categories: architecture, code-quality, refactoring, security, performance, a11y, testing, docs, ownchart."
+description: "Comprehensive code reviews based on the OwnChart review checklist (Issue #44). /review for full review, /review quick for pre-commit check, /review <category> for focused review. Categories: architecture, code-quality, refactoring, security, performance, a11y, testing, docs, ownchart."
 ---
 
 # Code Review Skill
 
-Systematische Code-Reviews basierend auf der OwnChart Review-Checkliste (GitHub Issue #44).
+Systematic code reviews based on the OwnChart review checklist (GitHub Issue #44).
 
-## Modi
+## Modes
 
 ### 1. Full Review (default)
-**Trigger:** `/review` oder `/review full`
-**Lädt:** Alle 9 Reference-Dateien
-**Nutzen:** Umfassende Review aller Aspekte
+**Trigger:** `/review` or `/review full`
+**Loads:** All 9 reference files
+**Purpose:** Comprehensive review of all aspects
 
 ### 2. Quick Review (Pre-Commit)
 **Trigger:** `/review quick`
-**Lädt:** architecture-design.md, code-quality-standards.md, ownchart-patterns.md
-**Nutzen:** Schnelle Prüfung vor dem Commit — fokussiert auf die häufigsten Probleme
+**Loads:** architecture-design.md, code-quality-standards.md, ownchart-patterns.md
+**Purpose:** Quick check before committing — focused on the most common issues
 
 ### 3. Focused Review
 **Trigger:** `/review <category>`
-**Lädt:** Nur die zugehörige Reference-Datei
+**Loads:** Only the corresponding reference file
 
-| Argument | Reference-Datei |
+| Argument | Reference file |
 |----------|----------------|
 | `architecture` | references/architecture-design.md |
 | `code-quality` | references/code-quality-standards.md |
@@ -35,44 +35,44 @@ Systematische Code-Reviews basierend auf der OwnChart Review-Checkliste (GitHub 
 | `docs` | references/documentation-maintainability.md |
 | `ownchart` | references/ownchart-patterns.md |
 
-## Scope-Erkennung
+## Scope Detection
 
-Bestimme was reviewt werden soll:
+Determine what should be reviewed:
 
-1. **Dateien explizit angegeben** (z.B. `/review src/store/taskSlice.ts`) → Diese Dateien reviewen
-2. **"uncommitted"/"staged"/"changes"** → `git diff` + `git diff --cached` auswerten
-3. **PR-Nummer** (z.B. `/review #42` oder `/review PR 42`) → `gh pr diff 42` auswerten
-4. **Nichts angegeben** → User fragen: "Was soll ich reviewen? Dateien, uncommitted changes, oder eine PR?"
+1. **Files explicitly specified** (e.g., `/review src/store/taskSlice.ts`) → Review those files
+2. **"uncommitted"/"staged"/"changes"** → Evaluate `git diff` + `git diff --cached`
+3. **PR number** (e.g., `/review #42` or `/review PR 42`) → Evaluate `gh pr diff 42`
+4. **Nothing specified** → Ask the user: "What should I review? Files, uncommitted changes, or a PR?"
 
 ## Workflow
 
-### Schritt 1: Scope bestimmen
-Identifiziere die zu reviewenden Dateien gemäß Scope-Erkennung oben.
+### Step 1: Determine scope
+Identify the files to review according to the scope detection above.
 
-### Schritt 2: Modus bestimmen
-Parse das Argument nach Modi-Definition oben. Default ist `full`.
+### Step 2: Determine mode
+Parse the argument according to the mode definitions above. Default is `full`.
 
-### Schritt 3: Reference-Dateien laden
-Lade die Reference-Dateien entsprechend dem gewählten Modus. Nutze das Read-Tool um die Dateien aus `references/` relativ zu dieser SKILL.md zu lesen.
+### Step 3: Load reference files
+Load the reference files corresponding to the chosen mode. Use the Read tool to read the files from `references/` relative to this SKILL.md.
 
-### Schritt 4: Dateien lesen und analysieren
-Lies jede zu reviewende Datei vollständig. Bei großen Diffs: Fokussiere auf die geänderten Bereiche, aber prüfe auch den Kontext drumherum.
+### Step 4: Read and analyze files
+Read each file to be reviewed in full. For large diffs: Focus on the changed areas, but also check the surrounding context.
 
-### Schritt 5: Systematische Prüfung
-**KERNREGEL: Kein Checklist-Item überspringen. Jedes Item gegen jede Datei prüfen.**
+### Step 5: Systematic check
+**CORE RULE: Do not skip any checklist item. Check every item against every file.**
 
-Gehe jede geladene Reference-Datei durch und prüfe JEDES Item gegen JEDE Datei. Notiere nur Findings — Items die bestanden werden, müssen nicht aufgelistet werden.
+Go through each loaded reference file and check EVERY item against EVERY file. Only note findings — items that pass do not need to be listed.
 
-### Schritt 6: Report erstellen
-Erstelle den Report im definierten Output-Format (siehe unten).
+### Step 6: Create report
+Create the report in the defined output format (see below).
 
-## Output-Format
+## Output Format
 
 ```markdown
 # Code Review Report
 
 **Mode**: Full / Quick / Focused (<category>)
-**Scope**: [Dateiliste oder "uncommitted changes" oder "PR #X"]
+**Scope**: [File list or "uncommitted changes" or "PR #X"]
 **Date**: [YYYY-MM-DD]
 
 ## Summary
@@ -85,104 +85,104 @@ Erstelle den Report im definierten Output-Format (siehe unten).
 
 ## Findings
 
-### [Dateiname]
+### [Filename]
 
 #### CRITICAL
-- **[F001]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung des Problems]
-  - **Impact**: [Was kann passieren]
-  - **Fix**: [Konkreter Lösungsvorschlag]
+- **[F001]** **[Checklist item]** (Line X-Y): [Description of the problem]
+  - **Impact**: [What could happen]
+  - **Fix**: [Concrete fix suggestion]
 
 #### WARNING
-- **[F002]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
-  - **Fix**: [Lösungsvorschlag]
+- **[F002]** **[Checklist item]** (Line X-Y): [Description]
+  - **Fix**: [Fix suggestion]
 
 #### NOTE
-- **[F003]** **[Checklist-Item]** (Zeile X-Y): [Beschreibung]
+- **[F003]** **[Checklist item]** (Line X-Y): [Description]
 
-### [Nächste Datei...]
+### [Next file...]
 
 ## Cross-File Impacts
-- [Änderungen die andere Dateien betreffen]
-- [Gemeinsame Patterns die refactored werden sollten]
+- [Changes that affect other files]
+- [Shared patterns that should be refactored]
 
 ## Prioritized Recommendations
-1. [F00X] [Wichtigste Änderung zuerst]
-2. [F00Y] [Zweitwichtigste]
+1. [F00X] [Most important change first]
+2. [F00Y] [Second most important]
 3. [...]
 
 ## Model Recommendation
 
 **Recommended model for fixes:** [Sonnet / Opus]
-**Reasoning:** [Kurze Begründung]
+**Reasoning:** [Brief reasoning]
 ```
 
-## Finding-IDs
+## Finding IDs
 
-Jedes Finding bekommt eine eindeutige ID im Format `[FXXX]` (z.B. `[F001]`, `[F002]`, ...).
+Each finding gets a unique ID in the format `[FXXX]` (e.g., `[F001]`, `[F002]`, ...).
 
-- **Fortlaufend nummeriert** über den gesamten Report hinweg (nicht pro Datei oder Severity)
-- **Reihenfolge**: Findings werden in der Reihenfolge nummeriert, in der sie im Report erscheinen (erst Datei 1 CRITICAL → WARNING → NOTE, dann Datei 2, etc.)
-- **Zweck**: Der User kann gezielt auf Findings reagieren, z.B. "fix F003" oder "ignoriere F007"
+- **Sequentially numbered** across the entire report (not per file or severity)
+- **Order**: Findings are numbered in the order they appear in the report (first File 1 CRITICAL → WARNING → NOTE, then File 2, etc.)
+- **Purpose**: The user can specifically act on findings, e.g., "fix F003" or "ignore F007"
 
 ## Severity Guide
 
 ### CRITICAL
-Muss vor dem nächsten Release gefixt werden:
-- Security-Vulnerabilities (XSS, Injection, Sensitive Data Exposure)
-- Datenverlust-Risiken (fehlende Validation, kaputte Serialisierung)
-- Kaputte Funktionalität (Runtime-Errors, Logic-Bugs)
-- `any` Types in kritischen Pfaden (Store, File Operations, Validation)
-- Breaking Changes ohne Migration
+Must be fixed before the next release:
+- Security vulnerabilities (XSS, Injection, Sensitive Data Exposure)
+- Data loss risks (missing validation, broken serialization)
+- Broken functionality (runtime errors, logic bugs)
+- `any` types in critical paths (Store, File Operations, Validation)
+- Breaking changes without migration
 
 ### WARNING
-Sollte zeitnah gefixt werden:
-- Code Smells (Funktionen >50 Zeilen, Komponenten >200 Zeilen)
-- Fehlende Tests für neue Funktionalität
-- Hardcoded Values (Magic Numbers, Farben, Strings)
-- Accessibility-Probleme (fehlende ARIA-Labels, Keyboard-Navigation)
-- Performance-Probleme (unnötige Re-Renders, O(n²) wo O(n) möglich)
-- DRY-Verletzungen (duplizierter Code)
+Should be fixed soon:
+- Code smells (functions >50 lines, components >200 lines)
+- Missing tests for new functionality
+- Hardcoded values (magic numbers, colors, strings)
+- Accessibility issues (missing ARIA labels, keyboard navigation)
+- Performance issues (unnecessary re-renders, O(n²) where O(n) is possible)
+- DRY violations (duplicated code)
 
 ### NOTE
-Nice-to-have Verbesserungen:
-- Style & Naming Inkonsistenzen
-- Kleine Refactorings (Extract Method, Rename Variable)
-- Dokumentations-Lücken (fehlende JSDoc, unklare Comments)
-- Import-Organisation
-- Tailwind-Nutzung statt Inline-Styles
+Nice-to-have improvements:
+- Style & naming inconsistencies
+- Small refactorings (extract method, rename variable)
+- Documentation gaps (missing JSDoc, unclear comments)
+- Import organization
+- Tailwind usage instead of inline styles
 
-## OwnChart Kontext-Reminder
+## OwnChart Context Reminder
 
-Beachte diese projektspezifischen Gotchas während der Review:
+Keep these project-specific gotchas in mind during the review:
 
-- **NEVER read font data files** (`src/utils/export/fonts/inter*FontData.ts`) — riesige Base64-Daten
-- **Column config**: `getVisibleColumns(hiddenColumns, showProgress)` — ALLE Aufrufer müssen beide Parameter übergeben
-- **State-Architektur**: Zustand Slices mit Immer in `src/store/slices/` — nicht `src/store/` direkt
-- **EDITABLE_FIELDS** in taskSlice enthält 'type' — navigierbar aber keine sichtbare Spalte
-- **SplitPane**: Direct DOM manipulation während Drag (Refs, nicht State) — performancekritisch
-- **Dropdown-Pattern**: `useDropdown` Hook + `DropdownTrigger` + `DropdownPanel` + Content
-- **Conventional Commits** sind Pflicht (feat:, fix:, refactor:, etc.)
-- **CI-Check vor Push**: `npm run ci:local` muss bestanden werden
+- **NEVER read font data files** (`src/utils/export/fonts/inter*FontData.ts`) — huge Base64 data
+- **Column config**: `getVisibleColumns(hiddenColumns, showProgress)` — ALL callers must pass both parameters
+- **State architecture**: Zustand slices with Immer in `src/store/slices/` — not `src/store/` directly
+- **EDITABLE_FIELDS** in taskSlice contains 'type' — navigable but not a visible column
+- **SplitPane**: Direct DOM manipulation during drag (refs, not state) — performance-critical
+- **Dropdown pattern**: `useDropdown` hook + `DropdownTrigger` + `DropdownPanel` + content
+- **Conventional Commits** are required (feat:, fix:, refactor:, etc.)
+- **CI check before push**: `npm run ci:local` must pass
 
 ## Model Recommendation Guide
 
-Am Ende jeder Review eine Empfehlung aussprechen, welches Modell (Sonnet oder Opus) für die Fixes verwendet werden sollte.
+At the end of each review, provide a recommendation for which model (Sonnet or Opus) should be used for the fixes.
 
-### Sonnet empfehlen wenn:
-- Nur NOTEs und einfache WARNINGs gefunden wurden
-- Fixes mechanisch/repetitiv sind (Renames, Import-Sortierung, fehlende ARIA-Labels, Magic Numbers extrahieren)
-- Änderungen auf einzelne Dateien beschränkt sind
-- Kein tiefes Architektur-Verständnis nötig ist
-- Standard-Patterns angewendet werden (z.B. `React.memo` hinzufügen, Tests ergänzen)
+### Recommend Sonnet when:
+- Only NOTEs and simple WARNINGs were found
+- Fixes are mechanical/repetitive (renames, import sorting, missing ARIA labels, extracting magic numbers)
+- Changes are limited to individual files
+- No deep architectural understanding is needed
+- Standard patterns are being applied (e.g., adding `React.memo`, adding tests)
 
-### Opus empfehlen wenn:
-- CRITICAL Findings vorhanden sind
-- Fixes architekturelle Änderungen erfordern (State-Redesign, neue Patterns einführen)
-- Cross-File Refactorings nötig sind (mehrere Dateien koordiniert ändern)
-- Komplexe Logik-Bugs behoben werden müssen
-- Security-Fixes mit subtilen Implikationen
-- Änderungen am Zustand-Store oder History-System betreffen
-- Tiefes Verständnis des Zusammenspiels mehrerer Systeme nötig ist
+### Recommend Opus when:
+- CRITICAL findings are present
+- Fixes require architectural changes (state redesign, introducing new patterns)
+- Cross-file refactorings are needed (coordinated changes across multiple files)
+- Complex logic bugs need to be fixed
+- Security fixes with subtle implications
+- Changes affect the Zustand store or history system
+- Deep understanding of the interplay between multiple systems is needed
 
-### Gemischte Findings:
-Wenn sowohl einfache als auch komplexe Fixes nötig sind, Opus empfehlen mit dem Hinweis, dass die einfachen Fixes (NOTEs) auch mit Sonnet erledigt werden könnten, um Kosten zu sparen.
+### Mixed findings:
+If both simple and complex fixes are needed, recommend Opus with the note that the simple fixes (NOTEs) could also be handled with Sonnet to save costs.

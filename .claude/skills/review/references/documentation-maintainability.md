@@ -1,23 +1,23 @@
 # Documentation & Maintainability
 
-Checkliste für Code-Dokumentation, Self-Documenting Code und Commit-Standards.
+Checklist for code documentation, self-documenting code, and commit standards.
 
 ## Code Documentation
 
-- [ ] Prüfe dass komplexe Logik Comments hat die das WARUM erklären (nicht das Was — Code erklärt sich selbst)
-- [ ] Stelle sicher dass KEINE offensichtlichen Comments existieren: `// increment i` für `i++` ist unnötig
-- [ ] Prüfe ob JSDoc für Public APIs/Utilities vorhanden ist (Parameter, Return, Beispiele)
-- [ ] Prüfe dass Type-Definitionen als Inline-Dokumentation dienen — gute Typen ersetzen viele Comments
-- [ ] Prüfe ob README/Docs aktualisiert werden müssen wenn sich Public APIs ändern
-- [ ] Prüfe ob Architektur-Entscheidungen dokumentiert sind (im Code als Comment oder in docs/)
+- [ ] Check that complex logic has comments explaining the WHY (not the what — code explains itself)
+- [ ] Ensure that NO obvious comments exist: `// increment i` for `i++` is unnecessary
+- [ ] Check whether JSDoc is present for public APIs/utilities (parameters, return, examples)
+- [ ] Check that type definitions serve as inline documentation — good types replace many comments
+- [ ] Check whether README/docs need to be updated when public APIs change
+- [ ] Check whether architecture decisions are documented (in the code as comments or in docs/)
 
 ## Self-Documenting Code
 
-- [ ] Prüfe dass Variablen-Namen den Zweck erklären: `isTaskCompleted` nicht `flag`, `selectedTaskIds` nicht `ids`
-- [ ] Prüfe dass Funktions-Namen Verben sind: `calculateTotalDuration()` nicht `total()`, `filterVisibleTasks()` nicht `filter()`
-- [ ] Prüfe dass Boolean-Namen Fragen sind: `hasChildren`, `canEdit`, `isVisible`, `shouldAutoScroll`
-- [ ] Prüfe dass Konstanten-Namen Bedeutung erklären: `MAX_TASK_DEPTH = 10` nicht `MAX = 10`, `SCROLL_DEBOUNCE_MS = 150` nicht `DELAY = 150`
-- [ ] Prüfe dass Enum/Union-Werte selbsterklärend sind: `'fit-to-page' | 'custom-zoom'` nicht `'mode1' | 'mode2'`
+- [ ] Check that variable names explain the purpose: `isTaskCompleted` not `flag`, `selectedTaskIds` not `ids`
+- [ ] Check that function names are verbs: `calculateTotalDuration()` not `total()`, `filterVisibleTasks()` not `filter()`
+- [ ] Check that boolean names are questions: `hasChildren`, `canEdit`, `isVisible`, `shouldAutoScroll`
+- [ ] Check that constant names explain meaning: `MAX_TASK_DEPTH = 10` not `MAX = 10`, `SCROLL_DEBOUNCE_MS = 150` not `DELAY = 150`
+- [ ] Check that enum/union values are self-explanatory: `'fit-to-page' | 'custom-zoom'` not `'mode1' | 'mode2'`
 
 ## Help Documentation Completeness
 
@@ -28,6 +28,6 @@ Checkliste für Code-Dokumentation, Self-Documenting Code und Commit-Standards.
 
 ## Commit Messages
 
-- [ ] Prüfe dass Conventional Commits Format eingehalten wird (feat:, fix:, refactor:, perf:, test:, docs:, chore:, ui:)
-- [ ] Prüfe dass Messages beschreibend sind: "fix: prevent crash when loading file with missing dates" nicht "fix bug"
-- [ ] Prüfe dass Commits atomar sind: Ein logischer Change pro Commit, nicht mehrere unzusammenhängende Änderungen
+- [ ] Check that Conventional Commits format is followed (feat:, fix:, refactor:, perf:, test:, docs:, chore:, ui:)
+- [ ] Check that messages are descriptive: "fix: prevent crash when loading file with missing dates" not "fix bug"
+- [ ] Check that commits are atomic: One logical change per commit, not multiple unrelated changes

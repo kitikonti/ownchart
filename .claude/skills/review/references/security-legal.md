@@ -1,61 +1,61 @@
 # Security & Legal
 
-Checkliste für Security, Input Validation, XSS-Prävention, Licensing und GDPR-Compliance.
+Checklist for security, input validation, XSS prevention, licensing, and GDPR compliance.
 
 ## Input Validation & Sanitization
 
-- [ ] Prüfe dass ALLE User-Inputs validiert werden (Typ, Format, Wertebereich)
-- [ ] Prüfe dass DOMPurify für jeden HTML-Content verwendet wird
-- [ ] Prüfe dass File-Uploads validiert werden (Typ, Größe, Inhaltsstruktur) — OwnChart nutzt 6-Layer Validation Pipeline
-- [ ] Stelle sicher dass KEIN `eval()` oder `new Function()` verwendet wird
-- [ ] Stelle sicher dass KEIN `dangerouslySetInnerHTML` ohne DOMPurify existiert
+- [ ] Check that ALL user inputs are validated (type, format, value range)
+- [ ] Check that DOMPurify is used for all HTML content
+- [ ] Check that file uploads are validated (type, size, content structure) — OwnChart uses a 6-layer validation pipeline
+- [ ] Ensure that NO `eval()` or `new Function()` is used
+- [ ] Ensure that NO `dangerouslySetInnerHTML` exists without DOMPurify
 
 ## XSS Prevention
 
-- [ ] Prüfe dass React Auto-Escaping genutzt wird (JSX statt innerHTML)
-- [ ] Prüfe dass kein User-Content in Script-Tags oder Event-Handlern landet
-- [ ] Prüfe dass URL-Parameter vor Verwendung sanitisiert werden
-- [ ] Prüfe dass externe Links `rel="noopener noreferrer"` haben
+- [ ] Check that React auto-escaping is used (JSX instead of innerHTML)
+- [ ] Check that no user content ends up in script tags or event handlers
+- [ ] Check that URL parameters are sanitized before use
+- [ ] Check that external links have `rel="noopener noreferrer"`
 
 ## Sensitive Data Protection
 
-- [ ] Stelle sicher dass KEINE API Keys, Tokens oder Secrets im Code sind
-- [ ] Stelle sicher dass KEINE Credentials in Comments oder Commit Messages stehen
-- [ ] Stelle sicher dass KEINE internen URLs/Endpoints die Architektur exponieren
-- [ ] Stelle sicher dass KEINE persönlichen Informationen im Code sind (Emails, Namen, Telefonnummern)
-- [ ] Stelle sicher dass KEINE Development/Staging URLs in Production-Code sind
-- [ ] Prüfe korrekte Nutzung von Environment Variables (Vite: `import.meta.env`)
+- [ ] Ensure that NO API keys, tokens, or secrets are in the code
+- [ ] Ensure that NO credentials are in comments or commit messages
+- [ ] Ensure that NO internal URLs/endpoints expose the architecture
+- [ ] Ensure that NO personal information is in the code (emails, names, phone numbers)
+- [ ] Ensure that NO development/staging URLs are in production code
+- [ ] Check correct usage of environment variables (Vite: `import.meta.env`)
 
 ## Secure Coding Practices
 
-- [ ] Prüfe auf Prototype Pollution Prevention — `Object.create(null)` für User-kontrollierte Keys
-- [ ] Prüfe auf sicheres Parsing — try-catch um `JSON.parse` mit anschließender Validation
-- [ ] Prüfe dass keine deprecated/vulnerablen APIs verwendet werden
-- [ ] Prüfe auf sichere Regex — keine ReDoS-anfälligen Patterns
+- [ ] Check for prototype pollution prevention — `Object.create(null)` for user-controlled keys
+- [ ] Check for safe parsing — try-catch around `JSON.parse` with subsequent validation
+- [ ] Check that no deprecated/vulnerable APIs are used
+- [ ] Check for safe regex — no ReDoS-vulnerable patterns
 
 ## Licensing Compliance
 
-- [ ] Prüfe dass alle Dependencies kompatible Lizenzen haben (Projekt ist MIT)
-- [ ] Stelle sicher dass KEIN GPL-Code verwendet wird (Copyleft inkompatibel mit MIT)
-- [ ] Stelle sicher dass KEIN proprietärer/kommerzieller Code ohne Lizenz eingebunden ist
-- [ ] Bei Bedarf prüfen: `npx license-checker --summary`
+- [ ] Check that all dependencies have compatible licenses (project is MIT)
+- [ ] Ensure that NO GPL code is used (copyleft incompatible with MIT)
+- [ ] Ensure that NO proprietary/commercial code is included without a license
+- [ ] If needed, check: `npx license-checker --summary`
 
 ## Attribution & Copyright
 
-- [ ] Prüfe dass Third-Party Code korrekt attributiert ist (mit Source-Link)
-- [ ] Prüfe dass Algorithmus-Implementierungen die Quelle zitieren
-- [ ] Prüfe dass Lizenz-Header vorhanden sind wo Dependencies es erfordern
+- [ ] Check that third-party code is correctly attributed (with source link)
+- [ ] Check that algorithm implementations cite the source
+- [ ] Check that license headers are present where dependencies require them
 
 ## Privacy & GDPR
 
-- [ ] Stelle sicher dass KEINE Analytics oder Tracking existiert — OwnChart ist privacy-first
-- [ ] Prüfe dass localStorage nur für die eigenen Daten des Users genutzt wird (vollständig lokal)
-- [ ] Stelle sicher dass KEINE Daten an externe Services gesendet werden
-- [ ] Stelle sicher dass KEIN Fingerprinting oder User-Identifikation stattfindet
+- [ ] Ensure that NO analytics or tracking exists — OwnChart is privacy-first
+- [ ] Check that localStorage is only used for the user's own data (fully local)
+- [ ] Ensure that NO data is sent to external services
+- [ ] Ensure that NO fingerprinting or user identification takes place
 
 ## Professional Standards
 
-- [ ] Stelle sicher dass KEINE offensiven/unangemessenen Comments oder Variablen-Namen existieren
-- [ ] Stelle sicher dass KEINE firmenspezifischen Referenzen vorhanden sind
-- [ ] Stelle sicher dass KEINE unprofessionelle Sprache in Comments steht
-- [ ] Stelle sicher dass KEINE TODO-Comments mit persönlichen Namen oder Emails existieren
+- [ ] Ensure that NO offensive/inappropriate comments or variable names exist
+- [ ] Ensure that NO company-specific references are present
+- [ ] Ensure that NO unprofessional language is in comments
+- [ ] Ensure that NO TODO comments with personal names or emails exist

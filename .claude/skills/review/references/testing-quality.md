@@ -1,37 +1,37 @@
 # Testing & Quality Assurance
 
-Checkliste für Test Coverage, Error Handling, Testing Best Practices und Logging.
+Checklist for test coverage, error handling, testing best practices, and logging.
 
 ## Test Coverage
 
-- [ ] Prüfe dass Unit Tests für alle Utilities und Pure Functions existieren (100% Target für kritische Module)
-- [ ] Prüfe dass Tests für Custom Hooks existieren
-- [ ] Prüfe dass Component Tests Verhalten testen, NICHT Implementierungsdetails (kein Testing von internem State)
-- [ ] Prüfe dass Edge Cases abgedeckt sind: leere Werte, null, undefined, Extremwerte, leere Arrays/Objects
-- [ ] Prüfe dass Error Cases getestet sind: Was passiert bei ungültigen Inputs?
-- [ ] Prüfe ob Integration Tests für Feature-Flows existieren
-- [ ] Prüfe ob E2E Tests (Playwright) für user-facing Features sinnvoll wären — insbesondere für: neue UI-Workflows (Dialoge, Upload-Flows, Multi-Step-Interaktionen), kritische User-Journeys (Export, File Save/Load), Features mit Browser-API-Abhängigkeiten (File Input, Drag&Drop, Clipboard). Nicht jedes Feature braucht E2E Tests, aber Features die reales User-Verhalten über mehrere Komponenten hinweg involvieren sollten bevorzugt mit E2E statt Unit Tests abgedeckt werden
+- [ ] Check that unit tests exist for all utilities and pure functions (100% target for critical modules)
+- [ ] Check that tests exist for custom hooks
+- [ ] Check that component tests test behavior, NOT implementation details (no testing of internal state)
+- [ ] Check that edge cases are covered: empty values, null, undefined, extreme values, empty arrays/objects
+- [ ] Check that error cases are tested: What happens with invalid inputs?
+- [ ] Check whether integration tests exist for feature flows
+- [ ] Check whether E2E tests (Playwright) would be useful for user-facing features — especially for: new UI workflows (dialogs, upload flows, multi-step interactions), critical user journeys (export, file save/load), features with browser API dependencies (file input, drag & drop, clipboard). Not every feature needs E2E tests, but features that involve real user behavior across multiple components should preferably be covered with E2E rather than unit tests
 
 ## Error Handling
 
-- [ ] Prüfe dass try-catch Blocks dort existieren wo Fehler auftreten können (Parsing, File Operations, externe Aufrufe)
-- [ ] Prüfe dass Error Messages User-freundlich sind — keine technischen Stack Traces für den Enduser
-- [ ] Stelle sicher dass KEINE Silent Failures existieren — Fehler müssen geloggt oder dem User angezeigt werden
-- [ ] Prüfe ob Error Boundaries für React Component Errors existieren
-- [ ] Prüfe auf Graceful Degradation: Feature schlägt fehl, App läuft weiter
-- [ ] Prüfe ob Recovery-Mechanismen existieren (Retry, Reset, Alternative Pfade)
+- [ ] Check that try-catch blocks exist where errors can occur (parsing, file operations, external calls)
+- [ ] Check that error messages are user-friendly — no technical stack traces for the end user
+- [ ] Ensure that NO silent failures exist — errors must be logged or displayed to the user
+- [ ] Check whether error boundaries exist for React component errors
+- [ ] Check for graceful degradation: Feature fails, app continues running
+- [ ] Check whether recovery mechanisms exist (retry, reset, alternative paths)
 
 ## Testing Best Practices
 
-- [ ] Prüfe dass Tests deterministisch sind — keine flaky Tests (keine Abhängigkeit von Timing, Reihenfolge oder externem State)
-- [ ] Prüfe dass Tests isoliert sind — kein geteilter State zwischen Tests (beforeEach mit Clean Setup)
-- [ ] Prüfe dass Test-Namen Verhalten beschreiben: `it('should calculate business days excluding weekends')` nicht `it('test 1')`
-- [ ] Prüfe AAA Pattern: Arrange (Setup), Act (Ausführung), Assert (Überprüfung) — klar getrennt
-- [ ] Prüfe dass Mocks sparsam eingesetzt werden — echten Code testen wo möglich, nur externe Dependencies mocken
+- [ ] Check that tests are deterministic — no flaky tests (no dependency on timing, order, or external state)
+- [ ] Check that tests are isolated — no shared state between tests (beforeEach with clean setup)
+- [ ] Check that test names describe behavior: `it('should calculate business days excluding weekends')` not `it('test 1')`
+- [ ] Check AAA pattern: Arrange (setup), Act (execution), Assert (verification) — clearly separated
+- [ ] Check that mocks are used sparingly — test real code where possible, only mock external dependencies
 
 ## Logging & Observability
 
-- [ ] Stelle sicher dass KEIN `console.log` in Production-Code existiert — nur in Test-/Dev-Hilfscode
-- [ ] Stelle sicher dass KEIN Debug-Code existiert: `debugger`, test-only Branches, temporäre Flags
-- [ ] Prüfe dass Error Messages genug Kontext für Debugging enthalten (aber keine sensitiven Daten)
-- [ ] Prüfe dass Fehler mit Kontext-Information geloggt werden (welche Operation, welche Daten, wo im Flow)
+- [ ] Ensure that NO `console.log` exists in production code — only in test/dev helper code
+- [ ] Ensure that NO debug code exists: `debugger`, test-only branches, temporary flags
+- [ ] Check that error messages contain enough context for debugging (but no sensitive data)
+- [ ] Check that errors are logged with context information (which operation, which data, where in the flow)

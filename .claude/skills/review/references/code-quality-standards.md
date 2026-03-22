@@ -1,40 +1,40 @@
 # Code Quality & Standards
 
-Checkliste für TypeScript-Qualität, Naming, Dead Code und Code Smells. Jedes Item systematisch prüfen.
+Checklist for TypeScript quality, naming, dead code, and code smells. Systematically check each item.
 
 ## TypeScript Strict Mode
 
-- [ ] Prüfe dass KEINE `any` Types vorhanden sind — nutze `unknown` mit Type Guards oder korrekte Typisierung
-- [ ] Prüfe dass alle Funktionen explizite Return-Types haben
-- [ ] Prüfe dass keine unsicheren Type Assertions (`as`) ohne Begründungskommentar existieren
-- [ ] Prüfe korrekte Interface/Type-Definitionen: Interface für Objekte, Type für Unions
-- [ ] Prüfe ob Generic Types genutzt werden wo sie Wiederverwendbarkeit verbessern würden
-- [ ] Prüfe ob Discriminated Unions für komplexe State-Typen genutzt werden statt String-Literale
+- [ ] Check that NO `any` types are present — use `unknown` with type guards or proper typing
+- [ ] Check that all functions have explicit return types
+- [ ] Check that no unsafe type assertions (`as`) exist without a justification comment
+- [ ] Check correct interface/type definitions: Interface for objects, Type for unions
+- [ ] Check whether generic types are used where they would improve reusability
+- [ ] Check whether discriminated unions are used for complex state types instead of string literals
 
 ## Code Organization
 
-- [ ] Prüfe dass KEINE Funktion länger als 50 Zeilen ist — bei Überschreitung: Extract Method mit klarem Namen
-- [ ] Prüfe dass KEINE Komponente länger als 200 Zeilen ist — bei Überschreitung: Aufteilen in Sub-Komponenten
-- [ ] Prüfe dass Single Responsibility eingehalten wird — eine Funktion = eine Aufgabe
-- [ ] Prüfe Naming: Klare, beschreibende Namen ohne Abkürzungen (`userData` nicht `usrDat`, `isTaskCompleted` nicht `flag`)
-- [ ] Prüfe logische Gruppierung: Zusammengehörige Funktionen stehen beieinander
-- [ ] Prüfe Export-Organisation: Types zuerst, dann Functions/Components
+- [ ] Check that NO function is longer than 50 lines — if exceeded: Extract Method with a clear name
+- [ ] Check that NO component is longer than 200 lines — if exceeded: Split into sub-components
+- [ ] Check that Single Responsibility is maintained — one function = one task
+- [ ] Check naming: Clear, descriptive names without abbreviations (`userData` not `usrDat`, `isTaskCompleted` not `flag`)
+- [ ] Check logical grouping: Related functions are placed together
+- [ ] Check export organization: Types first, then Functions/Components
 
 ## Dead Code Removal
 
-- [ ] Prüfe auf ungenutzte Imports — jeder Import muss verwendet werden
-- [ ] Prüfe auf auskommentierten Code — muss gelöscht werden (Git-History existiert)
-- [ ] Prüfe auf unerreichbare Code-Pfade (Code nach return, unreachable branches)
-- [ ] Prüfe auf ungenutzte Variablen, Funktionen oder Props
-- [ ] Prüfe auf Debug-Code: `console.log`, `console.debug`, `debugger` Statements müssen entfernt werden
+- [ ] Check for unused imports — every import must be used
+- [ ] Check for commented-out code — must be deleted (Git history exists)
+- [ ] Check for unreachable code paths (code after return, unreachable branches)
+- [ ] Check for unused variables, functions, or props
+- [ ] Check for debug code: `console.log`, `console.debug`, `debugger` statements must be removed
 
-## Code Smells (Martin Fowler's Katalog)
+## Code Smells (Martin Fowler's Catalog)
 
-- [ ] **Long Method**: Funktionen >50 Zeilen → Extract Method anwenden
-- [ ] **Large Class**: Dateien mit zu vielen Verantwortlichkeiten → In fokussierte Module aufteilen
-- [ ] **Duplicated Code**: Gleiche oder sehr ähnliche Code-Blöcke → Extract zu Utility/Hook
-- [ ] **Long Parameter List**: Mehr als 3-4 Parameter → Parameter Object Pattern verwenden
-- [ ] **Primitive Obsession**: Primitive Typen wo Domain-Types besser wären → Custom Types erstellen (z.B. `TaskId` statt `string`)
-- [ ] **Switch Statements**: Lange switch/if-else Ketten → Map/Record oder Polymorphismus verwenden
-- [ ] **Temporary Field**: Felder die nur manchmal gesetzt sind → State-Management refactoren
-- [ ] **Message Chains**: `a.b.c.d.method()` → Law of Demeter beachten, Zwischenvariablen oder Delegation nutzen
+- [ ] **Long Method**: Functions >50 lines → Apply Extract Method
+- [ ] **Large Class**: Files with too many responsibilities → Split into focused modules
+- [ ] **Duplicated Code**: Identical or very similar code blocks → Extract to utility/hook
+- [ ] **Long Parameter List**: More than 3-4 parameters → Use Parameter Object Pattern
+- [ ] **Primitive Obsession**: Primitive types where domain types would be better → Create custom types (e.g., `TaskId` instead of `string`)
+- [ ] **Switch Statements**: Long switch/if-else chains → Use Map/Record or polymorphism
+- [ ] **Temporary Field**: Fields that are only sometimes set → Refactor state management
+- [ ] **Message Chains**: `a.b.c.d.method()` → Follow the Law of Demeter, use intermediate variables or delegation
