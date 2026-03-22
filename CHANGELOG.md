@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.4.2](https://github.com/kitikonti/ownchart/compare/v1.4.1...v1.4.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* make paste position consistent — always insert above selection ([#18](https://github.com/kitikonti/ownchart/issues/18)) ([958ac0b](https://github.com/kitikonti/ownchart/commit/958ac0b2977b07285377bc1de7580c2e6a319939))
+
 ## [1.4.1](https://github.com/kitikonti/ownchart/compare/v1.4.0...v1.4.1) (2026-03-22)
 
 ## [1.4.0](https://github.com/kitikonti/ownchart/compare/v1.3.2...v1.4.0) (2026-03-22)
