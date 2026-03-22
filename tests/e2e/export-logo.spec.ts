@@ -7,6 +7,10 @@
 
 import { test, expect } from './fixtures/helpers';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // A minimal 1×1 PNG for testing (68 bytes)
 const TEST_LOGO_PATH = path.resolve(__dirname, 'fixtures/test-logo.png');
