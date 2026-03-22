@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.4.0](https://github.com/kitikonti/ownchart/compare/v1.3.2...v1.4.0) (2026-03-22)
+
+
+### Features
+
+* add project logo support for PDF export ([301d55f](https://github.com/kitikonti/ownchart/commit/301d55f366bf921dd0e8e177d43fdfe80d767b17))
+
+
+### Bug Fixes
+
+* address export warning review findings ([7ce3735](https://github.com/kitikonti/ownchart/commit/7ce3735f2da1809c29cf9794020763216c506a50))
+* address logo feature review findings ([63912af](https://github.com/kitikonti/ownchart/commit/63912afb4cfdf8cf1e83a2a7e33788de534bce1d))
+* improve getReservedSpace accuracy and test coverage ([c1d0bfc](https://github.com/kitikonti/ownchart/commit/c1d0bfc3bb733a8d8ebe220382f1680cc90ade75))
+* reduce excessive whitespace in PDF export header/footer ([ed25d12](https://github.com/kitikonti/ownchart/commit/ed25d1245dd46a1ba36e4281a1685a01357d8fa7))
+
+
+### Code Refactoring
+
+* consolidate default export columns to single source of truth ([dd3ba54](https://github.com/kitikonti/ownchart/commit/dd3ba544336b1006aa4863f380551c6a12983a15))
+* extract shared sample data fixture and fix review findings ([a306051](https://github.com/kitikonti/ownchart/commit/a306051b97cdaeadda83d4df6c1ba74d12f86f46))
+
+
+### UI/UX
+
+* improve export default settings for better out-of-the-box results ([be7e62d](https://github.com/kitikonti/ownchart/commit/be7e62d56c7c884056d6acd683b83bbf1a8d0593))
+* show warnings in export dialog for missing title or logo ([755ae0f](https://github.com/kitikonti/ownchart/commit/755ae0fefd42dbca3e5eb0821cb42cfa7b5eeb05))
+
 ## [1.3.2](https://github.com/kitikonti/ownchart/compare/v1.3.1...v1.3.2) (2026-03-20)
 
 
