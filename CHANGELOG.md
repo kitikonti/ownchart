@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.5.0](https://github.com/kitikonti/ownchart/compare/v1.4.2...v1.5.0) (2026-03-22)
+
+
+### Features
+
+* add High Contrast and Hide UI display modes ([#69](https://github.com/kitikonti/ownchart/issues/69)) ([4c627f8](https://github.com/kitikonti/ownchart/commit/4c627f862f798211a4330c5ee7e0075ee01aa12c))
+
+
+### Code Refactoring
+
+* address review findings for display modes ([#69](https://github.com/kitikonti/ownchart/issues/69)) ([7e2cbc6](https://github.com/kitikonti/ownchart/commit/7e2cbc6603c2b975804bb6de0bc3a916b73fb348))
+
 ## [1.4.2](https://github.com/kitikonti/ownchart/compare/v1.4.1...v1.4.2) (2026-03-22)
 
 
