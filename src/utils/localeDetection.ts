@@ -212,6 +212,7 @@ export function detectLocaleHolidayRegion(): string {
  */
 export const DEFAULT_PREFERENCES: UserPreferences = {
   uiDensity: "normal",
+  hideUI: false,
   dateFormat: detectLocaleDateFormat(),
   firstDayOfWeek: detectLocaleFirstDayOfWeek(),
   weekNumberingSystem: detectLocaleWeekNumberingSystem(),

@@ -311,7 +311,7 @@ export const ROW_NUMBER = {
   textInactive: slate[500], // Secondary text
   textSelected: slate[0],
   border: TABLE_HEADER.border,
-  hiddenIndicator: slate[350], // Subtle indicator lines
+  hiddenIndicator: slate[450], // Subtle indicator lines
   controlBg: slate[0], // Insert-circle & cursor background
 } as const;
 

@@ -106,7 +106,7 @@ export function Ribbon(): JSX.Element {
 
   return (
     <header
-      className="flex-shrink-0 relative"
+      className="ribbon-header flex-shrink-0 relative"
       style={{
         zIndex: Z_INDEX_RIBBON,
         backgroundColor: COLORS.slate[50],

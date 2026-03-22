@@ -11,6 +11,7 @@
  * Handles Alt+F (fit to view), Alt+T (go to today)
  * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (unhide hidden rows in selection)
  * Handles Ctrl+G (group), Ctrl+Shift+G (ungroup)
+ * Handles Ctrl+\ (toggle hide UI), Escape (exit presentation mode)
  */
 
 import { useEffect, useRef } from "react";
@@ -19,6 +20,7 @@ import { useHistoryStore } from "@/store/slices/historySlice";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { useUIStore } from "@/store/slices/uiSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 import { useClipboardStore } from "@/store/slices/clipboardSlice";
 import { useFileOperations } from "./useFileOperations";
 import { useClipboardOperations } from "./useClipboardOperations";
@@ -117,6 +119,9 @@ interface UIContext {
   isExportDialogOpen: boolean;
   isHelpPanelOpen: boolean;
   isWelcomeTourOpen: boolean;
+  isPresentationMode: boolean;
+  exitPresentationMode: () => void;
+  toggleHideUI: () => void;
 }
 
 type ShortcutContext = HistoryContext &
@@ -217,6 +222,12 @@ function handleClipboardShortcuts(
 
 function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
   if (e.key !== "Escape") return false;
+  // Exit presentation mode
+  if (ctx.isPresentationMode) {
+    e.preventDefault();
+    ctx.exitPresentationMode();
+    return true;
+  }
   // Close dialogs in priority order
   if (ctx.isExportDialogOpen) {
     e.preventDefault();
@@ -355,6 +366,21 @@ function handleHideShortcuts(
     return true;
   }
   // Nothing to do — don't suppress the browser's Ctrl+H default.
+  return false;
+}
+
+// Ctrl+\: toggle hide UI (Ribbon + StatusBar visibility)
+function handleDisplayModeShortcuts(
+  e: KeyboardEvent,
+  modKey: boolean,
+  ctx: ShortcutContext
+): boolean {
+  if (!modKey) return false;
+  if (e.key === "\\" || e.key === "|") {
+    e.preventDefault();
+    ctx.toggleHideUI();
+    return true;
+  }
   return false;
 }
 
@@ -516,6 +542,11 @@ function useUIContext(): UIContext {
   const isExportDialogOpen = useUIStore((state) => state.isExportDialogOpen);
   const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
+  const isPresentationMode = useUIStore((state) => state.isPresentationMode);
+  const exitPresentationMode = useUIStore(
+    (state) => state.exitPresentationMode
+  );
+  const toggleHideUI = useUserPreferencesStore((state) => state.toggleHideUI);
   return {
     openExportDialog,
     openHelpPanel,
@@ -525,6 +556,9 @@ function useUIContext(): UIContext {
     isExportDialogOpen,
     isHelpPanelOpen,
     isWelcomeTourOpen,
+    isPresentationMode,
+    exitPresentationMode,
+    toggleHideUI,
   };
 }
 
@@ -571,6 +605,7 @@ export function useKeyboardShortcuts(): void {
     if (handleIndentShortcuts(e, ctx)) return;
     if (handleGroupShortcuts(e, modKey, ctx)) return;
     if (handleHideShortcuts(e, modKey, ctx)) return;
+    if (handleDisplayModeShortcuts(e, modKey, ctx)) return;
     if (handleAltShortcuts(e, modKey, ctx)) return;
     if (handleViewToggleShortcuts(e, modKey, ctx)) return;
   };

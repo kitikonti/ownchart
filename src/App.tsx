@@ -15,6 +15,7 @@ import { Ribbon } from "./components/Ribbon";
 import { ExportDialog } from "./components/Export";
 import { AboutDialog, HelpDialog, WelcomeTour } from "./components/Help";
 import { MobileBlockScreen } from "./components/MobileBlockScreen";
+import { RestoreUIButton } from "./components/RestoreUIButton";
 import { AppErrorBoundary } from "./components/AppErrorBoundary";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useUnsavedChanges } from "./hooks/useUnsavedChanges";
@@ -22,6 +23,7 @@ import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
+import { usePresentationMode } from "./hooks/usePresentationMode";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 import { COLORS, SHADOWS, TOAST } from "./styles/design-tokens";
@@ -57,6 +59,7 @@ function AppContent(): ReactElement {
   const initializePreferences = useUserPreferencesStore(
     (state) => state.initializePreferences
   );
+  const hideUI = useUserPreferencesStore((state) => state.preferences.hideUI);
 
   // Enable global keyboard shortcuts
   useKeyboardShortcuts();
@@ -72,6 +75,9 @@ function AppContent(): ReactElement {
 
   // Handle OS file association via PWA LaunchQueue API
   useLaunchQueue();
+
+  // Presentation mode: Fullscreen API integration + data attribute
+  usePresentationMode();
 
   // Check for first-time user on mount and initialize preferences
   useEffect(() => {
@@ -120,6 +126,7 @@ function AppContent(): ReactElement {
         <GanttLayout />
         <StatusBar />
       </div>
+      {hideUI && <RestoreUIButton />}
     </>
   );
 }

@@ -47,6 +47,8 @@ interface UserPreferencesState {
 interface UserPreferencesActions {
   // Appearance actions
   setUiDensity: (density: UiDensity) => void;
+  setHideUI: (hidden: boolean) => void;
+  toggleHideUI: () => void;
 
   // Regional settings actions
   setDateFormat: (format: DateFormat) => void;
@@ -79,6 +81,18 @@ export function applyDensityClass(density: UiDensity): void {
   // Apply new class (normal doesn't need a class - it's the CSS default)
   if (density !== "normal") {
     html.classList.add(`density-${density}`);
+  }
+}
+
+/**
+ * Apply hide-UI data attribute to document element.
+ */
+export function applyHideUIAttribute(hidden: boolean): void {
+  const html = document.documentElement;
+  if (hidden) {
+    html.dataset.hideUi = "true";
+  } else {
+    delete html.dataset.hideUi;
   }
 }
 
@@ -136,6 +150,10 @@ function migratePreferences(stored: Record<string, unknown>): UserPreferences {
     uiDensity:
       validateStored<UiDensity>(stored.uiDensity, VALID_DENSITIES) ??
       DEFAULT_PREFERENCES.uiDensity,
+    hideUI:
+      typeof stored.hideUI === "boolean"
+        ? stored.hideUI
+        : DEFAULT_PREFERENCES.hideUI,
     dateFormat:
       validateStored<DateFormat>(stored.dateFormat, VALID_DATE_FORMATS) ??
       detectLocaleDateFormat(),
@@ -163,6 +181,18 @@ export const useUserPreferencesStore = create<UserPreferencesStore>()(
       setUiDensity: (density: UiDensity): void => {
         set((state) => {
           state.preferences.uiDensity = density;
+        });
+      },
+
+      setHideUI: (hidden: boolean): void => {
+        set((state) => {
+          state.preferences.hideUI = hidden;
+        });
+      },
+
+      toggleHideUI: (): void => {
+        set((state) => {
+          state.preferences.hideUI = !state.preferences.hideUI;
         });
       },
 
@@ -258,6 +288,16 @@ useUserPreferencesStore.subscribe((state) => {
   }
 });
 
+// Apply hide-UI attribute whenever hideUI changes
+let _prevHideUI: boolean | null = null;
+useUserPreferencesStore.subscribe((state) => {
+  const hide = state.preferences.hideUI;
+  if (hide !== _prevHideUI) {
+    _prevHideUI = hide;
+    applyHideUIAttribute(hide);
+  }
+});
+
 // Register the first day of week getter for timelineUtils
 // This avoids circular dependencies while allowing timelineUtils to access the preference
 registerFirstDayOfWeekGetter(
@@ -323,4 +363,11 @@ export function useWeekNumberingSystem(): WeekNumberingSystem {
  */
 export function getCurrentDateFormat(): DateFormat {
   return useUserPreferencesStore.getState().preferences.dateFormat;
+}
+
+/**
+ * Hook to get current hide UI preference
+ */
+export function useHideUI(): boolean {
+  return useUserPreferencesStore((state) => state.preferences.hideUI);
 }

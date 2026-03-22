@@ -136,6 +136,7 @@ function TaskShapeLabel({
 
   return (
     <text
+      className="task-bar-label"
       x={isBefore ? anchorX - LABEL_PADDING : anchorX + LABEL_PADDING}
       y={centerY + fontSize / 3}
       fontSize={fontSize}
@@ -611,6 +612,7 @@ export const TaskBar = React.memo(function TaskBar({
       {/* During progress drag, show percentage inside the bar instead of name */}
       {labelPosition !== "none" && (
         <text
+          className="task-bar-label"
           x={
             progressDrag.isDragging
               ? geometry.x + LABEL_PADDING

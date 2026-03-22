@@ -20,8 +20,10 @@
  * Standard Tailwind Slate stops (50–950) are used as-is.
  * Custom intermediate stops bridge luminance gaps:
  *   250 — HiDPI grid line compensation (midpoint 200↔300, Issue #64)
- *   325 — form/select borders (contrast-matched to former neutral[300])
- *   350 — muted icons/indicators (luminance-matched to former neutral[400])
+ *   325 — presentation mode grid lines (midpoint 300↔350)
+ *   350 — midpoint 300↔375
+ *   375 — form/select borders (contrast-matched to former neutral[300])
+ *   450 — muted icons/indicators (luminance-matched to former neutral[400])
  */
 export const slate = Object.freeze({
   0: '#ffffff',
@@ -30,9 +32,11 @@ export const slate = Object.freeze({
   200: '#e2e8f0',    // Tailwind slate-200
   250: '#d6dee8',    // Custom: HiDPI grid line compensation (midpoint 200↔300)
   300: '#cbd5e1',    // Tailwind slate-300
-  325: '#abb4c0',    // Custom: contrast-matched to former neutral[300] for form borders
-  350: '#7f8b9b',    // Custom: luminance-matched to former neutral[400] for indicators
+  325: '#c3cdd9',    // Custom: midpoint 300↔350 for presentation mode grid lines
+  350: '#bbc5d1',    // Custom: midpoint 300↔375
+  375: '#abb4c0',    // Custom: contrast-matched to former neutral[300] for form borders
   400: '#94a3b8',    // Tailwind slate-400
+  450: '#7f8b9b',    // Custom: luminance-matched to former neutral[400] for indicators
   500: '#64748b',    // Tailwind slate-500
   600: '#475569',    // Tailwind slate-600
   700: '#334155',    // Tailwind slate-700

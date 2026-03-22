@@ -149,6 +149,7 @@ const SHORTCUT_KEYS = {
   VIEW_HOLIDAYS: "H",
   VIEW_HIDE_ROWS: "{mod}+H",
   VIEW_SHOW_ROWS: "{mod}+Shift+H",
+  VIEW_HIDE_UI: "{mod}+\\",
 
   NAV_HELP: "?",
   NAV_ESCAPE: "Escape",
@@ -403,6 +404,19 @@ const SHORTCUT_SECTIONS: HelpSection[] = [
         title: "Collapse/expand task table",
         description: "Toggle the task table panel.",
         menuPath: "View > Table",
+      },
+      {
+        id: "sc-high-contrast",
+        title: "High contrast",
+        description:
+          "Increase contrast for better visibility on projectors and screen sharing.",
+        menuPath: "View > Contrast",
+      },
+      {
+        id: "sc-hide-ui",
+        title: "Hide toolbar & status bar",
+        description: "Hide the ribbon and status bar to maximize chart area.",
+        shortcuts: [SHORTCUT_KEYS.VIEW_HIDE_UI],
       },
     ],
   },
@@ -1074,6 +1088,27 @@ const FEATURE_SECTIONS: HelpSection[] = [
         description:
           "Choose ISO 8601 (Mon-Sun, week 1 contains Jan 4) or US (Sun-Sat, week 1 contains Jan 1) for calendar week numbers in the timeline.",
         keywords: ["week", "numbering", "iso", "us", "calendar week"],
+      },
+      {
+        id: "feat-set-high-contrast",
+        title: "High Contrast",
+        description:
+          "Increases contrast for grid lines, text, and backgrounds — better visibility on projectors, screen sharing, or low-quality monitors. Toggle via View > Contrast.",
+        keywords: [
+          "contrast",
+          "high contrast",
+          "projector",
+          "screen sharing",
+          "accessibility",
+          "a11y",
+        ],
+      },
+      {
+        id: "feat-set-hideui",
+        title: "Hide UI",
+        description: `Hides the ribbon toolbar and status bar to maximize chart area. Toggle via ${SHORTCUT_KEYS.VIEW_HIDE_UI} or View > Hide UI.`,
+        shortcuts: [SHORTCUT_KEYS.VIEW_HIDE_UI],
+        keywords: ["hide", "toolbar", "ribbon", "focus", "chrome"],
       },
     ],
   },

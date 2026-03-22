@@ -46,6 +46,9 @@ interface UIState {
   hasSeenWelcome: boolean;
   hasTourCompleted: boolean;
 
+  // Presentation mode (session-only, not persisted)
+  isPresentationMode: boolean;
+
   // Hydration state (true after localStorage restoration is complete)
   isHydrated: boolean;
 }
@@ -82,6 +85,11 @@ interface UIActions {
   dismissWelcome: (permanent?: boolean) => void;
   completeTour: () => void;
   checkFirstTimeUser: () => void;
+
+  // Presentation mode
+  enterPresentationMode: () => void;
+  exitPresentationMode: () => void;
+  togglePresentationMode: () => void;
 
   // Hydration
   setHydrated: () => void;
@@ -132,6 +140,7 @@ export const useUIStore = create<UIStore>()(
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
+      isPresentationMode: false,
       isHydrated: false,
 
       // Export dialog actions
@@ -271,6 +280,22 @@ export const useUIStore = create<UIStore>()(
           if (!state.hasSeenWelcome) {
             state.isWelcomeTourOpen = true;
           }
+        }),
+
+      // Presentation mode actions
+      enterPresentationMode: (): void =>
+        set((state) => {
+          state.isPresentationMode = true;
+        }),
+
+      exitPresentationMode: (): void =>
+        set((state) => {
+          state.isPresentationMode = false;
+        }),
+
+      togglePresentationMode: (): void =>
+        set((state) => {
+          state.isPresentationMode = !state.isPresentationMode;
         }),
 
       // Hydration action - called after localStorage restoration is complete

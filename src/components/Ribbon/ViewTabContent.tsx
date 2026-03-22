@@ -16,6 +16,8 @@ import {
   Island,
   TrendUp,
   SidebarSimple,
+  CircleHalf,
+  FrameCorners,
 } from "@phosphor-icons/react";
 
 import {
@@ -52,6 +54,10 @@ export function ViewTabContent(): JSX.Element {
     handleFitToView,
     isTaskTableCollapsed,
     toggleTaskTableCollapsed,
+    isPresentationMode,
+    togglePresentationMode,
+    hideUI,
+    toggleHideUI,
   } = useViewTabActions();
 
   return (
@@ -164,6 +170,40 @@ export function ViewTabContent(): JSX.Element {
           }
           icon={<SidebarSimple size={ICON_SIZE} weight="light" />}
           label="Table"
+          labelPriority={3}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* Display Modes (Issue #69: Projector support) */}
+      <ToolbarGroup label="Display">
+        <ToolbarButton
+          variant="toggle"
+          isActive={isPresentationMode}
+          onClick={togglePresentationMode}
+          title={
+            isPresentationMode
+              ? "Disable High Contrast"
+              : "High Contrast — better visibility for projectors & screen sharing"
+          }
+          aria-label={
+            isPresentationMode
+              ? "Disable High Contrast"
+              : "Enable High Contrast"
+          }
+          icon={<CircleHalf size={ICON_SIZE} weight="light" />}
+          label="Contrast"
+          labelPriority={3}
+        />
+        <ToolbarButton
+          variant="toggle"
+          isActive={hideUI}
+          onClick={toggleHideUI}
+          title={hideUI ? "Show Toolbar (Ctrl+\\)" : "Hide Toolbar (Ctrl+\\)"}
+          aria-label={hideUI ? "Show Toolbar" : "Hide Toolbar"}
+          icon={<FrameCorners size={ICON_SIZE} weight="light" />}
+          label="Hide UI"
           labelPriority={3}
         />
       </ToolbarGroup>

@@ -144,6 +144,139 @@
   --density-indent-size: 20px;
 }
 
+/* ============================================================================
+   Presentation Mode (Issue #69)
+   ============================================================================
+   Activated via [data-presentation-mode="true"] on <html>.
+   Combines higher contrast (darker grid lines, bolder text, darker icons)
+   with larger fonts and comfortable density — optimized for projectors
+   and screen sharing. Session-only (not persisted).
+
+   SVG elements use inline stroke/fill attributes from design tokens.
+   CSS rules override inline SVG presentation attributes (same pattern
+   as the HiDPI compensation rules below).
+   ============================================================================ */
+
+[data-presentation-mode="true"] {
+  /* Boost text contrast only — no density/font-size/weight changes */
+  color: theme("colors.slate.950");
+}
+
+/* Grid lines: moderate contrast boost (slate-200 → slate-325) */
+[data-presentation-mode="true"] .grid-lines .daily-line,
+[data-presentation-mode="true"] .grid-lines .horizontal-line {
+  stroke: theme("colors.slate.325");
+}
+
+[data-presentation-mode="true"] .grid-lines .weekly-line,
+[data-presentation-mode="true"] .grid-lines .monthly-line {
+  stroke: theme("colors.slate.400");
+}
+
+/* Weekend & holiday backgrounds: stronger opacity for projector visibility */
+[data-presentation-mode="true"] .grid-lines .weekend-column {
+  opacity: 0.85;
+}
+
+[data-presentation-mode="true"] .grid-lines .holiday-column {
+  opacity: 0.9;
+}
+
+/* Timeline header: darker separator lines and text */
+[data-presentation-mode="true"] .timeline-header line {
+  stroke: theme("colors.slate.300");
+}
+
+[data-presentation-mode="true"] .timeline-header text {
+  fill: theme("colors.slate.950");
+}
+
+/* Task bar labels: darker text for projector visibility */
+[data-presentation-mode="true"] .task-bar-label {
+  fill: theme("colors.slate.950");
+}
+
+/* OS-level high contrast preference — same overrides */
+@media (prefers-contrast: more) {
+  .grid-lines .daily-line,
+  .grid-lines .horizontal-line {
+    stroke: theme("colors.slate.325");
+  }
+
+  .grid-lines .weekly-line,
+  .grid-lines .monthly-line {
+    stroke: theme("colors.slate.400");
+  }
+
+  .grid-lines .weekend-column {
+    opacity: 0.85;
+  }
+
+  .grid-lines .holiday-column {
+    opacity: 0.9;
+  }
+
+  .timeline-header line {
+    stroke: theme("colors.slate.300");
+  }
+
+  .timeline-header text {
+    fill: theme("colors.slate.950");
+  }
+
+  .task-bar-label {
+    fill: theme("colors.slate.950");
+  }
+}
+
+/* Windows High Contrast Mode — ensure proper forced-colors support */
+@media (forced-colors: active) {
+  :root {
+    forced-color-adjust: auto;
+  }
+}
+
+/* ============================================================================
+   Hide UI Mode (Issue #69)
+   ============================================================================
+   Activated via [data-hide-ui="true"] on <html>.
+   Hides the Ribbon and StatusBar to maximize content area.
+   ============================================================================ */
+
+[data-hide-ui="true"] .ribbon-header {
+  display: none;
+}
+
+[data-hide-ui="true"] .status-bar {
+  display: none;
+}
+
+/* Floating restore button — bottom-right corner when UI is hidden */
+.restore-ui-button {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: none;
+  background: theme("colors.slate.200");
+  color: theme("colors.slate.800");
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+.restore-ui-button:hover {
+  color: theme("colors.slate.800");
+  background: theme("colors.slate.300");
+}
+
 /* Focus Management: Remove browser defaults, provide keyboard-only indicator */
 *:focus {
   outline: none;
@@ -314,7 +447,7 @@ select {
   -moz-appearance: none;
   appearance: none;
   background-color: theme("colors.surface.DEFAULT");
-  border: 1px solid theme("colors.slate.325");
+  border: 1px solid theme("colors.slate.375");
   border-radius: var(--radius-md);
   padding: 4px 24px 4px 8px;
   font-size: 12px;
@@ -446,8 +579,8 @@ select:focus-visible {
   left: 8px;
   right: 8px;
   height: 2px;
-  background-color: theme("colors.slate.325");
-  border: 0.666667px solid theme("colors.slate.325");
+  background-color: theme("colors.slate.375");
+  border: 0.666667px solid theme("colors.slate.375");
   border-radius: 10000px;
   display: none;
 }
@@ -494,7 +627,7 @@ select:focus-visible {
 }
 
 .ribbon-toolbar-button:disabled {
-  color: theme("colors.slate.325");
+  color: theme("colors.slate.375");
   cursor: not-allowed;
 }
 
@@ -510,7 +643,7 @@ select:focus-visible {
 }
 
 .ribbon-toolbar-button[data-variant="primary"]:disabled {
-  background-color: theme("colors.slate.325");
+  background-color: theme("colors.slate.375");
   color: theme("colors.slate.400");
 }
 
@@ -661,7 +794,7 @@ select:focus-visible {
 
 .dropdown-item-selected {
   background-color: theme("colors.slate.50");
-  border: 0.667px solid theme("colors.slate.325") !important;
+  border: 0.667px solid theme("colors.slate.375") !important;
   border-radius: 4px !important;
 }
 
@@ -715,7 +848,7 @@ select:focus-visible {
 
 .context-menu-item:disabled,
 .context-menu-item[aria-disabled="true"] {
-  color: theme("colors.slate.325");
+  color: theme("colors.slate.375");
   cursor: default;
   background-color: transparent;
 }

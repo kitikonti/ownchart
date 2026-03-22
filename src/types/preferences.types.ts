@@ -62,6 +62,7 @@ export type DensityConfigMap = Record<UiDensity, DensityConfig>;
 export interface UserPreferences {
   // Appearance
   uiDensity: UiDensity;
+  hideUI: boolean;
 
   // Regional
   dateFormat: DateFormat;

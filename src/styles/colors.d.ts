@@ -10,9 +10,11 @@ export declare const slate: {
   readonly 200: "#e2e8f0";
   readonly 250: "#d6dee8";
   readonly 300: "#cbd5e1";
-  readonly 325: "#abb4c0";
-  readonly 350: "#7f8b9b";
+  readonly 325: "#c3cdd9";
+  readonly 350: "#bbc5d1";
+  readonly 375: "#abb4c0";
   readonly 400: "#94a3b8";
+  readonly 450: "#7f8b9b";
   readonly 500: "#64748b";
   readonly 600: "#475569";
   readonly 700: "#334155";

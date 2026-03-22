@@ -12,6 +12,8 @@
 import { useCallback, useMemo } from "react";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
+import { useUIStore } from "@/store/slices/uiSlice";
+import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
 // Shared scroll-anchor helpers — live in useZoom to avoid duplicating the
 // viewport-center computation and DOM scroll-apply logic.
 import { computeViewportCenterAnchor, applyScrollLeft } from "./useZoom";
@@ -41,6 +43,11 @@ interface ViewTabActions {
   // Layout
   isTaskTableCollapsed: boolean;
   toggleTaskTableCollapsed: () => void;
+  // Display modes
+  isPresentationMode: boolean;
+  togglePresentationMode: () => void;
+  hideUI: boolean;
+  toggleHideUI: () => void;
 }
 
 export function useViewTabActions(): ViewTabActions {
@@ -66,6 +73,14 @@ export function useViewTabActions(): ViewTabActions {
   const toggleTaskTableCollapsedAction = useChartStore(
     (state) => state.toggleTaskTableCollapsed
   );
+
+  // Display mode state
+  const isPresentationMode = useUIStore((state) => state.isPresentationMode);
+  const togglePresentationMode = useUIStore(
+    (state) => state.togglePresentationMode
+  );
+  const hideUI = useUserPreferencesStore((state) => state.preferences.hideUI);
+  const toggleHideUI = useUserPreferencesStore((state) => state.toggleHideUI);
 
   // Derived zoom state
   const zoomPercentage = Math.round(zoom * 100);
@@ -141,5 +156,10 @@ export function useViewTabActions(): ViewTabActions {
     // The store action reads its own current state atomically, so the
     // function reference is stable and can be returned directly.
     toggleTaskTableCollapsed: toggleTaskTableCollapsedAction,
+    // Display modes
+    isPresentationMode,
+    togglePresentationMode,
+    hideUI,
+    toggleHideUI,
   };
 }
