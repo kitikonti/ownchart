@@ -145,8 +145,8 @@ describe("determineInsertPosition", () => {
     });
   });
 
-  describe("priority 3: last selected row", () => {
-    it("should return position after last selected row", () => {
+  describe("priority 3: selected row (insert above first selected)", () => {
+    it("should return position before first selected row", () => {
       const flattenedTasks = [
         createFlattenedTask("1"),
         createFlattenedTask("2"),
@@ -159,7 +159,7 @@ describe("determineInsertPosition", () => {
         flattenedTasks
       );
 
-      expect(result).toBe(2); // After task 2 (index 1 + 1)
+      expect(result).toBe(0); // Before task 1 (first selected, index 0)
     });
 
     it("should handle single selected row", () => {
@@ -174,10 +174,10 @@ describe("determineInsertPosition", () => {
         flattenedTasks
       );
 
-      expect(result).toBe(1); // After task 1
+      expect(result).toBe(0); // Before task 1 (index 0)
     });
 
-    it("should filter out placeholder from selection when finding last", () => {
+    it("should filter out placeholder from selection when finding first", () => {
       const flattenedTasks = [
         createFlattenedTask("1"),
         createFlattenedTask("2"),
@@ -189,7 +189,7 @@ describe("determineInsertPosition", () => {
         flattenedTasks
       );
 
-      expect(result).toBe(1); // After task 1 (placeholder filtered out)
+      expect(result).toBe(0); // Before task 1 (placeholder filtered out)
     });
 
     it("should handle selected row at end of list", () => {
@@ -204,7 +204,7 @@ describe("determineInsertPosition", () => {
         flattenedTasks
       );
 
-      expect(result).toBe(2); // After last row = end of list
+      expect(result).toBe(1); // Before task 2 (index 1)
     });
   });
 

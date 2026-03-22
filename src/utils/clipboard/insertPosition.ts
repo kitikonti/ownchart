@@ -16,7 +16,7 @@ import { PLACEHOLDER_TASK_ID } from "@/config/placeholderRow";
  * Priority:
  * 1. If placeholder row is active/selected -> insert at end
  * 2. Above active row (if active cell exists)
- * 3. Below last selected row (if selection exists)
+ * 3. Above first selected row (if selection exists)
  * 4. At end of list (default)
  *
  * @param activeCell - Current active cell state
@@ -53,15 +53,15 @@ export function determineInsertPosition(
     if (index !== -1) return index;
   }
 
-  // Priority 3: Bottommost selected row -> insert after it.
+  // Priority 3: Topmost selected row -> insert above it (consistent with Priority 2).
   // Uses pre-built indexMap rather than relying on store preserving visual order.
   if (realSelectedIds.length > 0) {
-    let lastIndex = -1;
+    let firstIndex = flattenedTasks.length;
     for (const id of realSelectedIds) {
-      const idx = indexMap.get(id) ?? -1;
-      if (idx > lastIndex) lastIndex = idx;
+      const idx = indexMap.get(id) ?? flattenedTasks.length;
+      if (idx < firstIndex) firstIndex = idx;
     }
-    if (lastIndex !== -1) return lastIndex + 1;
+    if (firstIndex < flattenedTasks.length) return firstIndex;
   }
 
   // Priority 4: End of list
