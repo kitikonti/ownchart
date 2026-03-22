@@ -23,7 +23,7 @@ import { useMultiTabPersistence } from "./hooks/useMultiTabPersistence";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { useLaunchQueue } from "./hooks/useLaunchQueue";
 import { useDeviceDetection } from "./hooks/useDeviceDetection";
-import { usePresentationMode } from "./hooks/usePresentationMode";
+import { useHighContrast } from "./hooks/useHighContrast";
 import { useUIStore } from "./store/slices/uiSlice";
 import { useUserPreferencesStore } from "./store/slices/userPreferencesSlice";
 import { COLORS, SHADOWS, TOAST } from "./styles/design-tokens";
@@ -76,8 +76,8 @@ function AppContent(): ReactElement {
   // Handle OS file association via PWA LaunchQueue API
   useLaunchQueue();
 
-  // Presentation mode: Fullscreen API integration + data attribute
-  usePresentationMode();
+  // High contrast mode: applies data-high-contrast attribute on <html>
+  useHighContrast();
 
   // Check for first-time user on mount and initialize preferences
   useEffect(() => {

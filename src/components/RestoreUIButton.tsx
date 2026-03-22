@@ -1,8 +1,7 @@
 /**
- * RestoreUIButton - Small floating button to restore hidden Ribbon & StatusBar.
+ * RestoreUIButton - Floating button to restore hidden Ribbon & StatusBar.
  *
- * Rendered when hideUI is active. Positioned in the top-right corner.
- * Semi-transparent by default, fully opaque on hover.
+ * Rendered when hideUI is active. Positioned in the bottom-right corner.
  */
 
 import { FrameCorners } from "@phosphor-icons/react";

@@ -12,6 +12,7 @@ import { useHistoryStore } from '@/store/slices/historySlice';
 import { useChartStore } from '@/store/slices/chartSlice';
 import { useTaskStore } from '@/store/slices/taskSlice';
 import { useUIStore } from '@/store/slices/uiSlice';
+import { useUserPreferencesStore } from '@/store/slices/userPreferencesSlice';
 import { useClipboardStore } from '@/store/slices/clipboardSlice';
 import type { Task } from '@/types/chart.types';
 
@@ -577,6 +578,47 @@ describe('useKeyboardShortcuts', () => {
       renderHook(() => useKeyboardShortcuts());
       simulateKeyPress('f');
       expect(fitToViewSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Display mode shortcuts ──────────────────────────────────────────────
+
+  describe('display mode shortcuts', () => {
+    it('should toggle hideUI on Ctrl+\\', () => {
+      renderHook(() => useKeyboardShortcuts());
+      simulateKeyPress('\\', { ctrlKey: true });
+      expect(
+        useUserPreferencesStore.getState().preferences.hideUI
+      ).toBe(true);
+
+      simulateKeyPress('\\', { ctrlKey: true });
+      expect(
+        useUserPreferencesStore.getState().preferences.hideUI
+      ).toBe(false);
+    });
+
+    it('should exit high contrast on Escape', () => {
+      useUIStore.setState({ isHighContrast: true });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('Escape');
+
+      expect(useUIStore.getState().isHighContrast).toBe(false);
+    });
+
+    it('should exit high contrast before closing dialogs on Escape', () => {
+      useUIStore.setState({
+        isHighContrast: true,
+        isExportDialogOpen: true,
+      });
+      renderHook(() => useKeyboardShortcuts());
+
+      simulateKeyPress('Escape');
+
+      // High contrast exits first
+      expect(useUIStore.getState().isHighContrast).toBe(false);
+      // Dialog stays open
+      expect(useUIStore.getState().isExportDialogOpen).toBe(true);
     });
   });
 

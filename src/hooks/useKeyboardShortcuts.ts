@@ -11,7 +11,7 @@
  * Handles Alt+F (fit to view), Alt+T (go to today)
  * Handles Ctrl+H (hide selected rows), Ctrl+Shift+H (unhide hidden rows in selection)
  * Handles Ctrl+G (group), Ctrl+Shift+G (ungroup)
- * Handles Ctrl+\ (toggle hide UI), Escape (exit presentation mode)
+ * Handles Ctrl+\ (toggle hide UI), Escape (exit high contrast mode)
  */
 
 import { useEffect, useRef } from "react";
@@ -119,8 +119,8 @@ interface UIContext {
   isExportDialogOpen: boolean;
   isHelpPanelOpen: boolean;
   isWelcomeTourOpen: boolean;
-  isPresentationMode: boolean;
-  exitPresentationMode: () => void;
+  isHighContrast: boolean;
+  disableHighContrast: () => void;
   toggleHideUI: () => void;
 }
 
@@ -222,10 +222,10 @@ function handleClipboardShortcuts(
 
 function handleEscapeKey(e: KeyboardEvent, ctx: ShortcutContext): boolean {
   if (e.key !== "Escape") return false;
-  // Exit presentation mode
-  if (ctx.isPresentationMode) {
+  // Exit high contrast mode
+  if (ctx.isHighContrast) {
     e.preventDefault();
-    ctx.exitPresentationMode();
+    ctx.disableHighContrast();
     return true;
   }
   // Close dialogs in priority order
@@ -542,10 +542,8 @@ function useUIContext(): UIContext {
   const isExportDialogOpen = useUIStore((state) => state.isExportDialogOpen);
   const isHelpPanelOpen = useUIStore((state) => state.isHelpPanelOpen);
   const isWelcomeTourOpen = useUIStore((state) => state.isWelcomeTourOpen);
-  const isPresentationMode = useUIStore((state) => state.isPresentationMode);
-  const exitPresentationMode = useUIStore(
-    (state) => state.exitPresentationMode
-  );
+  const isHighContrast = useUIStore((state) => state.isHighContrast);
+  const disableHighContrast = useUIStore((state) => state.disableHighContrast);
   const toggleHideUI = useUserPreferencesStore((state) => state.toggleHideUI);
   return {
     openExportDialog,
@@ -556,8 +554,8 @@ function useUIContext(): UIContext {
     isExportDialogOpen,
     isHelpPanelOpen,
     isWelcomeTourOpen,
-    isPresentationMode,
-    exitPresentationMode,
+    isHighContrast,
+    disableHighContrast,
     toggleHideUI,
   };
 }

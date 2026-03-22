@@ -145,54 +145,54 @@
 }
 
 /* ============================================================================
-   Presentation Mode (Issue #69)
+   High Contrast Mode (Issue #69)
    ============================================================================
-   Activated via [data-presentation-mode="true"] on <html>.
-   Combines higher contrast (darker grid lines, bolder text, darker icons)
-   with larger fonts and comfortable density — optimized for projectors
-   and screen sharing. Session-only (not persisted).
+   Activated via [data-high-contrast="true"] on <html>.
+   Boosts contrast for grid lines, text, and weekend/holiday backgrounds —
+   optimized for projectors and screen sharing. Session-only (not persisted).
+   No density or font-size changes.
 
    SVG elements use inline stroke/fill attributes from design tokens.
    CSS rules override inline SVG presentation attributes (same pattern
    as the HiDPI compensation rules below).
    ============================================================================ */
 
-[data-presentation-mode="true"] {
+[data-high-contrast="true"] {
   /* Boost text contrast only — no density/font-size/weight changes */
   color: theme("colors.slate.950");
 }
 
 /* Grid lines: moderate contrast boost (slate-200 → slate-325) */
-[data-presentation-mode="true"] .grid-lines .daily-line,
-[data-presentation-mode="true"] .grid-lines .horizontal-line {
+[data-high-contrast="true"] .grid-lines .daily-line,
+[data-high-contrast="true"] .grid-lines .horizontal-line {
   stroke: theme("colors.slate.325");
 }
 
-[data-presentation-mode="true"] .grid-lines .weekly-line,
-[data-presentation-mode="true"] .grid-lines .monthly-line {
+[data-high-contrast="true"] .grid-lines .weekly-line,
+[data-high-contrast="true"] .grid-lines .monthly-line {
   stroke: theme("colors.slate.400");
 }
 
 /* Weekend & holiday backgrounds: stronger opacity for projector visibility */
-[data-presentation-mode="true"] .grid-lines .weekend-column {
+[data-high-contrast="true"] .grid-lines .weekend-column {
   opacity: 0.85;
 }
 
-[data-presentation-mode="true"] .grid-lines .holiday-column {
+[data-high-contrast="true"] .grid-lines .holiday-column {
   opacity: 0.9;
 }
 
 /* Timeline header: darker separator lines and text */
-[data-presentation-mode="true"] .timeline-header line {
+[data-high-contrast="true"] .timeline-header line {
   stroke: theme("colors.slate.300");
 }
 
-[data-presentation-mode="true"] .timeline-header text {
+[data-high-contrast="true"] .timeline-header text {
   fill: theme("colors.slate.950");
 }
 
 /* Task bar labels: darker text for projector visibility */
-[data-presentation-mode="true"] .task-bar-label {
+[data-high-contrast="true"] .task-bar-label {
   fill: theme("colors.slate.950");
 }
 
@@ -273,7 +273,7 @@
 }
 
 .restore-ui-button:hover {
-  color: theme("colors.slate.800");
+  color: theme("colors.slate.900");
   background: theme("colors.slate.300");
 }
 

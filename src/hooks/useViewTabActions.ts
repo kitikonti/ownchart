@@ -44,8 +44,8 @@ interface ViewTabActions {
   isTaskTableCollapsed: boolean;
   toggleTaskTableCollapsed: () => void;
   // Display modes
-  isPresentationMode: boolean;
-  togglePresentationMode: () => void;
+  isHighContrast: boolean;
+  toggleHighContrast: () => void;
   hideUI: boolean;
   toggleHideUI: () => void;
 }
@@ -75,10 +75,8 @@ export function useViewTabActions(): ViewTabActions {
   );
 
   // Display mode state
-  const isPresentationMode = useUIStore((state) => state.isPresentationMode);
-  const togglePresentationMode = useUIStore(
-    (state) => state.togglePresentationMode
-  );
+  const isHighContrast = useUIStore((state) => state.isHighContrast);
+  const toggleHighContrast = useUIStore((state) => state.toggleHighContrast);
   const hideUI = useUserPreferencesStore((state) => state.preferences.hideUI);
   const toggleHideUI = useUserPreferencesStore((state) => state.toggleHideUI);
 
@@ -157,8 +155,8 @@ export function useViewTabActions(): ViewTabActions {
     // function reference is stable and can be returned directly.
     toggleTaskTableCollapsed: toggleTaskTableCollapsedAction,
     // Display modes
-    isPresentationMode,
-    togglePresentationMode,
+    isHighContrast,
+    toggleHighContrast,
     hideUI,
     toggleHideUI,
   };

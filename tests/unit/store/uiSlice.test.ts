@@ -26,6 +26,7 @@ describe('uiSlice', () => {
       isWelcomeTourOpen: false,
       hasSeenWelcome: false,
       hasTourCompleted: false,
+      isHighContrast: false,
       isHydrated: false,
     });
   });
@@ -334,6 +335,35 @@ describe('uiSlice', () => {
       setHelpDialogActiveTab('shortcuts');
 
       expect(useUIStore.getState().helpDialogActiveTab).toBe('shortcuts');
+    });
+  });
+
+  describe('high contrast mode', () => {
+    it('should default to disabled', () => {
+      expect(useUIStore.getState().isHighContrast).toBe(false);
+    });
+
+    it('should enable high contrast', () => {
+      const { enableHighContrast } = useUIStore.getState();
+      enableHighContrast();
+      expect(useUIStore.getState().isHighContrast).toBe(true);
+    });
+
+    it('should disable high contrast', () => {
+      useUIStore.setState({ isHighContrast: true });
+      const { disableHighContrast } = useUIStore.getState();
+      disableHighContrast();
+      expect(useUIStore.getState().isHighContrast).toBe(false);
+    });
+
+    it('should toggle high contrast', () => {
+      const { toggleHighContrast } = useUIStore.getState();
+
+      toggleHighContrast();
+      expect(useUIStore.getState().isHighContrast).toBe(true);
+
+      toggleHighContrast();
+      expect(useUIStore.getState().isHighContrast).toBe(false);
     });
   });
 

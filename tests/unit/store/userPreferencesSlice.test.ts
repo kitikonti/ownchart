@@ -8,6 +8,7 @@ import { act } from "@testing-library/react";
 import {
   useUserPreferencesStore,
   applyDensityClass,
+  applyHideUIAttribute,
   getCurrentDensityConfig,
   getCurrentDateFormat,
 } from "@/store/slices/userPreferencesSlice";
@@ -413,6 +414,44 @@ describe("userPreferencesSlice", () => {
       );
     });
   });
+
+  describe("hideUI", () => {
+    it("should default to false", () => {
+      expect(useUserPreferencesStore.getState().preferences.hideUI).toBe(false);
+    });
+
+    it("should set hideUI to true", () => {
+      act(() => {
+        useUserPreferencesStore.getState().setHideUI(true);
+      });
+
+      expect(useUserPreferencesStore.getState().preferences.hideUI).toBe(true);
+    });
+
+    it("should toggle hideUI", () => {
+      act(() => {
+        useUserPreferencesStore.getState().toggleHideUI();
+      });
+      expect(useUserPreferencesStore.getState().preferences.hideUI).toBe(true);
+
+      act(() => {
+        useUserPreferencesStore.getState().toggleHideUI();
+      });
+      expect(useUserPreferencesStore.getState().preferences.hideUI).toBe(false);
+    });
+
+    it("should apply data attribute when hideUI changes", () => {
+      act(() => {
+        useUserPreferencesStore.getState().setHideUI(true);
+      });
+      expect(document.documentElement.dataset.hideUi).toBe("true");
+
+      act(() => {
+        useUserPreferencesStore.getState().setHideUI(false);
+      });
+      expect(document.documentElement.dataset.hideUi).toBeUndefined();
+    });
+  });
 });
 
 describe("applyDensityClass", () => {
@@ -534,5 +573,22 @@ describe("DENSITY_CONFIG values", () => {
     expect(DENSITY_CONFIG.comfortable.taskBarHeight).toBe(32);
     expect(DENSITY_CONFIG.comfortable.taskBarOffset).toBe(6);
     expect(DENSITY_CONFIG.comfortable.iconSize).toBe(18);
+  });
+});
+
+describe("applyHideUIAttribute", () => {
+  afterEach(() => {
+    delete document.documentElement.dataset.hideUi;
+  });
+
+  it("should set data-hide-ui attribute when enabled", () => {
+    applyHideUIAttribute(true);
+    expect(document.documentElement.dataset.hideUi).toBe("true");
+  });
+
+  it("should remove data-hide-ui attribute when disabled", () => {
+    document.documentElement.dataset.hideUi = "true";
+    applyHideUIAttribute(false);
+    expect(document.documentElement.dataset.hideUi).toBeUndefined();
   });
 });

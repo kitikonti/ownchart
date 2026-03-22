@@ -54,8 +54,8 @@ export function ViewTabContent(): JSX.Element {
     handleFitToView,
     isTaskTableCollapsed,
     toggleTaskTableCollapsed,
-    isPresentationMode,
-    togglePresentationMode,
+    isHighContrast,
+    toggleHighContrast,
     hideUI,
     toggleHideUI,
   } = useViewTabActions();
@@ -180,17 +180,15 @@ export function ViewTabContent(): JSX.Element {
       <ToolbarGroup label="Display">
         <ToolbarButton
           variant="toggle"
-          isActive={isPresentationMode}
-          onClick={togglePresentationMode}
+          isActive={isHighContrast}
+          onClick={toggleHighContrast}
           title={
-            isPresentationMode
+            isHighContrast
               ? "Disable High Contrast"
               : "High Contrast — better visibility for projectors & screen sharing"
           }
           aria-label={
-            isPresentationMode
-              ? "Disable High Contrast"
-              : "Enable High Contrast"
+            isHighContrast ? "Disable High Contrast" : "Enable High Contrast"
           }
           icon={<CircleHalf size={ICON_SIZE} weight="light" />}
           label="Contrast"

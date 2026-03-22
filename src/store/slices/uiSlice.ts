@@ -46,8 +46,8 @@ interface UIState {
   hasSeenWelcome: boolean;
   hasTourCompleted: boolean;
 
-  // Presentation mode (session-only, not persisted)
-  isPresentationMode: boolean;
+  // High contrast mode (session-only, not persisted)
+  isHighContrast: boolean;
 
   // Hydration state (true after localStorage restoration is complete)
   isHydrated: boolean;
@@ -86,10 +86,10 @@ interface UIActions {
   completeTour: () => void;
   checkFirstTimeUser: () => void;
 
-  // Presentation mode
-  enterPresentationMode: () => void;
-  exitPresentationMode: () => void;
-  togglePresentationMode: () => void;
+  // High contrast mode
+  enableHighContrast: () => void;
+  disableHighContrast: () => void;
+  toggleHighContrast: () => void;
 
   // Hydration
   setHydrated: () => void;
@@ -140,7 +140,7 @@ export const useUIStore = create<UIStore>()(
       isWelcomeTourOpen: false,
       hasSeenWelcome,
       hasTourCompleted,
-      isPresentationMode: false,
+      isHighContrast: false,
       isHydrated: false,
 
       // Export dialog actions
@@ -282,20 +282,20 @@ export const useUIStore = create<UIStore>()(
           }
         }),
 
-      // Presentation mode actions
-      enterPresentationMode: (): void =>
+      // High contrast mode actions
+      enableHighContrast: (): void =>
         set((state) => {
-          state.isPresentationMode = true;
+          state.isHighContrast = true;
         }),
 
-      exitPresentationMode: (): void =>
+      disableHighContrast: (): void =>
         set((state) => {
-          state.isPresentationMode = false;
+          state.isHighContrast = false;
         }),
 
-      togglePresentationMode: (): void =>
+      toggleHighContrast: (): void =>
         set((state) => {
-          state.isPresentationMode = !state.isPresentationMode;
+          state.isHighContrast = !state.isHighContrast;
         }),
 
       // Hydration action - called after localStorage restoration is complete
