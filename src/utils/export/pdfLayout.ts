@@ -146,13 +146,14 @@ export function hasHeaderFooterContent(section: PdfHeaderFooter): boolean {
 export function getReservedSpace(section: PdfHeaderFooter): number {
   if (!hasHeaderFooterContent(section)) return 0;
 
-  const capHeightMm = ptToMm(
-    PDF_BANNER_FONT_SIZE_PT * PDF_BANNER_CAP_HEIGHT_RATIO
-  );
-  const logoHeightMm = ptToMm(MAX_LOGO_DISPLAY_HEIGHT_PT);
+  const hasText =
+    section.showProjectName || section.showAuthor || section.showExportDate;
+  const capHeightMm = hasText
+    ? ptToMm(PDF_BANNER_FONT_SIZE_PT * PDF_BANNER_CAP_HEIGHT_RATIO)
+    : 0;
 
   const contentHeightMm = section.showLogo
-    ? Math.max(logoHeightMm, capHeightMm)
+    ? Math.max(ptToMm(MAX_LOGO_DISPLAY_HEIGHT_PT), capHeightMm)
     : capHeightMm;
 
   return contentHeightMm + PDF_BANNER_LINE_GAP_MM + PDF_BANNER_PADDING_MM;

@@ -526,6 +526,33 @@ describe("pdfLayout", () => {
       expect(withLogo).toBeGreaterThan(textOnly);
     });
 
+    it("returns positive space for logo-only content (no text fields)", () => {
+      const logoOnly = getReservedSpace({
+        showProjectName: false,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: true,
+      });
+      expect(logoOnly).toBeGreaterThan(0);
+      expect(logoOnly).toBeLessThan(10);
+    });
+
+    it("logo-only reserved space differs from text-only", () => {
+      const textOnly = getReservedSpace({
+        showProjectName: true,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: false,
+      });
+      const logoOnly = getReservedSpace({
+        showProjectName: false,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: true,
+      });
+      expect(logoOnly).not.toBe(textOnly);
+    });
+
     it("reserves less space than the old fixed 10mm value", () => {
       const withLogo = getReservedSpace({
         showProjectName: true,
