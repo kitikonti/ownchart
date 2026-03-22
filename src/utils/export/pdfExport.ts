@@ -28,6 +28,9 @@ import {
   hexToRgb,
   calculatePdfFitToWidth,
   hasHeaderFooterContent,
+  PDF_BANNER_FONT_SIZE_PT,
+  PDF_BANNER_CAP_HEIGHT_RATIO,
+  PDF_BANNER_LINE_GAP_MM,
   type PageDimensions,
   type PdfColor,
 } from "./pdfLayout";
@@ -71,9 +74,6 @@ import { logoToDataUrl, MAX_LOGO_DISPLAY_HEIGHT_PT } from "@/utils/logoUpload";
 // PDF Rendering Constants
 // =============================================================================
 
-/** Font size for header/footer banner text in points */
-const PDF_BANNER_FONT_SIZE_PT = 9;
-
 /**
  * Text color for header/footer labels.
  * Derived from the design-token EXPORT_COLORS.textSecondary (slate-600)
@@ -90,20 +90,6 @@ const PDF_BORDER_COLOR: PdfColor = hexToRgb(EXPORT_COLORS.separator);
 
 /** Separator line width in millimeters */
 const PDF_SEPARATOR_LINE_WIDTH_MM = 0.1;
-
-/**
- * Distance (mm) from the separator line to the text baseline / logo bottom edge.
- * Both text and logo are positioned relative to the separator line for
- * consistent baseline alignment (print-standard approach).
- */
-const PDF_BANNER_LINE_GAP_MM = 2;
-
-/**
- * Approximate cap-height ratio for Inter at banner font size.
- * Used to position footer text so its visual bottom sits at the correct
- * distance below the separator line (mirroring the header layout).
- */
-const PDF_BANNER_CAP_HEIGHT_RATIO = 0.7;
 
 /** Middle-dot separator between right-side banner fields (e.g. author · date) */
 const PDF_BANNER_SEPARATOR = " \u00B7 ";

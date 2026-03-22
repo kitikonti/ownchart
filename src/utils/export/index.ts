@@ -130,7 +130,6 @@ export {
 // PDF layout utilities
 export {
   calculatePdfFitToWidth,
-  PDF_HEADER_FOOTER_RESERVED_MM,
   hasHeaderFooterContent,
   getReservedSpace,
   formatPageSizeName,

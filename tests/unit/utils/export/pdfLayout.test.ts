@@ -19,7 +19,6 @@ import {
   hasHeaderFooterContent,
   getReservedSpace,
   formatPageSizeName,
-  PDF_HEADER_FOOTER_RESERVED_MM,
   PT_PER_MM,
   PT_PER_PX,
   MM_PER_PX,
@@ -479,32 +478,62 @@ describe("pdfLayout", () => {
           showProjectName: false,
           showAuthor: false,
           showExportDate: false,
+          showLogo: false,
         })
       ).toBe(0);
     });
 
-    it("returns PDF_HEADER_FOOTER_RESERVED_MM when content is enabled", () => {
-      expect(
-        getReservedSpace({
-          showProjectName: true,
-          showAuthor: false,
-          showExportDate: false,
-        })
-      ).toBe(PDF_HEADER_FOOTER_RESERVED_MM);
+    it("returns positive space for text-only content", () => {
+      const reserved = getReservedSpace({
+        showProjectName: true,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: false,
+      });
+      expect(reserved).toBeGreaterThan(0);
+      expect(reserved).toBeLessThan(10);
     });
 
-    it("returns the same value regardless of how many fields are enabled", () => {
+    it("returns the same value regardless of how many text fields are enabled", () => {
       const oneField = getReservedSpace({
         showProjectName: true,
         showAuthor: false,
         showExportDate: false,
+        showLogo: false,
       });
       const allFields = getReservedSpace({
         showProjectName: true,
         showAuthor: true,
         showExportDate: true,
+        showLogo: false,
       });
       expect(oneField).toBe(allFields);
+    });
+
+    it("returns larger space when logo is enabled", () => {
+      const textOnly = getReservedSpace({
+        showProjectName: true,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: false,
+      });
+      const withLogo = getReservedSpace({
+        showProjectName: true,
+        showAuthor: false,
+        showExportDate: false,
+        showLogo: true,
+      });
+      expect(withLogo).toBeGreaterThan(textOnly);
+    });
+
+    it("reserves less space than the old fixed 10mm value", () => {
+      const withLogo = getReservedSpace({
+        showProjectName: true,
+        showAuthor: true,
+        showExportDate: true,
+        showLogo: true,
+      });
+      expect(withLogo).toBeLessThan(10);
     });
   });
 

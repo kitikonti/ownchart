@@ -10,6 +10,7 @@ import type {
   PdfPageSize,
   ExportOptions,
 } from "./types";
+import { MAX_LOGO_DISPLAY_HEIGHT_PT } from "@/utils/logoUpload";
 import {
   PDF_PAGE_SIZES,
   PDF_MARGIN_PRESETS,
@@ -88,8 +89,25 @@ export function mmToPx(mm: number): number {
 // PDF Header/Footer Constants
 // =============================================================================
 
-/** Reserved space (mm) for header or footer when content is enabled */
-export const PDF_HEADER_FOOTER_RESERVED_MM = 10;
+/** Font size for header/footer banner text in points */
+export const PDF_BANNER_FONT_SIZE_PT = 9;
+
+/**
+ * Approximate cap-height ratio for Inter at banner font size.
+ * Used to position footer text so its visual bottom sits at the correct
+ * distance below the separator line (mirroring the header layout).
+ */
+export const PDF_BANNER_CAP_HEIGHT_RATIO = 0.7;
+
+/**
+ * Distance (mm) from the separator line to the text baseline / logo bottom edge.
+ * Both text and logo are positioned relative to the separator line for
+ * consistent baseline alignment (print-standard approach).
+ */
+export const PDF_BANNER_LINE_GAP_MM = 2;
+
+/** Minimal padding (mm) between banner content and the page margin edge */
+const PDF_BANNER_PADDING_MM = 1;
 
 /**
  * Approximation of average character width as a fraction of font size (in pt).
@@ -122,10 +140,22 @@ export function hasHeaderFooterContent(section: PdfHeaderFooter): boolean {
 
 /**
  * Calculate reserved space (mm) for a header/footer section.
- * Returns PDF_HEADER_FOOTER_RESERVED_MM if any content is enabled, 0 otherwise.
+ * Dynamically sized based on actual content (text cap-height vs. logo height)
+ * to avoid excessive whitespace from a fixed reservation.
  */
 export function getReservedSpace(section: PdfHeaderFooter): number {
-  return hasHeaderFooterContent(section) ? PDF_HEADER_FOOTER_RESERVED_MM : 0;
+  if (!hasHeaderFooterContent(section)) return 0;
+
+  const capHeightMm = ptToMm(
+    PDF_BANNER_FONT_SIZE_PT * PDF_BANNER_CAP_HEIGHT_RATIO
+  );
+  const logoHeightMm = ptToMm(MAX_LOGO_DISPLAY_HEIGHT_PT);
+
+  const contentHeightMm = section.showLogo
+    ? Math.max(logoHeightMm, capHeightMm)
+    : capHeightMm;
+
+  return contentHeightMm + PDF_BANNER_LINE_GAP_MM + PDF_BANNER_PADDING_MM;
 }
 
 /** Display names for each PDF page size. Module-level to avoid per-call allocation. */
