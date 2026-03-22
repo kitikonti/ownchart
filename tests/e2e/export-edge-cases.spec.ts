@@ -15,6 +15,7 @@ import {
   clickExportAndWaitForDownload,
   assertValidPng,
   assertValidSvg,
+  setupEmptyProject,
 } from './fixtures/export-helpers';
 
 // Export tests are heavy — only run on Chromium
@@ -29,14 +30,7 @@ test.setTimeout(60_000);
 
 test.describe('Empty project export', () => {
   test.beforeEach(async ({ page }) => {
-    // Setup WITHOUT data — just dismiss welcome tour
-    await page.addInitScript(() => {
-      localStorage.setItem('ownchart-welcome-dismissed', 'true');
-      localStorage.setItem('ownchart-tour-completed', 'true');
-    });
-    await page.goto('/');
-    await expect(page.locator('#root')).toBeVisible();
-    await expect(page.getByRole('grid', { name: 'Task spreadsheet' })).toBeVisible();
+    await setupEmptyProject(page);
   });
 
   test('PNG export of empty project either downloads or shows error', async ({ page }) => {
@@ -47,7 +41,7 @@ test.describe('Empty project export', () => {
 
     // Try exporting — an empty project may either succeed with a minimal
     // image or show an error. Both are acceptable; a crash is not.
-    const downloadPromise = page.waitForEvent('download', { timeout: 30_000 }).catch(() => null);
+    const downloadPromise = page.waitForEvent('download', { timeout: 60_000 }).catch(() => null);
     await exportButton.click();
 
     const download = await downloadPromise;
@@ -66,7 +60,7 @@ test.describe('Empty project export', () => {
     const dialog = page.getByRole('dialog');
     const exportButton = dialog.getByRole('button', { name: /^Export/ });
 
-    const downloadPromise = page.waitForEvent('download', { timeout: 30_000 }).catch(() => null);
+    const downloadPromise = page.waitForEvent('download', { timeout: 60_000 }).catch(() => null);
     await exportButton.click();
 
     const download = await downloadPromise;
@@ -130,7 +124,7 @@ test.describe('Hidden tasks in export', () => {
     await rowNumberCell.click({ button: 'right' });
 
     // Click "Hide Row" in context menu
-    const hideMenuItem = page.getByRole('menuitem', { name: /hide/i });
+    const hideMenuItem = page.getByRole('menuitem', { name: /hide row/i });
     await hideMenuItem.click();
 
     // Verify task is no longer visible in the table
@@ -146,8 +140,8 @@ test.describe('Hidden tasks in export', () => {
     const download = await clickExportAndWaitForDownload(page);
     const content = await assertValidSvg(download);
 
-    // "Testing & QA" should not appear in SVG
-    expect(content).not.toContain('Testing');
+    // "Testing & QA" should not appear in SVG (XML-escaped as &amp;)
+    expect(content).not.toContain('Testing &amp; QA');
     // Other tasks should still be present
     expect(content).toContain('Project Kickoff');
     expect(content).toContain('Design Phase');

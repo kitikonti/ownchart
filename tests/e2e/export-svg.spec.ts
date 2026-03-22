@@ -14,6 +14,7 @@ import {
   selectFormat,
   clickExportAndWaitForDownload,
   assertValidSvg,
+  deselectAllColumns,
 } from './fixtures/export-helpers';
 
 // Export tests are heavy — only run on Chromium
@@ -101,19 +102,7 @@ test.describe('SVG Export', () => {
   test('export with all columns deselected produces SVG without table', async ({ page }) => {
     await openExportDialog(page);
     await selectFormat(page, 'SVG');
-
-    const dialog = page.getByRole('dialog');
-
-    // Expand "Layout Options" to access column checkboxes
-    await dialog.getByRole('button', { name: /layout options/i }).click();
-
-    // Uncheck all column checkboxes
-    for (const label of ['Color', 'Name', 'Start Date', 'End Date', 'Duration', 'Progress']) {
-      const checkbox = dialog.getByLabel(label);
-      if (await checkbox.isChecked()) {
-        await checkbox.uncheck();
-      }
-    }
+    await deselectAllColumns(page);
 
     const download = await clickExportAndWaitForDownload(page);
     await assertValidSvg(download);

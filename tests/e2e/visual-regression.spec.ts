@@ -16,6 +16,11 @@
  */
 
 import { test, expect } from "@playwright/test";
+import {
+  DEFAULT_SAMPLE_TASKS,
+  injectDataAndNavigate,
+  setupEmptyProject,
+} from "./fixtures/sample-data";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -44,110 +49,6 @@ function dynamicMasks(
 }
 
 // ---------------------------------------------------------------------------
-// Sample data — injected via localStorage to get a consistent populated state
-// ---------------------------------------------------------------------------
-
-const SAMPLE_TASKS = [
-  {
-    id: "vrt-task-1",
-    name: "Project Kickoff",
-    startDate: "2025-01-06",
-    endDate: "2025-01-06",
-    duration: 1,
-    progress: 100,
-    color: "#0F6CBD",
-    order: 0,
-    type: "milestone",
-    metadata: {},
-  },
-  {
-    id: "vrt-task-2",
-    name: "Design Phase",
-    startDate: "2025-01-07",
-    endDate: "2025-01-17",
-    duration: 11,
-    progress: 75,
-    color: "#0F6CBD",
-    order: 1,
-    type: "task",
-    parent: "vrt-task-4",
-    metadata: {},
-  },
-  {
-    id: "vrt-task-3",
-    name: "Development Sprint 1",
-    startDate: "2025-01-20",
-    endDate: "2025-02-07",
-    duration: 19,
-    progress: 30,
-    color: "#2B88D8",
-    order: 2,
-    type: "task",
-    parent: "vrt-task-4",
-    metadata: {},
-  },
-  {
-    id: "vrt-task-4",
-    name: "Phase 1",
-    startDate: "2025-01-07",
-    endDate: "2025-02-07",
-    duration: 32,
-    progress: 50,
-    color: "#0F6CBD",
-    order: 3,
-    type: "group",
-    open: true,
-    metadata: {},
-  },
-  {
-    id: "vrt-task-5",
-    name: "Testing & QA",
-    startDate: "2025-02-10",
-    endDate: "2025-02-21",
-    duration: 12,
-    progress: 0,
-    color: "#059669",
-    order: 4,
-    type: "task",
-    metadata: {},
-  },
-];
-
-const SAMPLE_CHART_STATE = {
-  zoom: 1,
-  panOffset: { x: 0, y: 0 },
-  showWeekends: true,
-  showTodayMarker: false, // Disable — moves daily, breaks screenshots
-  showHolidays: false,
-  showDependencies: true,
-  showProgress: true,
-  taskLabelPosition: "after" as const,
-};
-
-const SAMPLE_FILE_STATE = {
-  fileName: "Visual Test Project",
-  chartId: "vrt-chart-001",
-  lastSaved: "2025-01-06T10:00:00.000Z",
-  isDirty: false,
-};
-
-function buildStoragePayload(tabId: string): string {
-  return JSON.stringify({
-    version: 2,
-    charts: {
-      [tabId]: {
-        tabId,
-        lastActive: Date.now(), // Must be recent — cleanupInactiveTabs() deletes tabs older than 24h
-        tasks: SAMPLE_TASKS,
-        dependencies: [],
-        chartState: SAMPLE_CHART_STATE,
-        fileState: SAMPLE_FILE_STATE,
-      },
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Setup helpers
 // ---------------------------------------------------------------------------
 
@@ -155,43 +56,23 @@ function buildStoragePayload(tabId: string): string {
 async function setupWithData(
   page: import("@playwright/test").Page
 ): Promise<void> {
-  // The tab ID is generated on app boot — we inject data keyed to a known ID
-  // and also set the tab-id so the app picks up our data.
-  const tabId = "tab-0000000001-vrt0001";
-  const payload = buildStoragePayload(tabId);
-
-  await page.addInitScript(
-    ({ tabId, payload }) => {
-      localStorage.setItem("ownchart-welcome-dismissed", "true");
-      localStorage.setItem("ownchart-tour-completed", "true");
-      localStorage.setItem("ownchart-multi-tab-state", payload);
-      // The app generates its own tab ID via sessionStorage; override it.
-      sessionStorage.setItem("ownchart-tab-id", tabId);
+  await injectDataAndNavigate(page, {
+    tabId: "tab-0000000001-vrt0001",
+    tasks: DEFAULT_SAMPLE_TASKS,
+    fileState: {
+      fileName: "Visual Test Project",
+      chartId: "vrt-chart-001",
+      lastSaved: "2025-01-06T10:00:00.000Z",
+      isDirty: false,
     },
-    { tabId, payload }
-  );
-
-  await page.goto("/");
-  await expect(page.locator("#root")).toBeVisible();
-  // Wait for tasks to render — the first task name should be in the table.
-  // Use getByLabel to scope to the table (avoids strict-mode violation from
-  // the duplicate SVG <text> label on the timeline).
-  await expect(
-    page.getByLabel("Task spreadsheet").getByText("Project Kickoff")
-  ).toBeVisible({ timeout: 5000 });
+  });
 }
 
 /** Dismiss welcome tour, load empty app. */
 async function setupEmpty(
   page: import("@playwright/test").Page
 ): Promise<void> {
-  await page.addInitScript(() => {
-    localStorage.setItem("ownchart-welcome-dismissed", "true");
-    localStorage.setItem("ownchart-tour-completed", "true");
-  });
-
-  await page.goto("/");
-  await expect(page.locator("#root")).toBeVisible();
+  await setupEmptyProject(page);
 }
 
 // ---------------------------------------------------------------------------

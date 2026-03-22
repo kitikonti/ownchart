@@ -1,167 +1,67 @@
 /**
  * Shared helpers for export E2E tests.
  *
- * Provides sample data injection, download interception, and file validation
+ * Provides export dialog interaction, download interception, and file validation
  * utilities used across all export test files (PNG, PDF, SVG).
  */
 
 import { expect, type Page, type Download } from '@playwright/test';
+import {
+  DEFAULT_SAMPLE_TASKS,
+  EXPORT_EXTRA_TASKS,
+  DEFAULT_SAMPLE_DEPENDENCIES,
+  injectDataAndNavigate,
+} from './sample-data';
+
+// Re-export for convenience — tests only need to import from export-helpers
+export { setupEmptyProject } from './sample-data';
 
 // ---------------------------------------------------------------------------
-// Sample data — injected via localStorage for consistent export content
+// Constants
 // ---------------------------------------------------------------------------
 
-const SAMPLE_TASKS = [
-  {
-    id: 'export-task-1',
-    name: 'Project Kickoff',
-    startDate: '2025-01-06',
-    endDate: '2025-01-06',
-    duration: 1,
-    progress: 100,
-    color: '#0F6CBD',
-    order: 0,
-    type: 'milestone',
-    metadata: {},
-  },
-  {
-    id: 'export-task-2',
-    name: 'Design Phase',
-    startDate: '2025-01-07',
-    endDate: '2025-01-17',
-    duration: 11,
-    progress: 75,
-    color: '#0F6CBD',
-    order: 1,
-    type: 'task',
-    parent: 'export-task-4',
-    metadata: {},
-  },
-  {
-    id: 'export-task-3',
-    name: 'Development Sprint 1',
-    startDate: '2025-01-20',
-    endDate: '2025-02-07',
-    duration: 19,
-    progress: 30,
-    color: '#2B88D8',
-    order: 2,
-    type: 'task',
-    parent: 'export-task-4',
-    metadata: {},
-  },
-  {
-    id: 'export-task-4',
-    name: 'Phase 1',
-    startDate: '2025-01-07',
-    endDate: '2025-02-07',
-    duration: 32,
-    progress: 50,
-    color: '#0F6CBD',
-    order: 3,
-    type: 'group',
-    open: true,
-    metadata: {},
-  },
-  {
-    id: 'export-task-5',
-    name: 'Testing & QA',
-    startDate: '2025-02-10',
-    endDate: '2025-02-21',
-    duration: 12,
-    progress: 0,
-    color: '#059669',
-    order: 4,
-    type: 'task',
-    metadata: {},
-  },
-  {
-    id: 'export-task-6',
-    name: 'Launch',
-    startDate: '2025-02-24',
-    endDate: '2025-02-24',
-    duration: 1,
-    progress: 0,
-    color: '#DC2626',
-    order: 5,
-    type: 'milestone',
-    metadata: {},
-  },
-];
+/** Timeout for waiting on export downloads (ms). Exports are slow due to offscreen rendering. */
+const EXPORT_DOWNLOAD_TIMEOUT = 60_000;
 
-const SAMPLE_DEPENDENCIES = [
-  { from: 'export-task-4', to: 'export-task-5', type: 'finish-to-start' },
-  { from: 'export-task-5', to: 'export-task-6', type: 'finish-to-start' },
-];
-
-const SAMPLE_CHART_STATE = {
-  zoom: 1,
-  panOffset: { x: 0, y: 0 },
-  showWeekends: true,
-  showTodayMarker: false,
-  showHolidays: false,
-  showDependencies: true,
-  showProgress: true,
-  taskLabelPosition: 'after' as const,
-};
-
-const SAMPLE_FILE_STATE = {
-  fileName: 'Export Test Project',
-  chartId: 'export-chart-001',
-  lastSaved: '2025-01-06T10:00:00.000Z',
-  isDirty: false,
-};
-
-function buildStoragePayload(tabId: string): string {
-  return JSON.stringify({
-    version: 2,
-    charts: {
-      [tabId]: {
-        tabId,
-        lastActive: Date.now(),
-        tasks: SAMPLE_TASKS,
-        dependencies: SAMPLE_DEPENDENCIES,
-        chartState: SAMPLE_CHART_STATE,
-        fileState: SAMPLE_FILE_STATE,
-      },
-    },
-  });
-}
+/** Column labels in the export dialog's "Layout Options" section. */
+export const EXPORT_COLUMN_LABELS = [
+  'Color',
+  'Name',
+  'Start Date',
+  'End Date',
+  'Duration',
+  'Progress',
+] as const;
 
 // ---------------------------------------------------------------------------
 // Setup helpers
 // ---------------------------------------------------------------------------
 
-/** Dismiss welcome tour + inject sample data via localStorage. */
+/** Dismiss welcome tour + inject export sample data (6 tasks with dependencies). */
 export async function setupWithExportData(page: Page): Promise<void> {
-  const tabId = 'tab-0000000001-export001';
-  const payload = buildStoragePayload(tabId);
-
-  await page.addInitScript(
-    ({ tabId, payload }) => {
-      localStorage.setItem('ownchart-welcome-dismissed', 'true');
-      localStorage.setItem('ownchart-tour-completed', 'true');
-      localStorage.setItem('ownchart-multi-tab-state', payload);
-      sessionStorage.setItem('ownchart-tab-id', tabId);
+  await injectDataAndNavigate(page, {
+    tabId: 'tab-0000000001-export001',
+    tasks: [...DEFAULT_SAMPLE_TASKS, ...EXPORT_EXTRA_TASKS],
+    dependencies: DEFAULT_SAMPLE_DEPENDENCIES,
+    fileState: {
+      fileName: 'Export Test Project',
+      chartId: 'export-chart-001',
+      lastSaved: '2025-01-06T10:00:00.000Z',
+      isDirty: false,
     },
-    { tabId, payload },
-  );
-
-  await page.goto('/');
-  await expect(page.locator('#root')).toBeVisible();
-  await expect(
-    page.getByLabel('Task spreadsheet').getByText('Project Kickoff'),
-  ).toBeVisible({ timeout: 10_000 });
+  });
 }
 
 /** Set a project title via the top bar. Handles both empty and pre-existing titles. */
 export async function setProjectTitle(page: Page, title: string): Promise<void> {
-  // The title button has title="Click to edit project title" — use that as a stable selector
+  // The title button has title="Click to edit project title" — stable across all title states
   const titleButton = page.getByTitle('Click to edit project title');
   await titleButton.click();
   const titleInput = page.getByRole('textbox', { name: 'Project title' });
   await titleInput.fill(title);
   await titleInput.press('Enter');
+  // Wait for the button text to update so subsequent actions see the new title
+  await expect(titleButton).toContainText(title);
 }
 
 // ---------------------------------------------------------------------------
@@ -192,10 +92,25 @@ export async function selectFormat(
  */
 export async function clickExportAndWaitForDownload(page: Page): Promise<Download> {
   const dialog = page.getByRole('dialog');
-  const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
+  const downloadPromise = page.waitForEvent('download', { timeout: EXPORT_DOWNLOAD_TIMEOUT });
   const exportButton = dialog.getByRole('button', { name: /^Export/ });
   await exportButton.click();
   return downloadPromise;
+}
+
+/**
+ * Expand the "Layout Options" collapsible and uncheck all column checkboxes.
+ * Useful for testing chart-only (no table) exports.
+ */
+export async function deselectAllColumns(page: Page): Promise<void> {
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: /layout options/i }).click();
+  for (const label of EXPORT_COLUMN_LABELS) {
+    const checkbox = dialog.getByLabel(label);
+    if (await checkbox.isChecked()) {
+      await checkbox.uncheck();
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
