@@ -7,7 +7,11 @@
 import { useMemo, useCallback, useState } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
-import type { DependencyType, TaskPosition } from "@/types/dependency.types";
+import type {
+  DependencyDragState,
+  DependencyType,
+  TaskPosition,
+} from "@/types/dependency.types";
 import type {
   TimelineScale,
   DensityGeometryConfig,
@@ -25,11 +29,7 @@ interface DependencyArrowsProps {
   tasks: Task[];
   scale: TimelineScale;
   rowHeight?: number;
-  dragState?: {
-    isDragging: boolean;
-    fromTaskId: TaskId | null;
-    currentPosition: { x: number; y: number };
-  };
+  dragState?: DependencyDragState;
 }
 
 export function DependencyArrows({
@@ -127,7 +127,7 @@ export function DependencyArrows({
     });
   }, [dependencies, taskMap, taskPositions]);
 
-  // Get start position for drag preview
+  // Get start position for drag preview (respects which handle initiated the drag)
   const dragStartPosition = useMemo(() => {
     if (!dragState?.isDragging || !dragState.fromTaskId) {
       return null;
@@ -135,9 +135,9 @@ export function DependencyArrows({
     const pos = taskPositions.get(dragState.fromTaskId);
     if (!pos) return null;
 
-    // Start from right edge of task (for FS dependencies)
+    const x = dragState.fromSide === "start" ? pos.x : pos.x + pos.width;
     return {
-      x: pos.x + pos.width,
+      x,
       y: pos.y + pos.height / 2,
     };
   }, [dragState, taskPositions]);

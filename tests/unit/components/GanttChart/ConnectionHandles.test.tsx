@@ -214,14 +214,27 @@ describe("ConnectionHandles", () => {
       expect(onHover).toHaveBeenCalledWith("task-1");
     });
 
-    it("calls onDrop with taskId on mouseup", () => {
+    it("calls onDrop with taskId and side on mouseup on start handle", () => {
       const onDrop = vi.fn();
       const { container } = renderHandles({ onDrop });
 
-      const group = container.querySelector(".connection-handles")!;
-      fireEvent.mouseUp(group);
+      // Each handle has its own inner <g> with mouseUp; the first inner <g> is the start handle
+      const handleGroups =
+        container.querySelectorAll(".connection-handles > g");
+      fireEvent.mouseUp(handleGroups[0]);
 
-      expect(onDrop).toHaveBeenCalledWith("task-1");
+      expect(onDrop).toHaveBeenCalledWith("task-1", "start");
+    });
+
+    it("calls onDrop with taskId and side on mouseup on end handle", () => {
+      const onDrop = vi.fn();
+      const { container } = renderHandles({ onDrop });
+
+      const handleGroups =
+        container.querySelectorAll(".connection-handles > g");
+      fireEvent.mouseUp(handleGroups[1]);
+
+      expect(onDrop).toHaveBeenCalledWith("task-1", "end");
     });
   });
 

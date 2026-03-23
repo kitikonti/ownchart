@@ -472,11 +472,6 @@ export function ExportRenderer({
               tasks={orderedTasks}
               scale={scale}
               rowHeight={densityConfig.rowHeight}
-              dragState={{
-                isDragging: false,
-                fromTaskId: null,
-                currentPosition: { x: 0, y: 0 },
-              }}
             />
           )}
 

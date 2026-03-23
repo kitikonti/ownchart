@@ -1,7 +1,7 @@
 /**
  * ConnectionHandles - Connection handles for creating dependencies
  * Renders circular handles at the start and end of task bars.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ * Supports handle-based type inference for all 4 dependency types (FS/SS/FF/SF).
  */
 
 import React, { memo, useState, useCallback } from "react";
@@ -43,7 +43,7 @@ interface ConnectionHandlesProps {
     e: React.MouseEvent
   ) => void;
   onHover?: (taskId: TaskId | null) => void;
-  onDrop?: (taskId: TaskId) => void;
+  onDrop?: (taskId: TaskId, side: "start" | "end") => void;
 }
 
 export const ConnectionHandles = memo(function ConnectionHandles({
@@ -98,10 +98,13 @@ export const ConnectionHandles = memo(function ConnectionHandles({
     onHover?.(taskId);
   }, [onHover, taskId]);
 
-  // Handle drop on this task's handles
-  const handleMouseUp = useCallback(() => {
-    onDrop?.(taskId);
-  }, [onDrop, taskId]);
+  // Handle drop on this task's handles (per-side to pass which handle was dropped on)
+  const handleMouseUp = useCallback(
+    (side: "start" | "end") => (): void => {
+      onDrop?.(taskId, side);
+    },
+    [onDrop, taskId]
+  );
 
   // Don't render if not visible and not a drop target
   if (!isVisible && !isValidDropTarget && !isInvalidDropTarget) {
@@ -115,11 +118,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
   const showRings = isValidDropTarget || isInvalidDropTarget;
 
   return (
-    <g
-      className="connection-handles"
-      onMouseEnter={handleMouseEnter}
-      onMouseUp={handleMouseUp}
-    >
+    <g className="connection-handles" onMouseEnter={handleMouseEnter}>
       {handles.map(({ cx, side }) => {
         const radius =
           hoveredHandle === side ? HANDLE_RADIUS_HOVER : HANDLE_RADIUS_NORMAL;
@@ -129,6 +128,7 @@ export const ConnectionHandles = memo(function ConnectionHandles({
             onMouseEnter={() => setHoveredHandle(side)}
             onMouseLeave={() => setHoveredHandle(null)}
             onMouseDown={handleMouseDown(side)}
+            onMouseUp={handleMouseUp(side)}
           >
             {/* Invisible hit area */}
             <circle

@@ -8,6 +8,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
 import { DependencyArrows } from "@/components/GanttChart/DependencyArrows";
 import type { Task } from "@/types/chart.types";
+import type { TaskId } from "@/types/branded.types";
+import type { DependencyDragState } from "@/types/dependency.types";
 import type { TimelineScale } from "@/utils/timelineUtils";
 import { tid, hex } from "../../../helpers/branded";
 
@@ -85,6 +87,20 @@ function createScale(overrides: Partial<TimelineScale> = {}): TimelineScale {
     totalDays: 31,
     zoom: 1,
     scales: [],
+    ...overrides,
+  };
+}
+
+function createDragState(
+  overrides: Partial<DependencyDragState> = {},
+): DependencyDragState {
+  return {
+    isDragging: false,
+    fromTaskId: null,
+    fromSide: null,
+    currentPosition: { x: 0, y: 0 },
+    validTargets: new Set<TaskId>(),
+    invalidTargets: new Set<TaskId>(),
     ...overrides,
   };
 }
@@ -224,11 +240,12 @@ describe("DependencyArrows", () => {
 
     it("renders drag preview when dragging from a valid task", () => {
       const { container } = renderArrows({
-        dragState: {
+        dragState: createDragState({
           isDragging: true,
           fromTaskId: tid("task-1"),
+          fromSide: "end",
           currentPosition: { x: 300, y: 100 },
-        },
+        }),
       });
       expect(
         container.querySelector(".dependency-drag-preview"),
@@ -237,11 +254,11 @@ describe("DependencyArrows", () => {
 
     it("does not render drag preview when fromTaskId is null", () => {
       const { container } = renderArrows({
-        dragState: {
+        dragState: createDragState({
           isDragging: true,
           fromTaskId: null,
           currentPosition: { x: 300, y: 100 },
-        },
+        }),
       });
       expect(
         container.querySelector(".dependency-drag-preview"),
@@ -251,11 +268,12 @@ describe("DependencyArrows", () => {
     it("does not render drag preview when fromTask has no position", () => {
       const { container } = renderArrows({
         tasks: [createTask({ id: "task-1", startDate: "" })],
-        dragState: {
+        dragState: createDragState({
           isDragging: true,
           fromTaskId: tid("task-1"),
+          fromSide: "end",
           currentPosition: { x: 300, y: 100 },
-        },
+        }),
       });
       expect(
         container.querySelector(".dependency-drag-preview"),

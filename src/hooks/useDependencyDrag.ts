@@ -1,21 +1,25 @@
 /**
  * useDependencyDrag - Hook for dependency drag interaction
  * Manages the state and logic for creating dependencies via drag.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ * Supports all 4 dependency types (FS/SS/FF/SF) via handle-based type inference.
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
-import type { DependencyDragState } from "@/types/dependency.types";
+import type {
+  DependencyDragState,
+  DependencyType,
+} from "@/types/dependency.types";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { clientToSvgCoords } from "@/utils/svgCoords";
 import toast from "react-hot-toast";
 
-/** Adds a finish-to-start dependency; returns success/failure with an optional message. */
+/** Adds a dependency of the given type; returns success/failure with an optional message. */
 type AddDependencyFn = (
   fromId: TaskId,
-  toId: TaskId
+  toId: TaskId,
+  type?: DependencyType
 ) => { success: boolean; error?: string };
 
 /** Checks whether adding a dependency would create a cycle in the graph. */
@@ -35,7 +39,7 @@ export interface UseDependencyDragReturn {
     e: React.MouseEvent
   ) => void;
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
-  endDrag: (targetTaskId?: TaskId) => void;
+  endDrag: (targetTaskId?: TaskId, targetSide?: "start" | "end") => void;
   cancelDrag: () => void;
   isValidTarget: (taskId: TaskId) => boolean;
   isInvalidTarget: (taskId: TaskId) => boolean;
@@ -63,25 +67,36 @@ function createInitialDragState(): DependencyDragState {
 }
 
 /**
- * Determine which task is the dependency source and which is the target
- * based on which handle side the drag started from.
- *   end-handle drag   → fromTaskId finishes before targetTaskId starts (FS)
- *   start-handle drag → targetTaskId finishes before fromTaskId starts (FS)
+ * Determine dependency direction AND type based on source and target handle sides.
+ *
+ * Handle combinations:
+ *   source=end,   target=start → FS (Finish-to-Start)
+ *   source=start, target=start → SS (Start-to-Start)
+ *   source=end,   target=end   → FF (Finish-to-Finish)
+ *   source=start, target=end   → SF (Start-to-Finish)
+ *
+ * Direction is always source→target (the task the user dragged FROM is the predecessor).
  */
-function resolveDependencyDirection(
-  fromTaskId: TaskId,
+function resolveDependencyTypeAndDirection(
+  sourceTaskId: TaskId,
   targetTaskId: TaskId,
-  side: "start" | "end"
-): { fromId: TaskId; toId: TaskId } {
-  return side === "end"
-    ? { fromId: fromTaskId, toId: targetTaskId }
-    : { fromId: targetTaskId, toId: fromTaskId };
+  sourceSide: "start" | "end",
+  targetSide: "start" | "end"
+): { fromId: TaskId; toId: TaskId; type: DependencyType } {
+  let type: DependencyType;
+  if (sourceSide === "end" && targetSide === "start") type = "FS";
+  else if (sourceSide === "start" && targetSide === "start") type = "SS";
+  else if (sourceSide === "end" && targetSide === "end") type = "FF";
+  else type = "SF";
+
+  return { fromId: sourceTaskId, toId: targetTaskId, type };
 }
 
-/** Classify all tasks as valid or invalid drop targets for the given drag source. */
+/** Classify all tasks as valid or invalid drop targets for the given drag source.
+ * Direction is always source→target regardless of handle side, so cycle
+ * detection checks `(fromTaskId, task.id)` for every potential target. */
 function resolveDragTargets(
   fromTaskId: TaskId,
-  side: "start" | "end",
   tasks: Task[],
   checkWouldCreateCycle: CheckCycleFn
 ): { validTargets: Set<TaskId>; invalidTargets: Set<TaskId> } {
@@ -91,13 +106,7 @@ function resolveDragTargets(
   for (const task of tasks) {
     if (task.id === fromTaskId) continue;
 
-    const { fromId, toId } = resolveDependencyDirection(
-      fromTaskId,
-      task.id,
-      side
-    );
-
-    if (checkWouldCreateCycle(fromId, toId).hasCycle) {
+    if (checkWouldCreateCycle(fromTaskId, task.id).hasCycle) {
       invalidTargets.add(task.id);
     } else {
       validTargets.add(task.id);
@@ -119,8 +128,8 @@ function getEventCoords(
 }
 
 const DEPENDENCY_DRAG_MESSAGES = {
-  created: (fromName: string, toName: string) =>
-    `Dependency created: ${fromName} → ${toName}`,
+  created: (fromName: string, toName: string, type: DependencyType) =>
+    `${type} dependency created: ${fromName} → ${toName}`,
   failed: (error?: string) => error ?? "Failed to create dependency",
   wouldCreateCycle: "Cannot create: Would create circular dependency",
   // Shown when the drop target was added to the task list after drag start and
@@ -134,6 +143,7 @@ interface AttemptCreateDependencyOptions {
   fromTaskId: TaskId;
   targetTaskId: TaskId;
   fromSide: "start" | "end";
+  targetSide: "start" | "end";
   validTargets: Set<TaskId>;
   invalidTargets: Set<TaskId>;
   tasks: Task[];
@@ -145,19 +155,21 @@ function attemptCreateDependency({
   fromTaskId,
   targetTaskId,
   fromSide,
+  targetSide,
   validTargets,
   invalidTargets,
   tasks,
   addDependency,
 }: AttemptCreateDependencyOptions): void {
   if (validTargets.has(targetTaskId)) {
-    const { fromId, toId } = resolveDependencyDirection(
+    const { fromId, toId, type } = resolveDependencyTypeAndDirection(
       fromTaskId,
       targetTaskId,
-      fromSide
+      fromSide,
+      targetSide
     );
 
-    const result = addDependency(fromId, toId);
+    const result = addDependency(fromId, toId, type);
 
     if (result.success) {
       const fromTask = tasks.find((t) => t.id === fromId);
@@ -165,7 +177,8 @@ function attemptCreateDependency({
       toast.success(
         DEPENDENCY_DRAG_MESSAGES.created(
           fromTask?.name ?? "?",
-          toTask?.name ?? "?"
+          toTask?.name ?? "?",
+          type
         )
       );
     } else {
@@ -223,6 +236,7 @@ interface EndDragContext {
  * under the 50-line limit without losing any logic. */
 function performEndDrag(
   targetTaskId: TaskId | undefined,
+  targetSide: "start" | "end" | undefined,
   ctx: EndDragContext
 ): void {
   const { fromTaskId, fromSide, validTargets, invalidTargets } =
@@ -244,6 +258,7 @@ function performEndDrag(
       fromTaskId,
       targetTaskId,
       fromSide,
+      targetSide: targetSide ?? "start",
       validTargets,
       invalidTargets,
       tasks: ctx.tasksRef.current,
@@ -281,7 +296,6 @@ function useDragInitiators(
 
       const { validTargets, invalidTargets } = resolveDragTargets(
         taskId,
-        side,
         tasksRef.current,
         checkWouldCreateCycle
       );
@@ -336,7 +350,7 @@ interface DragSession {
     side: "start" | "end",
     e: React.MouseEvent
   ) => void;
-  endDrag: (targetTaskId?: TaskId) => void;
+  endDrag: (targetTaskId?: TaskId, targetSide?: "start" | "end") => void;
   cancelDrag: () => void;
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
 }
@@ -387,14 +401,14 @@ function useDragCommitter(
   addDependency: AddDependencyFn,
   setDragState: React.Dispatch<React.SetStateAction<DependencyDragState>>
 ): {
-  endDrag: (targetTaskId?: TaskId) => void;
+  endDrag: (targetTaskId?: TaskId, targetSide?: "start" | "end") => void;
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void;
 } {
   // End drag and potentially create a dependency.
   // Delegates to performEndDrag so this callback stays under 10 lines.
   const endDrag = useCallback(
-    (targetTaskId?: TaskId): void => {
-      performEndDrag(targetTaskId, {
+    (targetTaskId?: TaskId, targetSide?: "start" | "end"): void => {
+      performEndDrag(targetTaskId, targetSide, {
         dragStateRef,
         tasksRef,
         addDependency,
@@ -453,7 +467,7 @@ function useDragSession(
 function useDragGlobalEvents(
   isDragging: boolean,
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void,
-  endDrag: (targetTaskId?: TaskId) => void,
+  endDrag: (targetTaskId?: TaskId, targetSide?: "start" | "end") => void,
   cancelDrag: () => void
 ): void {
   useEffect(() => {
@@ -495,7 +509,7 @@ function useDragLifecycle(
   dragState: DependencyDragState,
   cancelDrag: () => void,
   updateDragPosition: (e: MouseEvent | React.MouseEvent) => void,
-  endDrag: (targetTaskId?: TaskId) => void
+  endDrag: (targetTaskId?: TaskId, targetSide?: "start" | "end") => void
 ): void {
   // Cancel any in-progress drag if the feature is disabled externally.
   // cancelDrag is stable (no deps), so this only re-runs when isDragging or

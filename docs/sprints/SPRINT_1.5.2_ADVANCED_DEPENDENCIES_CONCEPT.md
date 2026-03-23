@@ -1153,18 +1153,25 @@ Add "Scheduling" section to the Project Settings panel with the auto-scheduling 
 **Implementation notes:** Panel uses HTML overlay (div with absolute positioning, not SVG foreignObject) rendered within the chart container. Position is computed from arrow midpoint coordinates converted to container-relative pixels. Type selector uses segmented button group with active state highlighting. Lag input uses native number input with blur/Enter to apply. Arrow click selection triggers panel display; click-outside and Escape close it. Help content updated with dependency type descriptions.
 
 ### Package 3: Handle-Based Type Inference
-- [ ] Replace `resolveDependencyDirection` with `resolveDependencyTypeAndDirection`
-- [ ] Detect target handle side from drop position (left half = start, right half = end)
-- [ ] Update `findHoveredTaskId` to return `{ taskId, side }` (or add separate function)
-- [ ] Update `endDrag` to pass target side
-- [ ] Update `attemptCreateDependency` to use inferred type
-- [ ] Update `AddDependencyFn` type to accept `type` parameter
-- [ ] Update drag preview start position based on `fromSide`
-- [ ] Pass `fromSide` through `DependencyArrowsProps.dragState`
-- [ ] Write unit tests for type inference from all handle combinations
-- [ ] Write unit tests for drop target side detection
-- [ ] **GATE: `npm run test:unit` passes**
+- [x] Replace `resolveDependencyDirection` with `resolveDependencyTypeAndDirection`
+- [x] Detect target handle side from drop position (per-handle mouseUp instead of midpoint heuristic)
+- [x] Update `ConnectionHandles.onDrop` to pass handle side
+- [x] Update `endDrag` to pass target side
+- [x] Update `attemptCreateDependency` to use inferred type
+- [x] Update `AddDependencyFn` type to accept `type` parameter
+- [x] Update drag preview start position based on `fromSide`
+- [x] Use `DependencyDragState` type directly in `DependencyArrowsProps` (replaces inline subset)
+- [x] Write unit tests for type inference from all handle combinations (FS/SS/FF/SF)
+- [x] Write unit tests for body drop default (defaults to "start" → FS for end-handle drags)
+- [x] Write unit test for start-handle cycle detection with new direction semantics
+- [x] Update `ConnectionHandles.test.tsx` for per-handle onDrop with side parameter
+- [x] Update `DependencyArrows.test.tsx` dragState to use full `DependencyDragState` type
+- [x] Remove unused mock dragState from `ExportRenderer.tsx` (prop is optional)
+- [x] **GATE: `npm run test:unit` passes** (5000/5000 tests pass)
+- [x] **GATE: `npm run ci:local` passes** (lint, type-check, format, tests, build all green)
 - [ ] **GATE: Manual — drag end→start=FS, start→start=SS, end→end=FF, start→end=SF**
+
+**Implementation notes:** Used per-handle mouseUp (Approach B from concept doc) instead of midpoint heuristic (Approach A). Each handle's inner `<g>` has its own `onMouseUp` that passes the handle side. Body drops (task bar `<g>` mouseUp, not on a handle) default to `targetSide="start"`, preserving FS behavior for end-handle drags. Direction is always source→target (no more reversal for start-handle drags). Cycle detection now always checks `(source, target)` — this is correct and improves UX by showing invalid targets before drop instead of post-drop error toasts.
 
 ### Package 4: Auto-Scheduling (Opt-In)
 - [ ] Create `src/utils/graph/dateAdjustment.ts`

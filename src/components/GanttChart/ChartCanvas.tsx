@@ -253,11 +253,11 @@ export function ChartCanvas({
     };
   }, [tasks, scale, densityGeometry]);
 
-  // Sprint 1.4: Handle mouse up on task for dependency drop
+  // Handle mouse up on task for dependency drop (targetSide from handle, or "start" for body drops)
   const handleTaskMouseUp = useCallback(
-    (taskId: TaskId) => {
+    (taskId: TaskId, targetSide?: "start" | "end") => {
       if (dragState.isDragging) {
-        endDrag(taskId);
+        endDrag(taskId, targetSide);
       }
     },
     [dragState.isDragging, endDrag]
@@ -381,7 +381,7 @@ export function ChartCanvas({
                     key={task.id}
                     onMouseEnter={() => setHoveredTaskId(task.id)}
                     onMouseLeave={() => setHoveredTaskId(null)}
-                    onMouseUp={() => handleTaskMouseUp(task.id)}
+                    onMouseUp={() => handleTaskMouseUp(task.id, "start")}
                     onContextMenu={(e) => handleBarContextMenu(e, task.id)}
                   >
                     <TaskBar

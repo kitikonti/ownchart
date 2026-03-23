@@ -143,6 +143,23 @@ describe("useDependencyDrag", () => {
     expect(result.current.dragState.validTargets.has(TASK_C.id)).toBe(true);
   });
 
+  it("marks cycle correctly for start-handle drag", () => {
+    // A → B already exists; dragging from B's start handle targets A → B→A would be a cycle
+    useDependencyStore.getState().addDependency(TASK_A.id, TASK_B.id);
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    // Drag from B's start — direction is always source→target (B→X), so B→A creates cycle
+    act(() => {
+      result.current.startDrag(TASK_B.id, "start", makeMouseEvent());
+    });
+
+    expect(result.current.dragState.invalidTargets.has(TASK_A.id)).toBe(true);
+    expect(result.current.dragState.validTargets.has(TASK_C.id)).toBe(true);
+  });
+
   it("does not start drag when enabled=false", () => {
     const { result } = renderHook(() =>
       useDependencyDrag({ tasks: DEFAULT_TASKS, enabled: false })
@@ -261,7 +278,7 @@ describe("useDependencyDrag", () => {
     expect(result.current.dragState.fromTaskId).toBeNull();
   });
 
-  it("creates dependency when endDrag called with valid target", () => {
+  it("creates FS dependency when end→start drag", () => {
     const addDepSpy = vi.spyOn(
       useDependencyStore.getState(),
       "addDependency"
@@ -276,10 +293,10 @@ describe("useDependencyDrag", () => {
     });
 
     act(() => {
-      result.current.endDrag(TASK_B.id);
+      result.current.endDrag(TASK_B.id, "start");
     });
 
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id);
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS");
     expect(result.current.dragState.isDragging).toBe(false);
   });
 
@@ -301,7 +318,7 @@ describe("useDependencyDrag", () => {
     });
 
     act(() => {
-      result.current.endDrag(TASK_A.id);
+      result.current.endDrag(TASK_A.id, "start");
     });
 
     // addDependency should NOT have been called (target is invalid)
@@ -309,7 +326,7 @@ describe("useDependencyDrag", () => {
     expect(result.current.dragState.isDragging).toBe(false);
   });
 
-  it("resolves direction correctly for start-handle drag (target → source)", () => {
+  it("creates SS dependency when start→start drag", () => {
     const addDepSpy = vi.spyOn(
       useDependencyStore.getState(),
       "addDependency"
@@ -319,17 +336,80 @@ describe("useDependencyDrag", () => {
       useDependencyDrag({ tasks: DEFAULT_TASKS })
     );
 
-    // Dragging from A's START handle — dependency should be B → A
     act(() => {
       result.current.startDrag(TASK_A.id, "start", makeMouseEvent());
+    });
+
+    act(() => {
+      result.current.endDrag(TASK_B.id, "start");
+    });
+
+    // Direction is always source→target; type inferred from handle combination
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SS");
+  });
+
+  it("creates FF dependency when end→end drag", () => {
+    const addDepSpy = vi.spyOn(
+      useDependencyStore.getState(),
+      "addDependency"
+    );
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    act(() => {
+      result.current.startDrag(TASK_A.id, "end", makeMouseEvent());
+    });
+
+    act(() => {
+      result.current.endDrag(TASK_B.id, "end");
+    });
+
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FF");
+  });
+
+  it("creates SF dependency when start→end drag", () => {
+    const addDepSpy = vi.spyOn(
+      useDependencyStore.getState(),
+      "addDependency"
+    );
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    act(() => {
+      result.current.startDrag(TASK_A.id, "start", makeMouseEvent());
+    });
+
+    act(() => {
+      result.current.endDrag(TASK_B.id, "end");
+    });
+
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SF");
+  });
+
+  it("defaults to 'start' target side when endDrag called without side (body drop)", () => {
+    const addDepSpy = vi.spyOn(
+      useDependencyStore.getState(),
+      "addDependency"
+    );
+
+    const { result } = renderHook(() =>
+      useDependencyDrag({ tasks: DEFAULT_TASKS })
+    );
+
+    // End-handle drag + body drop (no target side) → defaults to start → FS
+    act(() => {
+      result.current.startDrag(TASK_A.id, "end", makeMouseEvent());
     });
 
     act(() => {
       result.current.endDrag(TASK_B.id);
     });
 
-    // fromId = target (B), toId = source (A) for start-handle drags
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_B.id, TASK_A.id);
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS");
   });
 
   // -------------------------------------------------------------------------
