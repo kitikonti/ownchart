@@ -1,6 +1,6 @@
 /**
  * Unit tests for arrow path calculation.
- * Sprint 1.4 - Dependencies
+ * Sprint 1.4 - Dependencies + Sprint 1.5.2 Package 1 - All 4 types
  */
 
 import { describe, it, expect } from "vitest";
@@ -372,5 +372,224 @@ describe("getArrowheadPoints", () => {
 
   it("should clamp negative size to 0", () => {
     expect(getArrowheadPoints(-5)).toBe("0,0 0,0 0,0");
+  });
+});
+
+// ===========================================================================
+// Sprint 1.5.2 Package 1 — All 4 dependency types
+// ===========================================================================
+
+describe("calculateArrowPath — dependency type support", () => {
+  describe("backward compatibility", () => {
+    it("produces identical output with and without type parameter", () => {
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 200, 100, 30);
+
+      const withoutType = calculateArrowPath(fromPos, toPos);
+      const withFS = calculateArrowPath(fromPos, toPos, 44, "FS");
+
+      expect(withoutType).toEqual(withFS);
+    });
+
+    it("produces identical output for default rowHeight with explicit FS", () => {
+      const fromPos = pos(0, 100, 150, 30);
+      const toPos = pos(100, 200, 100, 30);
+
+      const withoutType = calculateArrowPath(fromPos, toPos);
+      const withFS = calculateArrowPath(fromPos, toPos, 44, "FS");
+
+      expect(withoutType).toEqual(withFS);
+    });
+  });
+
+  describe("arrowhead angle per type", () => {
+    const fromPos = pos(0, 100, 100, 30);
+    const toPos = pos(200, 200, 100, 30);
+
+    it("FS: angle=0 (pointing right into left edge)", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "FS");
+      expect(result.arrowHead.angle).toBe(0);
+    });
+
+    it("SS: angle=0 (pointing right into left edge)", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+      expect(result.arrowHead.angle).toBe(0);
+    });
+
+    it("FF: angle=180 (pointing left into right edge)", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+      expect(result.arrowHead.angle).toBe(180);
+    });
+
+    it("SF: angle=180 (pointing left into right edge)", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+      expect(result.arrowHead.angle).toBe(180);
+    });
+  });
+
+  describe("connection points per type", () => {
+    const fromPos = pos(50, 100, 100, 30); // left=50, right=150, centerY=115
+    const toPos = pos(300, 200, 80, 40); // left=300, right=380, centerY=220
+
+    it("FS: from right edge of source, to left edge of target", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "FS");
+      // Path starts at right edge (x=150) and ends at left edge (x=300)
+      expect(result.path).toContain("M 150 115");
+      expect(result.arrowHead.x).toBe(300);
+      expect(result.arrowHead.y).toBe(220);
+    });
+
+    it("SS: from left edge of source, to left edge of target", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+      // Path starts at left edge (x=50) and ends at left edge (x=300)
+      expect(result.path).toContain("M 50 115");
+      expect(result.arrowHead.x).toBe(300);
+      expect(result.arrowHead.y).toBe(220);
+    });
+
+    it("FF: from right edge of source, to right edge of target", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+      // Path starts at right edge (x=150) and ends at right edge (x=380)
+      expect(result.path).toContain("M 150 115");
+      expect(result.arrowHead.x).toBe(380);
+      expect(result.arrowHead.y).toBe(220);
+    });
+
+    it("SF: from left edge of source, to right edge of target", () => {
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+      // Path starts at left edge (x=50) and ends at right edge (x=380)
+      expect(result.path).toContain("M 50 115");
+      expect(result.arrowHead.x).toBe(380);
+      expect(result.arrowHead.y).toBe(220);
+    });
+  });
+
+  describe("SS path routing", () => {
+    it("always uses 4-corner S-curve", () => {
+      // Large horizontal gap — FS would use standard elbow, but SS must use S-curve
+      const fromPos = pos(50, 100, 100, 30); // left=50
+      const toPos = pos(300, 200, 100, 30); // left=300
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+
+    it("exits leftward from source left edge", () => {
+      const fromPos = pos(100, 100, 100, 30); // left=100
+      const toPos = pos(200, 200, 100, 30); // left=200
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+
+      // Path starts at x=100 (left edge) and first horizontal goes LEFT (x < 100)
+      // firstX = 100 + (-1) * 15 = 85
+      expect(result.path).toContain("M 100 115");
+      // The first L segment should go toward x=85 area (leftward)
+      expect(result.path).toMatch(/M 100 115 L (8[0-9]|9[0-3])/);
+    });
+
+    it("handles same-row tasks by extending middleY below", () => {
+      const fromPos = pos(50, 100, 100, 30); // left=50, centerY=115
+      const toPos = pos(200, 100, 100, 30); // left=200, centerY=115
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+  });
+
+  describe("FF path routing", () => {
+    it("always uses 4-corner S-curve", () => {
+      const fromPos = pos(0, 100, 100, 30); // right=100
+      const toPos = pos(300, 200, 100, 30); // right=400
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+
+    it("enters target from the right (entryDir=-1)", () => {
+      const fromPos = pos(0, 100, 100, 30); // right=100
+      const toPos = pos(300, 200, 100, 30); // right=400
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+
+      // Arrowhead at right edge of target
+      expect(result.arrowHead.x).toBe(400);
+      // Path should end with L going to 400 (right edge)
+      expect(result.path).toContain("L 400 215");
+    });
+
+    it("handles overlapping tasks", () => {
+      const fromPos = pos(0, 100, 200, 30); // right=200
+      const toPos = pos(50, 200, 100, 30); // right=150
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      expect(result.arrowHead.x).toBe(150);
+    });
+  });
+
+  describe("SF path routing", () => {
+    it("always uses 4-corner S-curve", () => {
+      const fromPos = pos(50, 100, 100, 30); // left=50
+      const toPos = pos(300, 200, 80, 40); // right=380
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+
+    it("exits left and enters right", () => {
+      const fromPos = pos(100, 100, 100, 30); // left=100
+      const toPos = pos(300, 200, 100, 30); // right=400
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      // Starts at left edge of source
+      expect(result.path).toContain("M 100 115");
+      // Arrowhead at right edge of target
+      expect(result.arrowHead.x).toBe(400);
+      expect(result.arrowHead.angle).toBe(180);
+    });
+
+    it("handles tasks far apart", () => {
+      const fromPos = pos(0, 100, 50, 30); // left=0
+      const toPos = pos(500, 200, 100, 30); // right=600
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      expect(result.arrowHead.x).toBe(600);
+    });
+  });
+
+  describe("FS routing remains unchanged", () => {
+    it("still uses standard 2-corner elbow for large gaps", () => {
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 200, 100, 30);
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2);
+    });
+
+    it("still uses S-curve for small gaps", () => {
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(110, 200, 100, 30);
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
   });
 });

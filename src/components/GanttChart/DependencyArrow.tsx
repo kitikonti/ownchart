@@ -1,7 +1,7 @@
 /**
  * DependencyArrow - Single dependency arrow component
  * Renders an SVG path with arrowhead for a single dependency.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ * Supports all 4 dependency types with per-type dash patterns.
  */
 
 import React, { memo, useMemo, useState } from "react";
@@ -13,6 +13,7 @@ import {
   getArrowheadPoints,
 } from "@/utils/arrowPath";
 import { COLORS } from "@/styles/design-tokens";
+import { DEPENDENCY_DASH_PATTERNS } from "@/utils/export/renderConstants";
 
 // ---------------------------------------------------------------------------
 // Geometry constants
@@ -62,8 +63,8 @@ export const DependencyArrow = memo(function DependencyArrow({
     if (!fromPos || !toPos) {
       return null;
     }
-    return calculateArrowPath(fromPos, toPos, rowHeight);
-  }, [fromPos, toPos, rowHeight]);
+    return calculateArrowPath(fromPos, toPos, rowHeight, dependency.type);
+  }, [fromPos, toPos, rowHeight, dependency.type]);
 
   // Don't render if positions not available
   if (!fromPos || !toPos || !arrowData) {
@@ -125,6 +126,7 @@ export const DependencyArrow = memo(function DependencyArrow({
         fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
+        strokeDasharray={DEPENDENCY_DASH_PATTERNS[dependency.type]}
         className="transition-colors duration-150 cursor-pointer"
       />
 

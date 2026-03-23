@@ -7,6 +7,7 @@
 
 import { getContrastTextColor } from "@/utils/colorUtils";
 import { COLORS, DARK_TEXT_COLOR } from "@/styles/design-tokens";
+import type { DependencyType } from "@/types/dependency.types";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -256,6 +257,21 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
    */
   elbowGapPadding: 0,
 } as const;
+
+/**
+ * Dash patterns per dependency type. `undefined` = solid line.
+ * FS is solid (most common, default). Other types use distinct patterns
+ * so users can distinguish dependency types at a glance.
+ */
+export const DEPENDENCY_DASH_PATTERNS: Record<
+  DependencyType,
+  string | undefined
+> = {
+  FS: undefined, // solid
+  SS: "6 4", // dashed
+  FF: "2 4", // dotted
+  SF: "8 4 2 4", // dash-dot
+};
 
 /**
  * Calculate milestone size based on pixels per day.

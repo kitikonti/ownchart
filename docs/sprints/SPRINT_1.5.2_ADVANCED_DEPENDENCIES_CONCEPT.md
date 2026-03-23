@@ -2,7 +2,7 @@
 
 **Project:** Gantt Chart Application - app-gantt
 **Sprint:** Sprint 1.5.2 - Advanced Dependencies
-**Status:** PLANNED
+**Status:** IN PROGRESS (Package 1 complete, pending manual verification)
 **Date:** 2026-03-23 (Concept Created)
 **Priority:** High (V1.1 Feature)
 **Estimated Duration:** 1.5-2 weeks (split into 4 testable packages)
@@ -1111,23 +1111,26 @@ Add "Scheduling" section to the Project Settings panel with the auto-scheduling 
 > This checklist serves as a working document. Update checkboxes as tasks are completed during implementation.
 
 ### Package 1: Arrow Paths & Visual Differentiation
-- [ ] Add `getSSConnectionPoints` function in `elbowPath.ts`
-- [ ] Add `getFFConnectionPoints` function in `elbowPath.ts`
-- [ ] Add `getSFConnectionPoints` function in `elbowPath.ts`
-- [ ] Add `getConnectionPoints` dispatcher function in `elbowPath.ts`
-- [ ] Add `getExitDirection` and `getEntryDirection` helpers
-- [ ] Modify `calculateArrowPath` to accept `DependencyType` parameter
-- [ ] Handle arrowhead angle (0° for FS/SS, 180° for FF/SF)
-- [ ] Handle left-exit paths for SS/SF (negate `HORIZONTAL_SEGMENT` direction)
-- [ ] Add `DEPENDENCY_DASH_PATTERNS` to `renderConstants.ts`
-- [ ] Modify `DependencyArrow.tsx` to apply dash pattern from `dependency.type`
-- [ ] Pass `dependency.type` to `calculateArrowPath` in `DependencyArrow.tsx`
-- [ ] Update export pipeline to use per-type dash patterns
-- [ ] Write unit tests for all 4 connection point functions
-- [ ] Write unit tests for path routing per type
-- [ ] Write unit tests for arrowhead angle per type
-- [ ] **GATE: `npm run test:unit` passes**
+- [x] Add `getSSConnectionPoints` function in `elbowPath.ts`
+- [x] Add `getFFConnectionPoints` function in `elbowPath.ts`
+- [x] Add `getSFConnectionPoints` function in `elbowPath.ts`
+- [x] Add `getConnectionPoints` dispatcher function in `elbowPath.ts`
+- [x] Add `getExitDirection` and `getEntryDirection` helpers
+- [x] Modify `calculateArrowPath` to accept `DependencyType` parameter
+- [x] Handle arrowhead angle (0° for FS/SS, 180° for FF/SF)
+- [x] Handle left-exit paths for SS/SF (direction-aware S-curve with parameterized `exitDir`/`entryDir`)
+- [x] Add `DEPENDENCY_DASH_PATTERNS` to `renderConstants.ts`
+- [x] Modify `DependencyArrow.tsx` to apply dash pattern from `dependency.type`
+- [x] Pass `dependency.type` to `calculateArrowPath` in `DependencyArrow.tsx`
+- [x] Update export pipeline to use per-type dash patterns (automatic — export reuses `DependencyArrow`)
+- [x] Write unit tests for all 4 connection point functions
+- [x] Write unit tests for path routing per type
+- [x] Write unit tests for arrowhead angle per type
+- [x] **GATE: `npm run test:unit` passes** (56/56 tests pass)
+- [x] **GATE: `npm run ci:local` passes** (lint, type-check, tests, build all green)
 - [ ] **GATE: Manual verification — create deps in code/test, verify all 4 arrow styles render**
+
+**Implementation note:** Senior review identified that `buildTwoCornerPath` assumes left-to-right flow, which breaks SS/FF/SF routing. Solution: non-FS types always use a fully direction-aware S-curve (`buildSCurvePath` with `exitDir`/`entryDir` params). FS routing is unchanged (zero regression).
 
 ### Package 2: Dependency Properties Panel
 - [ ] Create `DependencyPropertiesPanel.tsx` component

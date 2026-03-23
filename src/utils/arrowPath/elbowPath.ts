@@ -1,10 +1,11 @@
 /**
  * Arrow Path Calculation for Dependency Arrows
  * Generates orthogonal (elbow-style) SVG paths with rounded corners.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ * Supports all 4 dependency types: FS, SS, FF, SF.
  */
 
 import type { ArrowPath, Point, TaskPosition } from "@/types/dependency.types";
+import type { DependencyType } from "@/types/dependency.types";
 
 // ---------------------------------------------------------------------------
 // Public constants
@@ -165,23 +166,26 @@ function calculateMiddleY(
  * Build the four-corner S-curve path string.
  * The path exits horizontally, turns vertical, crosses the middle Y, reverses
  * horizontal direction, then enters the target horizontally.
- * Routing direction is derived from the y-coordinates.
+ * Vertical direction is derived from the y-coordinates.
+ * Horizontal exit/entry directions are parameterized to support all dependency types.
  */
 function buildSCurvePath(
   from: Point,
   to: Point,
   middleY: number,
-  cornerRadius: number
+  cornerRadius: number,
+  exitDir: 1 | -1 = 1,
+  entryDir: 1 | -1 = 1
 ): string {
   const r = cornerRadius;
   const dir = getVerticalDir(from, to);
-  const firstX = from.x + HORIZONTAL_SEGMENT;
-  const secondX = to.x - HORIZONTAL_SEGMENT;
+  const firstX = from.x + exitDir * HORIZONTAL_SEGMENT;
+  const secondX = to.x - entryDir * HORIZONTAL_SEGMENT;
 
   return [
     `M ${from.x} ${from.y}`,
-    // 1. Horizontal out from source
-    `L ${firstX - r} ${from.y}`,
+    // 1. Horizontal out from source (in exitDir direction)
+    `L ${firstX - exitDir * r} ${from.y}`,
     // 2. First corner — turn toward middle
     quadraticCorner(
       { x: firstX, y: from.y },
@@ -189,19 +193,25 @@ function buildSCurvePath(
     ),
     // 3. Vertical to middle
     `L ${firstX} ${middleY - dir * r}`,
-    // 4. Second corner — turn left (toward target)
-    quadraticCorner({ x: firstX, y: middleY }, { x: firstX - r, y: middleY }),
-    // 5. Horizontal segment (going left, between the tasks)
-    `L ${secondX + r} ${middleY}`,
-    // 6. Third corner — turn toward target
+    // 4. Second corner — turn toward target (opposite of exitDir)
+    quadraticCorner(
+      { x: firstX, y: middleY },
+      { x: firstX - exitDir * r, y: middleY }
+    ),
+    // 5. Horizontal segment between tasks
+    `L ${secondX + entryDir * r} ${middleY}`,
+    // 6. Third corner — turn toward target row
     quadraticCorner(
       { x: secondX, y: middleY },
       { x: secondX, y: middleY + dir * r }
     ),
     // 7. Vertical to target level
     `L ${secondX} ${to.y - dir * r}`,
-    // 8. Fourth corner — turn right into target
-    quadraticCorner({ x: secondX, y: to.y }, { x: secondX + r, y: to.y }),
+    // 8. Fourth corner — turn into target (in entryDir direction)
+    quadraticCorner(
+      { x: secondX, y: to.y },
+      { x: secondX + entryDir * r, y: to.y }
+    ),
     // 9. Horizontal into target
     `L ${to.x} ${to.y}`,
   ].join(" ");
@@ -216,7 +226,9 @@ function calculateRoutedPath(
   from: Point,
   to: Point,
   rowHeight: number,
-  cornerRadius: number
+  cornerRadius: number,
+  exitDir: 1 | -1 = 1,
+  entryDir: 1 | -1 = 1
 ): string {
   const horizontalGap = to.x - from.x;
 
@@ -228,7 +240,7 @@ function calculateRoutedPath(
 
   const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
   const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
-  return buildSCurvePath(from, to, middleY, cornerRadius);
+  return buildSCurvePath(from, to, middleY, cornerRadius, exitDir, entryDir);
 }
 
 /**
@@ -265,6 +277,70 @@ function getFSConnectionPoints(
   };
 }
 
+/** SS: Start-to-Start — both anchors on the left edge. */
+function getSSConnectionPoints(
+  fromPos: TaskPosition,
+  toPos: TaskPosition
+): { from: Point; to: Point } {
+  return {
+    from: { x: fromPos.x, y: fromPos.y + fromPos.height / 2 },
+    to: { x: toPos.x, y: toPos.y + toPos.height / 2 },
+  };
+}
+
+/** FF: Finish-to-Finish — both anchors on the right edge. */
+function getFFConnectionPoints(
+  fromPos: TaskPosition,
+  toPos: TaskPosition
+): { from: Point; to: Point } {
+  return {
+    from: { x: fromPos.x + fromPos.width, y: fromPos.y + fromPos.height / 2 },
+    to: { x: toPos.x + toPos.width, y: toPos.y + toPos.height / 2 },
+  };
+}
+
+/** SF: Start-to-Finish — source left edge, target right edge. */
+function getSFConnectionPoints(
+  fromPos: TaskPosition,
+  toPos: TaskPosition
+): { from: Point; to: Point } {
+  return {
+    from: { x: fromPos.x, y: fromPos.y + fromPos.height / 2 },
+    to: { x: toPos.x + toPos.width, y: toPos.y + toPos.height / 2 },
+  };
+}
+
+/** Get connection points for a dependency based on its type. */
+function getConnectionPoints(
+  type: DependencyType,
+  fromPos: TaskPosition,
+  toPos: TaskPosition
+): { from: Point; to: Point } {
+  switch (type) {
+    case "SS":
+      return getSSConnectionPoints(fromPos, toPos);
+    case "FF":
+      return getFFConnectionPoints(fromPos, toPos);
+    case "SF":
+      return getSFConnectionPoints(fromPos, toPos);
+    case "FS":
+    default:
+      return getFSConnectionPoints(fromPos, toPos);
+  }
+}
+
+/** Get the horizontal exit direction for the source anchor. */
+function getExitDirection(type: DependencyType): 1 | -1 {
+  // FS/FF exit right (from right edge), SS/SF exit left (from left edge)
+  return type === "SS" || type === "SF" ? -1 : 1;
+}
+
+/** Get the horizontal entry direction for the target anchor. */
+function getEntryDirection(type: DependencyType): 1 | -1 {
+  // FS/SS enter from left (into left edge), FF/SF enter from right (into right edge)
+  return type === "FF" || type === "SF" ? -1 : 1;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -273,49 +349,62 @@ function getFSConnectionPoints(
  * Calculate the SVG path for a dependency arrow.
  * Uses orthogonal routing with rounded 90° corners.
  *
- * Path structure:
- * 1. Horizontal segment out from source task
- * 2. 90° rounded corner
- * 3. Vertical segment
- * 4. 90° rounded corner
- * 5. Horizontal segment into target task
- *
- * NOTE: Entry/exit points are hardcoded for Finish-to-Start (FS) dependency type
- * (right edge → left edge). To support SS/FF/SF, pass connection-side as a
- * parameter and adjust start/end x accordingly.
+ * FS uses 3-zone routing (standard elbow → compact elbow → S-curve).
+ * SS/FF/SF always use a direction-aware S-curve to avoid the left-to-right
+ * flow assumption in the two-corner elbow path builders.
  *
  * @param fromPos - Position of predecessor task bar
  * @param toPos - Position of successor task bar
  * @param rowHeight - Height of each row (used for scaling corners)
+ * @param type - Dependency type (FS, SS, FF, SF) — defaults to FS
  * @returns ArrowPath with SVG path and arrowhead position
  */
 export function calculateArrowPath(
   fromPos: TaskPosition,
   toPos: TaskPosition,
-  rowHeight: number = BASE_ROW_HEIGHT
+  rowHeight: number = BASE_ROW_HEIGHT,
+  type: DependencyType = "FS"
 ): ArrowPath {
-  const { from, to } = getFSConnectionPoints(fromPos, toPos);
+  const { from, to } = getConnectionPoints(type, fromPos, toPos);
   const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(
     from,
     to,
     rowHeight
   );
 
-  // Routing zones (thresholds scale with cornerRadius, which scales with rowHeight):
-  //   gap ≥ minGapForElbow                              → standard 2-corner elbow
-  //   gap ∈ [HORIZONTAL_SEGMENT*2 − r*2, minGapForElbow) → compact 2-corner elbow (adaptive radius)
-  //   gap < HORIZONTAL_SEGMENT*2 − r*2                   → 4-corner S-curve
-  const path =
-    horizontalGap >= minGapForElbow
-      ? buildTwoCornerPath(from, to, cornerRadius)
-      : calculateRoutedPath(from, to, rowHeight, cornerRadius);
+  const exitDir = getExitDirection(type);
+  const entryDir = getEntryDirection(type);
+
+  let path: string;
+  if (type === "FS") {
+    // FS: existing 3-zone routing (standard elbow, compact elbow, S-curve)
+    path =
+      horizontalGap >= minGapForElbow
+        ? buildTwoCornerPath(from, to, cornerRadius)
+        : calculateRoutedPath(
+            from,
+            to,
+            rowHeight,
+            cornerRadius,
+            exitDir,
+            entryDir
+          );
+  } else {
+    // SS/FF/SF: always use direction-aware S-curve
+    const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
+    const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
+    path = buildSCurvePath(from, to, middleY, cornerRadius, exitDir, entryDir);
+  }
+
+  // Arrowhead: 0° for left-edge targets (FS, SS), 180° for right-edge targets (FF, SF)
+  const arrowAngle = type === "FF" || type === "SF" ? 180 : 0;
 
   return {
     path,
     arrowHead: {
       x: to.x,
       y: to.y,
-      angle: 0, // Always pointing right (into the task)
+      angle: arrowAngle,
     },
   };
 }
