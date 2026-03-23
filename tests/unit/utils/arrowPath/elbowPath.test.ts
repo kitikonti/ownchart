@@ -592,4 +592,80 @@ describe("calculateArrowPath — dependency type support", () => {
       expect(qCount).toBe(4);
     });
   });
+
+  describe("rowHeight scaling for non-FS types", () => {
+    const fromPos = pos(50, 100, 100, 20);
+    const toPos = pos(300, 200, 100, 20);
+
+    it.each(["SS", "FF", "SF"] as const)(
+      "%s produces valid 4-corner S-curve at small rowHeight=20",
+      (type) => {
+        const result = calculateArrowPath(fromPos, toPos, 20, type);
+        const qCount = (result.path.match(/Q /g) || []).length;
+        expect(qCount).toBe(4);
+        expect(result.path).toContain("M ");
+      }
+    );
+
+    it.each(["SS", "FF", "SF"] as const)(
+      "%s produces valid 4-corner S-curve at large rowHeight=88",
+      (type) => {
+        const result = calculateArrowPath(fromPos, toPos, 88, type);
+        const qCount = (result.path.match(/Q /g) || []).length;
+        expect(qCount).toBe(4);
+        expect(result.path).toContain("M ");
+      }
+    );
+  });
+
+  describe("edge cases for non-FS types", () => {
+    it("SS with vertically aligned left edges (from.x ≈ to.x)", () => {
+      const fromPos = pos(100, 100, 80, 30); // left=100
+      const toPos = pos(101, 200, 120, 30); // left=101 (nearly same x)
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      // Path must not contain NaN or degenerate coordinates
+      expect(result.path).not.toMatch(/NaN/);
+    });
+
+    it("FF with identical right edges (from.x === to.x)", () => {
+      const fromPos = pos(0, 100, 200, 30); // right=200
+      const toPos = pos(100, 200, 100, 30); // right=200 (same!)
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      expect(result.path).not.toMatch(/NaN/);
+    });
+
+    it("SF with zero-width milestone task", () => {
+      const fromPos = pos(100, 100, 0, 30); // milestone at x=100, width=0
+      const toPos = pos(200, 200, 100, 30); // right=300
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      expect(result.path).toContain("M 100 115");
+      expect(result.arrowHead.x).toBe(300);
+      expect(result.path).not.toMatch(/NaN/);
+    });
+
+    it("all non-FS types produce no negative path coordinates from direction math", () => {
+      // Tight layout that could expose sign errors in corner offset math
+      const fromPos = pos(10, 50, 30, 20);
+      const toPos = pos(15, 80, 25, 20);
+
+      for (const type of ["SS", "FF", "SF"] as const) {
+        const result = calculateArrowPath(fromPos, toPos, 30, type);
+        // Path coordinates must not go negative from direction miscalculation
+        expect(result.path).not.toMatch(/NaN/);
+        expect(result.arrowHead.angle).toBe(
+          type === "FF" || type === "SF" ? 180 : 0
+        );
+      }
+    });
+  });
 });

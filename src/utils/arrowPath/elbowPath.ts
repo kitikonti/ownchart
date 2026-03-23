@@ -4,8 +4,12 @@
  * Supports all 4 dependency types: FS, SS, FF, SF.
  */
 
-import type { ArrowPath, Point, TaskPosition } from "@/types/dependency.types";
-import type { DependencyType } from "@/types/dependency.types";
+import type {
+  ArrowPath,
+  DependencyType,
+  Point,
+  TaskPosition,
+} from "@/types/dependency.types";
 
 // ---------------------------------------------------------------------------
 // Public constants
@@ -259,14 +263,7 @@ function computeElbowParams(
   return { cornerRadius, minGapForElbow, horizontalGap };
 }
 
-/**
- * Compute Finish-to-Start connection anchor points from task bar positions.
- * Isolated here so that adding SS/FF/SF later requires only a sibling function.
- *
- * @param fromPos - Position of the predecessor task bar
- * @param toPos - Position of the successor task bar
- * @returns Start and end anchor points for path routing
- */
+/** FS: Finish-to-Start — source right edge, target left edge. */
 function getFSConnectionPoints(
   fromPos: TaskPosition,
   toPos: TaskPosition

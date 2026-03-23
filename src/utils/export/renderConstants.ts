@@ -271,7 +271,7 @@ export const DEPENDENCY_DASH_PATTERNS: Record<
   SS: "6 4", // dashed
   FF: "2 4", // dotted
   SF: "8 4 2 4", // dash-dot
-};
+} as const;
 
 /**
  * Calculate milestone size based on pixels per day.
