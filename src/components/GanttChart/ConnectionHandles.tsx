@@ -82,29 +82,38 @@ export const ConnectionHandles = memo(function ConnectionHandles({
     handleStroke = CONNECTION_HANDLE.invalidStroke;
   }
 
-  // Handle mouse down to start drag
-  const handleMouseDown = useCallback(
-    (side: "start" | "end") =>
-      (e: React.MouseEvent): void => {
-        e.stopPropagation();
-        e.preventDefault();
-        onDragStart(taskId, side, e);
-      },
+  // Pre-computed per-side handlers — stable references that don't change between renders
+  // unless taskId or the callbacks change.
+  const handleStartMouseDown = useCallback(
+    (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      e.preventDefault();
+      onDragStart(taskId, "start", e);
+    },
     [taskId, onDragStart]
   );
+
+  const handleEndMouseDown = useCallback(
+    (e: React.MouseEvent): void => {
+      e.stopPropagation();
+      e.preventDefault();
+      onDragStart(taskId, "end", e);
+    },
+    [taskId, onDragStart]
+  );
+
+  const handleStartMouseUp = useCallback((): void => {
+    onDrop?.(taskId, "start");
+  }, [onDrop, taskId]);
+
+  const handleEndMouseUp = useCallback((): void => {
+    onDrop?.(taskId, "end");
+  }, [onDrop, taskId]);
 
   // Keep task hovered when mouse enters handles
   const handleMouseEnter = useCallback(() => {
     onHover?.(taskId);
   }, [onHover, taskId]);
-
-  // Handle drop on this task's handles (per-side to pass which handle was dropped on)
-  const handleMouseUp = useCallback(
-    (side: "start" | "end") => (): void => {
-      onDrop?.(taskId, side);
-    },
-    [onDrop, taskId]
-  );
 
   // Don't render if not visible and not a drop target
   if (!isVisible && !isValidDropTarget && !isInvalidDropTarget) {
@@ -122,13 +131,17 @@ export const ConnectionHandles = memo(function ConnectionHandles({
       {handles.map(({ cx, side }) => {
         const radius =
           hoveredHandle === side ? HANDLE_RADIUS_HOVER : HANDLE_RADIUS_NORMAL;
+        const onMouseDown =
+          side === "start" ? handleStartMouseDown : handleEndMouseDown;
+        const onMouseUp =
+          side === "start" ? handleStartMouseUp : handleEndMouseUp;
         return (
           <g
             key={side}
             onMouseEnter={() => setHoveredHandle(side)}
             onMouseLeave={() => setHoveredHandle(null)}
-            onMouseDown={handleMouseDown(side)}
-            onMouseUp={handleMouseUp(side)}
+            onMouseDown={onMouseDown}
+            onMouseUp={onMouseUp}
           >
             {/* Invisible hit area */}
             <circle

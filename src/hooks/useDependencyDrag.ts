@@ -67,28 +67,25 @@ function createInitialDragState(): DependencyDragState {
 }
 
 /**
- * Determine dependency direction AND type based on source and target handle sides.
- *
- * Handle combinations:
- *   source=end,   target=start → FS (Finish-to-Start)
- *   source=start, target=start → SS (Start-to-Start)
- *   source=end,   target=end   → FF (Finish-to-Finish)
- *   source=start, target=end   → SF (Start-to-Finish)
- *
+ * Map from handle combination key ("sourceSide-targetSide") to dependency type.
  * Direction is always source→target (the task the user dragged FROM is the predecessor).
  */
+const HANDLE_COMBINATION_TO_TYPE: Record<string, DependencyType> = {
+  "end-start": "FS",
+  "start-start": "SS",
+  "end-end": "FF",
+  "start-end": "SF",
+};
+
+/** Determine dependency direction AND type based on source and target handle sides. */
 function resolveDependencyTypeAndDirection(
   sourceTaskId: TaskId,
   targetTaskId: TaskId,
   sourceSide: "start" | "end",
   targetSide: "start" | "end"
 ): { fromId: TaskId; toId: TaskId; type: DependencyType } {
-  let type: DependencyType;
-  if (sourceSide === "end" && targetSide === "start") type = "FS";
-  else if (sourceSide === "start" && targetSide === "start") type = "SS";
-  else if (sourceSide === "end" && targetSide === "end") type = "FF";
-  else type = "SF";
-
+  const type =
+    HANDLE_COMBINATION_TO_TYPE[`${sourceSide}-${targetSide}`] ?? "FS";
   return { fromId: sourceTaskId, toId: targetTaskId, type };
 }
 
