@@ -81,7 +81,13 @@ export const DependencyArrow = memo(function DependencyArrow({
   const handleKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onSelect(dependency.id);
+      // Compute fallback position from the arrow's bounding box for panel placement
+      const rect = (e.currentTarget as SVGGElement).getBoundingClientRect();
+      const fallback = {
+        x: rect.x + rect.width / 2,
+        y: rect.y + rect.height / 2,
+      };
+      onSelect(dependency.id, fallback);
     }
     if (e.key === "Delete" || e.key === "Backspace") {
       e.preventDefault();

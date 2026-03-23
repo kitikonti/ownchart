@@ -798,14 +798,31 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-dep-create",
         title: "Create Dependency",
         description:
-          "Hover over a task bar to reveal connection handles, then drag from one task's handle to another task. This creates a Finish-to-Start dependency.",
+          "Hover over a task bar to reveal connection handles, then drag from one task's handle to another task. This creates a Finish-to-Start (FS) dependency by default.",
         keywords: ["create", "link", "connect", "arrow"],
+      },
+      {
+        id: "feat-dep-edit",
+        title: "Edit Dependency",
+        description:
+          "Click a dependency arrow to open the Properties Panel. Change the type (FS, SS, FF, SF), edit the lag in days (negative for overlap), or delete the dependency. Changes apply immediately and support undo.",
+        keywords: [
+          "edit",
+          "type",
+          "lag",
+          "properties",
+          "panel",
+          "FS",
+          "SS",
+          "FF",
+          "SF",
+        ],
       },
       {
         id: "feat-dep-delete",
         title: "Delete Dependency",
         description:
-          "Click a dependency arrow to select it (it turns darker), then press Delete to remove it.",
+          "Click a dependency arrow to open the Properties Panel, then click Delete Dependency. Alternatively, select an arrow and press Delete or Backspace.",
         keywords: ["delete", "remove", "unlink"],
       },
       {
@@ -819,9 +836,9 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-dep-visual",
         title: "Dependency Arrows",
         description:
-          "Dependencies render as curved SVG arrows. Toggle their visibility with D or the Dependencies button in the View tab.",
+          "Dependencies render as curved arrows with distinct styles per type: FS (solid), SS (dashed), FF (dotted), SF (dash-dot). Toggle visibility with D or the Dependencies button in the View tab.",
         shortcuts: [SHORTCUT_KEYS.VIEW_DEPS],
-        keywords: ["arrow", "visual", "show", "hide"],
+        keywords: ["arrow", "visual", "show", "hide", "style", "dash"],
       },
     ],
   },

@@ -38,8 +38,11 @@ const TYPE_LABELS: Record<DependencyType, string> = {
 const TYPE_OPTIONS: SegmentedControlOption<DependencyType>[] =
   DEPENDENCY_TYPES.map((t) => ({ value: t, label: t }));
 
-/** Class used to identify the scroll container for close-on-scroll. */
-const SCROLL_CONTAINER_SELECTOR = ".gantt-chart-scroll-container";
+/** Selector for horizontal scroll container (chart timeline). */
+const H_SCROLL_SELECTOR = ".gantt-chart-scroll-container";
+
+/** Selector for vertical scroll container (outer layout). */
+const V_SCROLL_SELECTOR = "[data-scroll-driver]";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -152,19 +155,20 @@ export const DependencyPropertiesPanel = memo(
       };
     }, []);
 
-    // --- Close on chart scroll ---
+    // --- Close on scroll (horizontal or vertical) ---
     useEffect(() => {
-      const scrollContainer = document.querySelector(SCROLL_CONTAINER_SELECTOR);
-      if (!scrollContainer) return;
+      const hScroll = document.querySelector(H_SCROLL_SELECTOR);
+      const vScroll = document.querySelector(V_SCROLL_SELECTOR);
 
       const handleScroll = (): void => {
         onCloseRef.current();
       };
-      scrollContainer.addEventListener("scroll", handleScroll, {
-        passive: true,
-      });
+
+      hScroll?.addEventListener("scroll", handleScroll, { passive: true });
+      vScroll?.addEventListener("scroll", handleScroll, { passive: true });
       return () => {
-        scrollContainer.removeEventListener("scroll", handleScroll);
+        hScroll?.removeEventListener("scroll", handleScroll);
+        vScroll?.removeEventListener("scroll", handleScroll);
       };
     }, []);
 
@@ -187,6 +191,8 @@ export const DependencyPropertiesPanel = memo(
       }
       const clamped = Math.max(-MAX_LAG, Math.min(MAX_LAG, parsed));
       setLagDraft(String(clamped));
+      // Skip no-op updates to avoid polluting the undo stack
+      if (clamped === (dependency.lag ?? 0)) return;
       onUpdateLag(clamped);
     }, [lagDraft, dependency.lag, onUpdateLag]);
 

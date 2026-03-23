@@ -3,8 +3,14 @@
  * Tests type selector, lag input, delete, close behavior, and rendering.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  act,
+  cleanup,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DependencyPropertiesPanel } from "@/components/GanttChart/DependencyPropertiesPanel";
 import type { Dependency, DependencyType } from "@/types/dependency.types";
@@ -71,9 +77,7 @@ describe("DependencyPropertiesPanel", () => {
   describe("rendering", () => {
     it("displays task names in header", () => {
       renderPanel();
-      expect(
-        screen.getByText("Task Alpha → Task Beta")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Task Alpha → Task Beta")).toBeInTheDocument();
     });
 
     it("renders dialog with correct role and label", () => {
@@ -214,6 +218,52 @@ describe("DependencyPropertiesPanel", () => {
       await user.tab();
       expect(onUpdateLag).not.toHaveBeenCalled();
       expect(input).toHaveValue(5);
+    });
+
+    it("does not call onUpdateLag when value is unchanged", async () => {
+      vi.useRealTimers();
+      const user = userEvent.setup();
+      const { onUpdateLag } = renderPanel({
+        dependency: { ...baseDependency, lag: 3 },
+      });
+      const input = screen.getByLabelText("Lag");
+      // Clear and re-type the same value
+      await user.clear(input);
+      await user.type(input, "3");
+      await user.tab();
+      expect(onUpdateLag).not.toHaveBeenCalled();
+    });
+
+    it("re-syncs draft when dependency.lag changes externally", () => {
+      const { rerender } = render(
+        <DependencyPropertiesPanel
+          dependency={{ ...baseDependency, lag: 2 }}
+          fromTaskName="Task Alpha"
+          toTaskName="Task Beta"
+          position={{ x: 200, y: 150 }}
+          onUpdateType={vi.fn()}
+          onUpdateLag={vi.fn()}
+          onDelete={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+      expect(screen.getByLabelText("Lag")).toHaveValue(2);
+
+      // Simulate external change (e.g. undo/redo)
+      rerender(
+        <DependencyPropertiesPanel
+          dependency={{ ...baseDependency, lag: 7 }}
+          fromTaskName="Task Alpha"
+          toTaskName="Task Beta"
+          position={{ x: 200, y: 150 }}
+          onUpdateType={vi.fn()}
+          onUpdateLag={vi.fn()}
+          onDelete={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+      expect(screen.getByLabelText("Lag")).toHaveValue(7);
+      cleanup();
     });
   });
 

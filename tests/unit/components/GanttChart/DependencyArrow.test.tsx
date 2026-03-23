@@ -48,7 +48,7 @@ function makePositions(): Map<TaskId, TaskPosition> {
 }
 
 function renderArrow(
-  overrides: Partial<Parameters<typeof DependencyArrow>[0]> = {},
+  overrides: Partial<Parameters<typeof DependencyArrow>[0]> = {}
 ): ReturnType<typeof render> {
   const defaults = {
     dependency,
@@ -63,7 +63,7 @@ function renderArrow(
   return render(
     <svg>
       <DependencyArrow {...defaults} {...overrides} />
-    </svg>,
+    </svg>
   );
 }
 
@@ -82,7 +82,7 @@ describe("DependencyArrow", () => {
       const g = container.querySelector(".dependency-arrow");
       expect(g).not.toBeNull();
       expect(g!.getAttribute("aria-label")).toBe(
-        "Dependency from From Task to To Task",
+        "Dependency from From Task to To Task"
       );
     });
 
@@ -99,7 +99,7 @@ describe("DependencyArrow", () => {
       const { container } = renderArrow({ isSelected: false });
       const arrowPath = container.querySelectorAll("path")[1]; // second path is the visible arrow
       expect(arrowPath.getAttribute("stroke")).toBe(
-        COLORS.chart.dependencyDefault,
+        COLORS.chart.dependencyDefault
       );
     });
 
@@ -107,7 +107,7 @@ describe("DependencyArrow", () => {
       const { container } = renderArrow({ isSelected: true });
       const arrowPath = container.querySelectorAll("path")[1];
       expect(arrowPath.getAttribute("stroke")).toBe(
-        COLORS.chart.dependencySelected,
+        COLORS.chart.dependencySelected
       );
     });
   });
@@ -173,7 +173,10 @@ describe("DependencyArrow", () => {
       fireEvent.click(g);
       expect(onSelect).toHaveBeenCalledWith(
         "dep-1",
-        expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) })
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        })
       );
     });
 
@@ -192,7 +195,7 @@ describe("DependencyArrow", () => {
       fireEvent.mouseEnter(g);
       const arrowPath = container.querySelectorAll("path")[1];
       expect(arrowPath.getAttribute("stroke")).toBe(
-        COLORS.chart.dependencyHover,
+        COLORS.chart.dependencyHover
       );
     });
 
@@ -203,7 +206,7 @@ describe("DependencyArrow", () => {
       fireEvent.mouseLeave(g);
       const arrowPath = container.querySelectorAll("path")[1];
       expect(arrowPath.getAttribute("stroke")).toBe(
-        COLORS.chart.dependencyDefault,
+        COLORS.chart.dependencyDefault
       );
     });
 
@@ -213,7 +216,7 @@ describe("DependencyArrow", () => {
       fireEvent.mouseEnter(g);
       const arrowPath = container.querySelectorAll("path")[1];
       expect(arrowPath.getAttribute("stroke")).toBe(
-        COLORS.chart.dependencySelected,
+        COLORS.chart.dependencySelected
       );
     });
   });
@@ -237,20 +240,32 @@ describe("DependencyArrow", () => {
   // -------------------------------------------------------------------------
 
   describe("keyboard interaction", () => {
-    it("calls onSelect on Enter key", () => {
+    it("calls onSelect on Enter key with fallback position", () => {
       const onSelect = vi.fn();
       const { container } = renderArrow({ onSelect });
       const g = container.querySelector(".dependency-arrow")!;
       fireEvent.keyDown(g, { key: "Enter" });
-      expect(onSelect).toHaveBeenCalledWith("dep-1");
+      expect(onSelect).toHaveBeenCalledWith(
+        "dep-1",
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        })
+      );
     });
 
-    it("calls onSelect on Space key", () => {
+    it("calls onSelect on Space key with fallback position", () => {
       const onSelect = vi.fn();
       const { container } = renderArrow({ onSelect });
       const g = container.querySelector(".dependency-arrow")!;
       fireEvent.keyDown(g, { key: " " });
-      expect(onSelect).toHaveBeenCalledWith("dep-1");
+      expect(onSelect).toHaveBeenCalledWith(
+        "dep-1",
+        expect.objectContaining({
+          x: expect.any(Number),
+          y: expect.any(Number),
+        })
+      );
     });
 
     it("calls onDelete on Delete key", () => {

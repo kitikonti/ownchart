@@ -1,13 +1,13 @@
 /**
  * DependencyArrows - Container for all dependency arrows
- * Renders all dependency arrows for the Gantt chart.
- * Sprint 1.4 - Dependencies (Finish-to-Start Only)
+ * Renders all dependency arrows and the properties panel for the Gantt chart.
+ * Supports all 4 dependency types (FS/SS/FF/SF).
  */
 
 import { useMemo, useCallback, useState } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
-import type { TaskPosition } from "@/types/dependency.types";
+import type { DependencyType, TaskPosition } from "@/types/dependency.types";
 import type {
   TimelineScale,
   DensityGeometryConfig,
@@ -153,6 +153,29 @@ export function DependencyArrows({
     ? taskMap.get(selectedDep.toTaskId)
     : undefined;
 
+  // Stable callbacks for the properties panel (avoids defeating React.memo)
+  const handlePanelUpdateType = useCallback(
+    (type: DependencyType): void => {
+      if (selectedDep) updateDependency(selectedDep.id, { type });
+    },
+    [selectedDep, updateDependency]
+  );
+
+  const handlePanelUpdateLag = useCallback(
+    (lag: number): void => {
+      if (selectedDep) updateDependency(selectedDep.id, { lag });
+    },
+    [selectedDep, updateDependency]
+  );
+
+  const handlePanelDelete = useCallback((): void => {
+    if (selectedDep) removeDependency(selectedDep.id);
+  }, [selectedDep, removeDependency]);
+
+  const handlePanelClose = useCallback((): void => {
+    selectDependency(null);
+  }, [selectDependency]);
+
   return (
     <>
       <g className="layer-dependencies">
@@ -196,10 +219,10 @@ export function DependencyArrows({
           fromTaskName={selectedFromTask.name}
           toTaskName={selectedToTask.name}
           position={panelPosition}
-          onUpdateType={(type) => updateDependency(selectedDep.id, { type })}
-          onUpdateLag={(lag) => updateDependency(selectedDep.id, { lag })}
-          onDelete={() => removeDependency(selectedDep.id)}
-          onClose={() => selectDependency(null)}
+          onUpdateType={handlePanelUpdateType}
+          onUpdateLag={handlePanelUpdateLag}
+          onDelete={handlePanelDelete}
+          onClose={handlePanelClose}
         />
       )}
     </>
