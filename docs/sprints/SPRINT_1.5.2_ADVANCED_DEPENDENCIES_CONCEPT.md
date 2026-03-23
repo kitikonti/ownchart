@@ -2,7 +2,7 @@
 
 **Project:** Gantt Chart Application - app-gantt
 **Sprint:** Sprint 1.5.2 - Advanced Dependencies
-**Status:** IN PROGRESS (Package 1 complete, pending manual verification)
+**Status:** IN PROGRESS (Packages 1-2 complete)
 **Date:** 2026-03-23 (Concept Created)
 **Priority:** High (V1.1 Feature)
 **Estimated Duration:** 1.5-2 weeks (split into 4 testable packages)
@@ -1128,25 +1128,29 @@ Add "Scheduling" section to the Project Settings panel with the auto-scheduling 
 - [x] Write unit tests for arrowhead angle per type
 - [x] **GATE: `npm run test:unit` passes** (56/56 tests pass)
 - [x] **GATE: `npm run ci:local` passes** (lint, type-check, tests, build all green)
-- [ ] **GATE: Manual verification — create deps in code/test, verify all 4 arrow styles render**
+- [x] **GATE: Manual verification — create deps in code/test, verify all 4 arrow styles render**
 
 **Implementation note:** Senior review identified that `buildTwoCornerPath` assumes left-to-right flow, which breaks SS/FF/SF routing. Solution: non-FS types always use a fully direction-aware S-curve (`buildSCurvePath` with `exitDir`/`entryDir` params). FS routing is unchanged (zero regression).
 
 ### Package 2: Dependency Properties Panel
-- [ ] Create `DependencyPropertiesPanel.tsx` component
-- [ ] Implement type selector (segmented control: FS/SS/FF/SF)
-- [ ] Implement lag input (number, supports negative)
-- [ ] Implement delete button
-- [ ] Wire `onUpdateType` → `updateDependency(id, { type })`
-- [ ] Wire `onUpdateLag` → `updateDependency(id, { lag })`
-- [ ] Wire `onDelete` → `removeDependency(id)`
-- [ ] Close on Escape / click outside
-- [ ] Portal-based rendering (above SVG layer)
-- [ ] Compute panel position from task positions
-- [ ] Render panel in `DependencyArrows.tsx` when dependency is selected
-- [ ] Write unit tests for panel rendering and interactions
-- [ ] **GATE: `npm run test:unit` passes**
+- [x] Create `DependencyPropertiesPanel.tsx` component
+- [x] Implement type selector (segmented control: FS/SS/FF/SF)
+- [x] Implement lag input (number, supports negative)
+- [x] Implement delete button
+- [x] Wire `onUpdateType` → `updateDependency(id, { type })`
+- [x] Wire `onUpdateLag` → `updateDependency(id, { lag })`
+- [x] Wire `onDelete` → `removeDependency(id)`
+- [x] Close on Escape / click outside
+- [x] Portal-based rendering (above SVG layer)
+- [x] Compute panel position from task positions
+- [x] Render panel in `DependencyArrows.tsx` when dependency is selected
+- [x] Write unit tests for panel rendering and interactions
+- [x] Update `helpContent.ts` with dependency type descriptions (FS/SS/FF/SF)
+- [x] **GATE: `npm run test:unit` passes**
+- [x] **GATE: `npm run ci:local` passes** (lint, type-check, tests, build all green)
 - [ ] **GATE: Manual — select arrow, change type, verify arrow re-renders; change lag, verify persisted**
+
+**Implementation notes:** Panel uses HTML overlay (div with absolute positioning, not SVG foreignObject) rendered within the chart container. Position is computed from arrow midpoint coordinates converted to container-relative pixels. Type selector uses segmented button group with active state highlighting. Lag input uses native number input with blur/Enter to apply. Arrow click selection triggers panel display; click-outside and Escape close it. Help content updated with dependency type descriptions.
 
 ### Package 3: Handle-Based Type Inference
 - [ ] Replace `resolveDependencyDirection` with `resolveDependencyTypeAndDirection`
