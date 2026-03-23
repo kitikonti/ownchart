@@ -4,6 +4,7 @@
 
 export { ChartCanvas } from "./ChartCanvas";
 export { DependencyArrows } from "./DependencyArrows";
+export { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
 export { GridLines } from "./GridLines";
 export { SelectionHighlight } from "./SelectionHighlight";
 export { TaskBar } from "./TaskBar";

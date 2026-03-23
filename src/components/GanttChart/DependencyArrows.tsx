@@ -4,7 +4,7 @@
  * Sprint 1.4 - Dependencies (Finish-to-Start Only)
  */
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import type { TaskPosition } from "@/types/dependency.types";
@@ -19,6 +19,7 @@ import {
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
+import { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
 
 interface DependencyArrowsProps {
   tasks: Task[];
@@ -58,6 +59,15 @@ export function DependencyArrows({
   const removeDependency = useDependencyStore(
     (state) => state.removeDependency
   );
+  const updateDependency = useDependencyStore(
+    (state) => state.updateDependency
+  );
+
+  // Panel position for the properties panel (screen-space coordinates from click)
+  const [panelPosition, setPanelPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Create task map for quick lookup
   const taskMap = useMemo(() => {
@@ -93,10 +103,12 @@ export function DependencyArrows({
     return positions;
   }, [tasks, scale, densityGeometry]);
 
-  // Handle dependency selection
+  // Handle dependency selection (with optional click position for panel placement)
   const handleSelect = useCallback(
-    (id: string) => {
-      selectDependency(id === selectedDependencyId ? null : id);
+    (id: string, position?: { x: number; y: number }) => {
+      const newId = id === selectedDependencyId ? null : id;
+      selectDependency(newId);
+      setPanelPosition(newId && position ? position : null);
     },
     [selectDependency, selectedDependencyId]
   );
@@ -130,39 +142,66 @@ export function DependencyArrows({
     };
   }, [dragState, taskPositions]);
 
+  // Resolve selected dependency and its tasks for the properties panel
+  const selectedDep = selectedDependencyId
+    ? (dependencies.find((d) => d.id === selectedDependencyId) ?? null)
+    : null;
+  const selectedFromTask = selectedDep
+    ? taskMap.get(selectedDep.fromTaskId)
+    : undefined;
+  const selectedToTask = selectedDep
+    ? taskMap.get(selectedDep.toTaskId)
+    : undefined;
+
   return (
-    <g className="layer-dependencies">
-      {/* Render all visible dependency arrows */}
-      {visibleDependencies.map((dep) => {
-        const fromTask = taskMap.get(dep.fromTaskId);
-        const toTask = taskMap.get(dep.toTaskId);
-        if (!fromTask || !toTask) return null;
+    <>
+      <g className="layer-dependencies">
+        {/* Render all visible dependency arrows */}
+        {visibleDependencies.map((dep) => {
+          const fromTask = taskMap.get(dep.fromTaskId);
+          const toTask = taskMap.get(dep.toTaskId);
+          if (!fromTask || !toTask) return null;
 
-        return (
-          <DependencyArrow
-            key={dep.id}
-            dependency={dep}
-            fromTaskName={fromTask.name}
-            toTaskName={toTask.name}
-            taskPositions={taskPositions}
+          return (
+            <DependencyArrow
+              key={dep.id}
+              dependency={dep}
+              fromTaskName={fromTask.name}
+              toTaskName={toTask.name}
+              taskPositions={taskPositions}
+              rowHeight={rowHeight}
+              isSelected={selectedDependencyId === dep.id}
+              onSelect={handleSelect}
+              onDelete={removeDependency}
+            />
+          );
+        })}
+
+        {/* Drag preview (temporary arrow while creating dependency) */}
+        {dragState?.isDragging && dragStartPosition && (
+          <DependencyDragPreview
+            startX={dragStartPosition.x}
+            startY={dragStartPosition.y}
+            endX={dragState.currentPosition.x}
+            endY={dragState.currentPosition.y}
             rowHeight={rowHeight}
-            isSelected={selectedDependencyId === dep.id}
-            onSelect={handleSelect}
-            onDelete={removeDependency}
           />
-        );
-      })}
+        )}
+      </g>
 
-      {/* Drag preview (temporary arrow while creating dependency) */}
-      {dragState?.isDragging && dragStartPosition && (
-        <DependencyDragPreview
-          startX={dragStartPosition.x}
-          startY={dragStartPosition.y}
-          endX={dragState.currentPosition.x}
-          endY={dragState.currentPosition.y}
-          rowHeight={rowHeight}
+      {/* Dependency Properties Panel (portal-rendered to document.body) */}
+      {selectedDep && selectedFromTask && selectedToTask && panelPosition && (
+        <DependencyPropertiesPanel
+          dependency={selectedDep}
+          fromTaskName={selectedFromTask.name}
+          toTaskName={selectedToTask.name}
+          position={panelPosition}
+          onUpdateType={(type) => updateDependency(selectedDep.id, { type })}
+          onUpdateLag={(lag) => updateDependency(selectedDep.id, { lag })}
+          onDelete={() => removeDependency(selectedDep.id)}
+          onClose={() => selectDependency(null)}
         />
       )}
-    </g>
+    </>
   );
 }

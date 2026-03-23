@@ -39,7 +39,7 @@ interface DependencyArrowProps {
   taskPositions: Map<TaskId, TaskPosition>;
   rowHeight: number;
   isSelected: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, position?: { x: number; y: number }) => void;
   onDelete: (id: string) => void;
 }
 
@@ -75,7 +75,7 @@ export const DependencyArrow = memo(function DependencyArrow({
 
   const handleClick = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    onSelect(dependency.id);
+    onSelect(dependency.id, { x: e.clientX, y: e.clientY });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent): void => {

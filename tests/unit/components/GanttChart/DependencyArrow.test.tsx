@@ -171,7 +171,10 @@ describe("DependencyArrow", () => {
       const { container } = renderArrow({ onSelect });
       const g = container.querySelector(".dependency-arrow")!;
       fireEvent.click(g);
-      expect(onSelect).toHaveBeenCalledWith("dep-1");
+      expect(onSelect).toHaveBeenCalledWith(
+        "dep-1",
+        expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) })
+      );
     });
 
     it("stops event propagation on click", () => {
