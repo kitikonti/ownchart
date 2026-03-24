@@ -8,6 +8,7 @@
 
 import {
   FlowArrow,
+  Lightning,
   MagnifyingGlassPlus,
   MagnifyingGlassMinus,
   ArrowsOutLineHorizontal,
@@ -44,6 +45,8 @@ export function ViewTabContent(): JSX.Element {
     toggleDependencies,
     showProgress,
     toggleProgress,
+    autoScheduling,
+    toggleAutoScheduling,
     zoomPercentage,
     zoomOptions,
     canZoomIn,
@@ -121,6 +124,30 @@ export function ViewTabContent(): JSX.Element {
           aria-label={showProgress ? "Hide Progress" : "Show Progress"}
           icon={<TrendUp size={ICON_SIZE} weight="light" />}
           label="Progress"
+          labelPriority={2}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* Scheduling */}
+      <ToolbarGroup label="Scheduling">
+        <ToolbarButton
+          variant="toggle"
+          isActive={autoScheduling}
+          onClick={toggleAutoScheduling}
+          title={
+            autoScheduling
+              ? "Disable Auto-Scheduling"
+              : "Enable Auto-Scheduling"
+          }
+          aria-label={
+            autoScheduling
+              ? "Disable Auto-Scheduling"
+              : "Enable Auto-Scheduling"
+          }
+          icon={<Lightning size={ICON_SIZE} weight="light" />}
+          label="Auto-Schedule"
           labelPriority={2}
         />
       </ToolbarGroup>

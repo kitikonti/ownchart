@@ -79,6 +79,9 @@ export enum CommandType {
   // Hide/Show operations
   HIDE_TASKS = "hideTasks",
   UNHIDE_TASKS = "unhideTasks",
+
+  // Scheduling operations
+  TOGGLE_AUTO_SCHEDULING = "toggleAutoScheduling",
 }
 
 // Type mapping — single source of truth for CommandType → Params
@@ -104,6 +107,7 @@ export type CommandParamsMap = {
   [CommandType.APPLY_COLORS_TO_MANUAL]: ApplyColorsToManualParams;
   [CommandType.HIDE_TASKS]: HideTasksParams;
   [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
+  [CommandType.TOGGLE_AUTO_SCHEDULING]: ToggleAutoSchedulingParams;
 };
 
 // Derived discriminated union — adding a new CommandType only requires updating CommandParamsMap
@@ -133,6 +137,7 @@ export interface UpdateTaskParams {
   updates: Partial<Task>;
   previousValues: Partial<Task>; // Store old values for undo
   cascadeUpdates?: CascadeUpdate[];
+  dateAdjustments?: DateAdjustment[];
 }
 
 export interface DeleteTaskParams {
@@ -193,6 +198,7 @@ export interface UpdateDependencyParams {
   id: string;
   updates: DependencyUpdatableFields;
   previousValues: DependencyUpdatableFields;
+  dateAdjustments: DateAdjustment[];
 }
 
 // Clipboard operations (Row-level)
@@ -241,6 +247,7 @@ export interface MultiDragTasksParams {
     newEndDate: string;
   }>;
   cascadeUpdates: CascadeUpdate[];
+  dateAdjustments: DateAdjustment[];
 }
 
 // Color operations
@@ -263,4 +270,11 @@ export interface HideTasksParams {
 export interface UnhideTasksParams {
   taskIds: TaskId[]; // IDs that were unhidden
   previousHiddenTaskIds: TaskId[]; // Previous state for undo
+}
+
+// Scheduling operations
+export interface ToggleAutoSchedulingParams {
+  previousValue: boolean;
+  newValue: boolean;
+  dateAdjustments: DateAdjustment[];
 }

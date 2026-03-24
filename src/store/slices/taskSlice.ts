@@ -27,8 +27,12 @@ import {
   collectDescendantIds,
 } from "@/utils/hierarchy";
 import { useFileStore } from "./fileSlice";
+import { useHistoryStore } from "./historySlice";
 import { useDependencyStore } from "./dependencySlice";
 import { CommandType } from "@/types/command.types";
+import type { DateAdjustment } from "@/types/dependency.types";
+import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
+import { calculateDuration as calcDuration } from "@/utils/dateUtils";
 import { useChartStore } from "./chartSlice";
 import {
   UNKNOWN_TASK_NAME,
@@ -235,6 +239,34 @@ export const useTaskStore = create<TaskStore>()(
         }
       });
 
+      // Auto-scheduling: propagate date changes to successors
+      let dateAdjustments: DateAdjustment[] = [];
+      const historyState = useHistoryStore.getState();
+      if (
+        (updates.startDate !== undefined || updates.endDate !== undefined) &&
+        useChartStore.getState().autoScheduling &&
+        !historyState.isUndoing &&
+        !historyState.isRedoing
+      ) {
+        dateAdjustments = propagateDateChanges(
+          get().tasks,
+          useDependencyStore.getState().dependencies,
+          [id]
+        );
+        if (dateAdjustments.length > 0) {
+          set((state) => {
+            for (const adj of dateAdjustments) {
+              const task = state.tasks.find((t) => t.id === adj.taskId);
+              if (task) {
+                task.startDate = adj.newStartDate;
+                task.endDate = adj.newEndDate;
+                task.duration = calcDuration(adj.newStartDate, adj.newEndDate);
+              }
+            }
+          });
+        }
+      }
+
       // Mark file as dirty
       if (Object.keys(previousValues).length > 0) {
         useFileStore.getState().markDirty();
@@ -250,6 +282,7 @@ export const useTaskStore = create<TaskStore>()(
             updates,
             previousValues,
             cascadeUpdates: parentUpdates,
+            dateAdjustments,
           }
         );
       }
@@ -305,6 +338,46 @@ export const useTaskStore = create<TaskStore>()(
         cascadeUpdates.push(...cascadeResults);
       });
 
+      // Auto-scheduling: propagate date changes to successors
+      let dateAdjustments: DateAdjustment[] = [];
+      const historyState = useHistoryStore.getState();
+      if (
+        taskChanges.length > 0 &&
+        useChartStore.getState().autoScheduling &&
+        !historyState.isUndoing &&
+        !historyState.isRedoing
+      ) {
+        const changedIds = taskChanges
+          .filter(
+            (c) =>
+              c.newStartDate !== c.previousStartDate ||
+              c.newEndDate !== c.previousEndDate
+          )
+          .map((c) => c.id);
+        if (changedIds.length > 0) {
+          dateAdjustments = propagateDateChanges(
+            get().tasks,
+            useDependencyStore.getState().dependencies,
+            changedIds
+          );
+          if (dateAdjustments.length > 0) {
+            set((state) => {
+              for (const adj of dateAdjustments) {
+                const task = state.tasks.find((t) => t.id === adj.taskId);
+                if (task) {
+                  task.startDate = adj.newStartDate;
+                  task.endDate = adj.newEndDate;
+                  task.duration = calcDuration(
+                    adj.newStartDate,
+                    adj.newEndDate
+                  );
+                }
+              }
+            });
+          }
+        }
+      }
+
       // Mark file as dirty
       if (taskChanges.length > 0) {
         useFileStore.getState().markDirty();
@@ -315,7 +388,7 @@ export const useTaskStore = create<TaskStore>()(
         recordCommand(
           CommandType.MULTI_DRAG_TASKS,
           `Moved ${taskChanges.length} task(s)`,
-          { taskChanges, cascadeUpdates }
+          { taskChanges, cascadeUpdates, dateAdjustments }
         );
       }
     },

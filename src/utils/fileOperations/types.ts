@@ -110,6 +110,9 @@ export interface ViewSettings {
   showProgress?: boolean;
   taskLabelPosition?: TaskLabelPosition;
 
+  // Scheduling
+  autoScheduling?: boolean;
+
   // Working days mode
   workingDaysMode?: boolean;
   workingDaysConfig?: WorkingDaysConfig;

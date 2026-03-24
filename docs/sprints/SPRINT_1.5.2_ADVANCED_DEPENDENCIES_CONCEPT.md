@@ -1174,28 +1174,38 @@ Add "Scheduling" section to the Project Settings panel with the auto-scheduling 
 **Implementation notes:** Used per-handle mouseUp (Approach B from concept doc) instead of midpoint heuristic (Approach A). Each handle's inner `<g>` has its own `onMouseUp` that passes the handle side. Body drops (task bar `<g>` mouseUp, not on a handle) default to `targetSide="start"`, preserving FS behavior for end-handle drags. Direction is always source→target (no more reversal for start-handle drags). Cycle detection now always checks `(source, target)` — this is correct and improves UX by showing invalid targets before drop instead of post-drop error toasts.
 
 ### Package 4: Auto-Scheduling (Opt-In)
-- [ ] Create `src/utils/graph/dateAdjustment.ts`
-- [ ] Implement `calculateConstraint` for all 4 types
-- [ ] Implement `propagateDateChanges` using topological sort
-- [ ] Handle edge cases: milestones, summary tasks, no-dep tasks
-- [ ] Add `autoScheduling` state to `chartSlice.ts`
-- [ ] Add `setAutoScheduling` and `toggleAutoScheduling` actions
-- [ ] Add `autoScheduling` to `ViewSettings` in `fileOperations/types.ts`
-- [ ] Add `autoScheduling` to `applyViewSettings` in `chartSlice.ts`
-- [ ] Wire auto-scheduling into `dependencySlice.addDependency`
-- [ ] Wire auto-scheduling into task date change path
-- [ ] Add toast notifications for date adjustments
-- [ ] Add "Scheduling" section to Project Settings UI
-- [ ] Update `helpContent.ts` with dependency type explanations
-- [ ] Update `helpContent.ts` with auto-scheduling help topic
-- [ ] Write unit tests for all 4 type constraints
-- [ ] Write unit tests for cascade propagation with mixed types
-- [ ] Write unit tests for multiple predecessors (most restrictive wins)
-- [ ] Write integration test for auto-scheduling toggle
-- [ ] **GATE: `npm run ci:local` passes**
+- [x] Create `src/utils/graph/dateAdjustment.ts`
+- [x] Implement `calculateConstrainedDates` for all 4 types
+- [x] Implement `propagateDateChanges` using topological sort with reachability filter
+- [x] Implement `applyDateAdjustments` and `reverseeDateAdjustments` batch helpers
+- [x] Handle edge cases: milestones, summary tasks, no-dep tasks
+- [x] Add `autoScheduling` state to `chartSlice.ts`
+- [x] Add `setAutoScheduling` and `toggleAutoScheduling` actions (with cascade + undo)
+- [x] Add `autoScheduling` to `ViewSettings` in `fileOperations/types.ts`
+- [x] Add `autoScheduling` to `applyViewSettings` in `chartSlice.ts`
+- [x] Add `autoScheduling` to `viewSettingsDefaults.ts` (backward compat: defaults to false)
+- [x] Add `autoScheduling` to `useFileOperations.ts` (ChartSliceNeeded, useFeatureViewSettings)
+- [x] Add `autoScheduling` to multi-tab persistence (multiTabStorage + useMultiTabPersistence)
+- [x] Wire auto-scheduling into `dependencySlice.addDependency`
+- [x] Wire auto-scheduling into `dependencySlice.updateDependency`
+- [x] Wire auto-scheduling into `taskSlice.updateTask` (cell edits, resize)
+- [x] Wire auto-scheduling into `taskSlice.updateMultipleTasks` (drag move)
+- [x] Add toast notifications for date adjustments
+- [x] Add `TOGGLE_AUTO_SCHEDULING` command type with full undo/redo
+- [x] Extend `UpdateDependencyParams`, `UpdateTaskParams`, `MultiDragTasksParams` with dateAdjustments
+- [x] Update all 6 undo/redo handlers for dateAdjustments
+- [x] Add "Scheduling" section to View tab ribbon (Lightning icon toggle)
+- [x] Update `helpContent.ts` with auto-scheduling help topic
+- [x] Update `helpContent.ts` dependency creation topic with type inference info
+- [x] Write unit tests for all 4 type constraints (35 tests)
+- [x] Write unit tests for cascade propagation with mixed types
+- [x] Write unit tests for multiple predecessors (most restrictive wins)
+- [x] **GATE: `npm run ci:local` passes** (lint, type-check, format, 5035 tests, build all green)
 - [ ] **GATE: Manual — enable auto-scheduling, move predecessor, verify cascade**
 - [ ] **GATE: Manual — save/load file with mixed types, verify preservation**
 - [ ] **GATE: Manual — export PNG/PDF with mixed arrow styles**
+
+**Implementation notes:** Core algorithm uses topological sort + reachability filtering via `getSuccessors()` for efficient scoped propagation. Toggle-ON runs full recalculation (no changedTaskIds). All cascade operations are fully undoable — toggle, dependency creation/update, task drag/resize/edit all record dateAdjustments in their command params. Uses `useTaskStore.setState()` for batch date application to avoid N separate history entries. Lag field is optional (defaults to 0). FS constraint uses `+1` offset because dates are inclusive.
 
 ### Final
 - [ ] All packages complete and gates passed

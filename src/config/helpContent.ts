@@ -798,7 +798,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-dep-create",
         title: "Create Dependency",
         description:
-          "Hover over a task bar to reveal connection handles, then drag from one task's handle to another task. This creates a Finish-to-Start (FS) dependency by default.",
+          "Hover over a task bar to reveal connection handles, then drag from one task's handle to another task. The dependency type is inferred from the handle combination (end→start = FS, start→start = SS, end→end = FF, start→end = SF). With auto-scheduling enabled, successor dates adjust automatically.",
         keywords: ["create", "link", "connect", "arrow"],
       },
       {
@@ -839,6 +839,20 @@ const FEATURE_SECTIONS: HelpSection[] = [
           "Dependencies render as curved arrows with distinct styles per type: FS (solid), SS (dashed), FF (dotted), SF (dash-dot). Toggle visibility with D or the Dependencies button in the View tab.",
         shortcuts: [SHORTCUT_KEYS.VIEW_DEPS],
         keywords: ["arrow", "visual", "show", "hide", "style", "dash"],
+      },
+      {
+        id: "feat-dep-auto-schedule",
+        title: "Auto-Scheduling",
+        description:
+          "Enable auto-scheduling in the View tab (Lightning icon) to automatically adjust successor task dates when predecessor dates change. Supports all dependency types (FS, SS, FF, SF) with lag. Toggle is OFF by default — your dates won't change unless you opt in. When toggled ON, all existing constraint violations are resolved immediately. Undo (Ctrl+Z) reverts all cascaded changes.",
+        keywords: [
+          "auto-schedule",
+          "cascade",
+          "propagate",
+          "dates",
+          "automatic",
+          "scheduling",
+        ],
       },
     ],
   },

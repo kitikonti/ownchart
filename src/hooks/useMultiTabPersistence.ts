@@ -91,6 +91,7 @@ function restoreChartState(chartState: ChartState): void {
   applyIfDefined(chartState.showHolidays, store.setShowHolidays);
   applyIfDefined(chartState.showDependencies, store.setShowDependencies);
   applyIfDefined(chartState.showProgress, store.setShowProgress);
+  applyIfDefined(chartState.autoScheduling, store.setAutoScheduling);
   applyIfDefined(chartState.taskLabelPosition, store.setTaskLabelPosition);
   applyIfDefined(chartState.holidayRegion, store.setHolidayRegion);
   applyIfDefined(chartState.projectTitle, store.setProjectTitle);
@@ -192,6 +193,7 @@ function buildSavePayload(): Omit<TabChartData, "tabId" | "lastActive"> {
       showHolidays: chartState.showHolidays,
       showDependencies: chartState.showDependencies,
       showProgress: chartState.showProgress,
+      autoScheduling: chartState.autoScheduling,
       taskLabelPosition: chartState.taskLabelPosition,
       workingDaysConfig: chartState.workingDaysConfig,
       holidayRegion: chartState.holidayRegion,

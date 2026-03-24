@@ -59,6 +59,7 @@ export interface ChartState {
   showHolidays?: boolean;
   showDependencies?: boolean;
   showProgress?: boolean;
+  autoScheduling?: boolean;
   taskLabelPosition?: "before" | "inside" | "after" | "none";
   workingDaysMode?: boolean;
   workingDaysConfig?: {

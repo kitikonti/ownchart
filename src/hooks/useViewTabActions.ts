@@ -31,6 +31,9 @@ interface ViewTabActions {
   toggleDependencies: () => void;
   showProgress: boolean;
   toggleProgress: () => void;
+  // Scheduling
+  autoScheduling: boolean;
+  toggleAutoScheduling: () => void;
   // Zoom
   zoomPercentage: number;
   zoomOptions: number[];
@@ -67,6 +70,10 @@ export function useViewTabActions(): ViewTabActions {
   const toggleDependencies = useChartStore((state) => state.toggleDependencies);
   const showProgress = useChartStore((state) => state.showProgress);
   const toggleProgress = useChartStore((state) => state.toggleProgress);
+  const autoScheduling = useChartStore((state) => state.autoScheduling);
+  const toggleAutoScheduling = useChartStore(
+    (state) => state.toggleAutoScheduling
+  );
   const isTaskTableCollapsed = useChartStore(
     (state) => state.isTaskTableCollapsed
   );
@@ -142,6 +149,8 @@ export function useViewTabActions(): ViewTabActions {
     toggleDependencies,
     showProgress,
     toggleProgress,
+    autoScheduling,
+    toggleAutoScheduling,
     zoomPercentage,
     zoomOptions,
     canZoomIn,

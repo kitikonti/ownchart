@@ -18,8 +18,13 @@ import type { TaskId } from "@/types/branded.types";
 import { CommandType } from "@/types/command.types";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
+import { useChartStore } from "./chartSlice";
 import { useFileStore } from "./fileSlice";
 import { wouldCreateCycle } from "@/utils/graph/cycleDetection";
+import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
+import type { DateAdjustment } from "@/types/dependency.types";
+import { calculateDuration } from "@/utils/dateUtils";
+import toast from "react-hot-toast";
 
 /**
  * Validates whether a new dependency can be created.
@@ -160,6 +165,32 @@ export const useDependencyStore = create<DependencyStore>()(
         state.dependencies.push(newDependency);
       });
 
+      // Auto-scheduling: propagate date constraints to successors
+      let dateAdjustments: DateAdjustment[] = [];
+      if (useChartStore.getState().autoScheduling) {
+        dateAdjustments = propagateDateChanges(
+          taskStore.tasks,
+          get().dependencies,
+          [fromTaskId]
+        );
+        if (dateAdjustments.length > 0) {
+          useTaskStore.setState((state) => {
+            for (const adj of dateAdjustments) {
+              const task = state.tasks.find((t) => t.id === adj.taskId);
+              if (task) {
+                task.startDate = adj.newStartDate;
+                task.endDate = adj.newEndDate;
+                task.duration = calculateDuration(
+                  adj.newStartDate,
+                  adj.newEndDate
+                );
+              }
+            }
+          });
+          toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);
+        }
+      }
+
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         historyStore.recordCommand({
           id: crypto.randomUUID(),
@@ -168,7 +199,7 @@ export const useDependencyStore = create<DependencyStore>()(
           description: `Created dependency: ${validation.fromTask.name} → ${validation.toTask.name}`,
           params: {
             dependency: newDependency,
-            dateAdjustments: [],
+            dateAdjustments,
           },
         });
       }
@@ -238,6 +269,37 @@ export const useDependencyStore = create<DependencyStore>()(
         }
       });
 
+      // Auto-scheduling: propagate when type or lag changes
+      let dateAdjustments: DateAdjustment[] = [];
+      if (
+        useChartStore.getState().autoScheduling &&
+        !historyStore.isUndoing &&
+        !historyStore.isRedoing
+      ) {
+        const taskStore = useTaskStore.getState();
+        dateAdjustments = propagateDateChanges(
+          taskStore.tasks,
+          get().dependencies,
+          [dependency.fromTaskId]
+        );
+        if (dateAdjustments.length > 0) {
+          useTaskStore.setState((state) => {
+            for (const adj of dateAdjustments) {
+              const task = state.tasks.find((t) => t.id === adj.taskId);
+              if (task) {
+                task.startDate = adj.newStartDate;
+                task.endDate = adj.newEndDate;
+                task.duration = calculateDuration(
+                  adj.newStartDate,
+                  adj.newEndDate
+                );
+              }
+            }
+          });
+          toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);
+        }
+      }
+
       // Record to history
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         historyStore.recordCommand({
@@ -249,6 +311,7 @@ export const useDependencyStore = create<DependencyStore>()(
             id,
             updates,
             previousValues,
+            dateAdjustments,
           },
         });
       }

@@ -47,9 +47,13 @@ import { DEFAULT_PALETTE_ID } from "@/utils/colorPalettes";
 import type { HexColor, TaskId } from "@/types/branded.types";
 import { CommandType } from "@/types/command.types";
 import type { ApplyColorsToManualParams } from "@/types/command.types";
+import type { DateAdjustment } from "@/types/dependency.types";
+import toast from "react-hot-toast";
 import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
+import { useDependencyStore } from "./dependencySlice";
+import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
 
 /**
  * Anchor point for zoom operations.
@@ -92,6 +96,7 @@ interface ChartState {
   showHolidays: boolean;
   showDependencies: boolean;
   showProgress: boolean;
+  autoScheduling: boolean;
   taskLabelPosition: TaskLabelPosition;
   workingDaysMode: boolean;
   workingDaysConfig: WorkingDaysConfig;
@@ -149,6 +154,7 @@ type SettableViewFields = Pick<
   | "showHolidays"
   | "showDependencies"
   | "showProgress"
+  | "autoScheduling"
   | "taskLabelPosition"
   | "workingDaysMode"
   | "workingDaysConfig"
@@ -193,6 +199,8 @@ interface ChartActions {
   toggleHolidays: () => void;
   toggleDependencies: () => void;
   toggleProgress: () => void;
+  toggleAutoScheduling: () => void;
+  setAutoScheduling: (enabled: boolean) => void;
   setShowWeekends: (show: boolean) => void;
   setShowTodayMarker: (show: boolean) => void;
   setShowHolidays: (show: boolean) => void;
@@ -296,6 +304,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     showHolidays: true,
     showDependencies: true,
     showProgress: true,
+    autoScheduling: false,
     taskLabelPosition: "inside",
     workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
@@ -627,6 +636,69 @@ export const useChartStore = create<ChartState & ChartActions>()(
     toggleProgress: (): void => {
       set((state) => {
         state.showProgress = !state.showProgress;
+      });
+    },
+
+    // Toggle auto-scheduling with cascade recalculation and undo support
+    toggleAutoScheduling: (): void => {
+      const historyStore = useHistoryStore.getState();
+      const fileStore = useFileStore.getState();
+      const previousValue = get().autoScheduling;
+      const newValue = !previousValue;
+
+      set((state) => {
+        state.autoScheduling = newValue;
+      });
+
+      let dateAdjustments: DateAdjustment[] = [];
+      if (newValue) {
+        // Recalculate ALL constraints when toggling ON
+        const tasks = useTaskStore.getState().tasks;
+        const deps = useDependencyStore.getState().dependencies;
+        dateAdjustments = propagateDateChanges(tasks, deps);
+        if (dateAdjustments.length > 0) {
+          useTaskStore.setState((state) => {
+            for (const adj of dateAdjustments) {
+              const task = state.tasks.find((t) => t.id === adj.taskId);
+              if (task) {
+                task.startDate = adj.newStartDate;
+                task.endDate = adj.newEndDate;
+                task.duration = calculateDuration(
+                  adj.newStartDate,
+                  adj.newEndDate
+                );
+              }
+            }
+          });
+          toast(
+            `Auto-scheduling enabled — adjusted ${dateAdjustments.length} task(s)`
+          );
+        } else {
+          toast("Auto-scheduling enabled");
+        }
+      } else {
+        toast("Auto-scheduling disabled");
+      }
+
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.TOGGLE_AUTO_SCHEDULING,
+          timestamp: Date.now(),
+          description: newValue
+            ? "Enable auto-scheduling"
+            : "Disable auto-scheduling",
+          params: { previousValue, newValue, dateAdjustments },
+        });
+      }
+
+      fileStore.markDirty();
+    },
+
+    // Set auto-scheduling
+    setAutoScheduling: (enabled: boolean): void => {
+      set((state) => {
+        state.autoScheduling = enabled;
       });
     },
 
@@ -962,6 +1034,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.showDependencies = settings.showDependencies;
         if (settings.showProgress !== undefined)
           state.showProgress = settings.showProgress;
+        if (settings.autoScheduling !== undefined)
+          state.autoScheduling = settings.autoScheduling;
         if (settings.taskLabelPosition !== undefined)
           state.taskLabelPosition = settings.taskLabelPosition;
         if (settings.workingDaysConfig !== undefined) {

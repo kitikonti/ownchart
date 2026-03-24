@@ -25,6 +25,7 @@ import {
   type UngroupTasksParams,
   type HideTasksParams,
   type UnhideTasksParams,
+  type ToggleAutoSchedulingParams,
 } from "@/types/command.types";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
@@ -288,6 +289,16 @@ function undoUpdateTask(params: UpdateTaskParams): void {
       taskStore.updateTask(cascade.id, cascade.previousValues);
     }
   }
+
+  // Reverse auto-scheduling date adjustments
+  if (params.dateAdjustments && params.dateAdjustments.length > 0) {
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.oldStartDate,
+        endDate: adj.oldEndDate,
+      });
+    }
+  }
 }
 
 function undoDeleteTask(params: DeleteTaskParams): void {
@@ -367,6 +378,17 @@ function undoUpdateDependency(params: UpdateDependencyParams): void {
     d.id === params.id ? { ...d, ...params.previousValues } : d
   );
   useDependencyStore.setState({ dependencies: deps });
+
+  // Reverse auto-scheduling date adjustments
+  if (params.dateAdjustments.length > 0) {
+    const taskStore = useTaskStore.getState();
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.oldStartDate,
+        endDate: adj.oldEndDate,
+      });
+    }
+  }
 }
 
 function undoPasteRows(params: PasteRowsParams): void {
@@ -411,6 +433,16 @@ function undoPasteCell(params: PasteCellParams): void {
 
 function undoMultiDragTasks(params: MultiDragTasksParams): void {
   const taskStore = useTaskStore.getState();
+
+  // Reverse auto-scheduling date adjustments first (applied last, undo first)
+  if (params.dateAdjustments.length > 0) {
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.oldStartDate,
+        endDate: adj.oldEndDate,
+      });
+    }
+  }
 
   for (const change of params.taskChanges) {
     taskStore.updateTask(change.id, {
@@ -516,6 +548,20 @@ function undoHideStateChange(params: {
   useChartStore.getState().setHiddenTaskIds(params.previousHiddenTaskIds);
 }
 
+function undoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
+  useChartStore.getState().setAutoScheduling(params.previousValue);
+
+  if (params.dateAdjustments.length > 0) {
+    const taskStore = useTaskStore.getState();
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.oldStartDate,
+        endDate: adj.oldEndDate,
+      });
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Redo handlers
 // ---------------------------------------------------------------------------
@@ -538,6 +584,16 @@ function redoUpdateTask(params: UpdateTaskParams): void {
   if (params.cascadeUpdates) {
     for (const cascade of params.cascadeUpdates) {
       taskStore.updateTask(cascade.id, cascade.updates);
+    }
+  }
+
+  // Re-apply auto-scheduling date adjustments
+  if (params.dateAdjustments && params.dateAdjustments.length > 0) {
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.newStartDate,
+        endDate: adj.newEndDate,
+      });
     }
   }
 }
@@ -615,6 +671,17 @@ function redoUpdateDependency(params: UpdateDependencyParams): void {
     d.id === params.id ? { ...d, ...params.updates } : d
   );
   useDependencyStore.setState({ dependencies: deps });
+
+  // Re-apply auto-scheduling date adjustments
+  if (params.dateAdjustments.length > 0) {
+    const taskStore = useTaskStore.getState();
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.newStartDate,
+        endDate: adj.newEndDate,
+      });
+    }
+  }
 }
 
 function redoPasteRows(params: PasteRowsParams): void {
@@ -675,6 +742,16 @@ function redoMultiDragTasks(params: MultiDragTasksParams): void {
 
   for (const cascade of params.cascadeUpdates) {
     taskStore.updateTask(cascade.id, cascade.updates);
+  }
+
+  // Re-apply auto-scheduling date adjustments
+  if (params.dateAdjustments.length > 0) {
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.newStartDate,
+        endDate: adj.newEndDate,
+      });
+    }
   }
 }
 
@@ -776,6 +853,20 @@ function redoUnhideTasks(params: UnhideTasksParams): void {
   useChartStore.getState().setHiddenTaskIds(newHidden);
 }
 
+function redoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
+  useChartStore.getState().setAutoScheduling(params.newValue);
+
+  if (params.dateAdjustments.length > 0) {
+    const taskStore = useTaskStore.getState();
+    for (const adj of params.dateAdjustments) {
+      taskStore.updateTask(adj.taskId, {
+        startDate: adj.newStartDate,
+        endDate: adj.newEndDate,
+      });
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Command dispatchers
 // ---------------------------------------------------------------------------
@@ -820,6 +911,8 @@ function executeUndoCommand(command: Command): void {
       return undoHideStateChange(command.params);
     case CommandType.UNHIDE_TASKS:
       return undoHideStateChange(command.params);
+    case CommandType.TOGGLE_AUTO_SCHEDULING:
+      return undoToggleAutoScheduling(command.params);
     default:
       return assertNever(command);
   }
@@ -865,6 +958,8 @@ function executeRedoCommand(command: Command): void {
       return redoHideTasks(command.params);
     case CommandType.UNHIDE_TASKS:
       return redoUnhideTasks(command.params);
+    case CommandType.TOGGLE_AUTO_SCHEDULING:
+      return redoToggleAutoScheduling(command.params);
     default:
       return assertNever(command);
   }

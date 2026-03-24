@@ -769,6 +769,7 @@ describe("History Store - Dependency commands", () => {
       id: "dep-1",
       updates: { lag: 5 },
       previousValues: { lag: 0 },
+      dateAdjustments: [],
     });
     useHistoryStore.getState().recordCommand(cmd);
     useHistoryStore.getState().undo();
@@ -784,6 +785,7 @@ describe("History Store - Dependency commands", () => {
       id: "dep-1",
       updates: { lag: 5 },
       previousValues: { lag: 0 },
+      dateAdjustments: [],
     });
     useHistoryStore.getState().recordCommand(cmd);
     useHistoryStore.getState().undo();

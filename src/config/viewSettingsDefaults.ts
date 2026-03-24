@@ -30,6 +30,7 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     columnWidths: loaded.columnWidths,
 
     // Optional fields — apply defaults for older file versions
+    autoScheduling: loaded.autoScheduling ?? false,
     showHolidays: loaded.showHolidays ?? true,
     showDependencies: loaded.showDependencies ?? true,
     showProgress: loaded.showProgress ?? true,
