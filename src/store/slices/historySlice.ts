@@ -31,6 +31,10 @@ import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import type { Dependency } from "@/types/dependency.types";
 import { calculateDuration } from "@/utils/dateUtils";
+import {
+  applyDateAdjustments,
+  reverseDateAdjustments,
+} from "@/utils/graph/dateAdjustment";
 import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useChartStore } from "./chartSlice";
@@ -290,14 +294,17 @@ function undoUpdateTask(params: UpdateTaskParams): void {
     }
   }
 
-  // Reverse auto-scheduling date adjustments
+  // Reverse auto-scheduling date adjustments (batch)
   if (params.dateAdjustments && params.dateAdjustments.length > 0) {
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.oldStartDate,
-        endDate: adj.oldEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments!,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -355,13 +362,15 @@ function undoAddDependency(params: AddDependencyParams): void {
   useDependencyStore.getState().removeDependency(params.dependency.id);
 
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.oldStartDate,
-        endDate: adj.oldEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -379,15 +388,17 @@ function undoUpdateDependency(params: UpdateDependencyParams): void {
   );
   useDependencyStore.setState({ dependencies: deps });
 
-  // Reverse auto-scheduling date adjustments
+  // Reverse auto-scheduling date adjustments (batch)
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.oldStartDate,
-        endDate: adj.oldEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -436,12 +447,15 @@ function undoMultiDragTasks(params: MultiDragTasksParams): void {
 
   // Reverse auto-scheduling date adjustments first (applied last, undo first)
   if (params.dateAdjustments.length > 0) {
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.oldStartDate,
-        endDate: adj.oldEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 
   for (const change of params.taskChanges) {
@@ -552,13 +566,15 @@ function undoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
   useChartStore.getState().setAutoScheduling(params.previousValue);
 
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.oldStartDate,
-        endDate: adj.oldEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -587,14 +603,17 @@ function redoUpdateTask(params: UpdateTaskParams): void {
     }
   }
 
-  // Re-apply auto-scheduling date adjustments
+  // Re-apply auto-scheduling date adjustments (batch)
   if (params.dateAdjustments && params.dateAdjustments.length > 0) {
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.newStartDate,
-        endDate: adj.newEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments!,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -651,13 +670,15 @@ function redoAddDependency(params: AddDependencyParams): void {
   });
 
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.newStartDate,
-        endDate: adj.newEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -672,15 +693,17 @@ function redoUpdateDependency(params: UpdateDependencyParams): void {
   );
   useDependencyStore.setState({ dependencies: deps });
 
-  // Re-apply auto-scheduling date adjustments
+  // Re-apply auto-scheduling date adjustments (batch)
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.newStartDate,
-        endDate: adj.newEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -744,14 +767,17 @@ function redoMultiDragTasks(params: MultiDragTasksParams): void {
     taskStore.updateTask(cascade.id, cascade.updates);
   }
 
-  // Re-apply auto-scheduling date adjustments
+  // Re-apply auto-scheduling date adjustments (batch)
   if (params.dateAdjustments.length > 0) {
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.newStartDate,
-        endDate: adj.newEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 
@@ -857,13 +883,15 @@ function redoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
   useChartStore.getState().setAutoScheduling(params.newValue);
 
   if (params.dateAdjustments.length > 0) {
-    const taskStore = useTaskStore.getState();
-    for (const adj of params.dateAdjustments) {
-      taskStore.updateTask(adj.taskId, {
-        startDate: adj.newStartDate,
-        endDate: adj.newEndDate,
-      });
-    }
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
   }
 }
 

@@ -11,7 +11,7 @@ import {
   calculateConstrainedDates,
   propagateDateChanges,
   applyDateAdjustments,
-  reverseeDateAdjustments,
+  reverseDateAdjustments,
 } from "@/utils/graph/dateAdjustment";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
@@ -710,7 +710,7 @@ describe("applyDateAdjustments", () => {
   });
 });
 
-describe("reverseeDateAdjustments", () => {
+describe("reverseDateAdjustments", () => {
   it("restores old dates", () => {
     const tasks: Task[] = [
       makeTask({
@@ -730,7 +730,7 @@ describe("reverseeDateAdjustments", () => {
       },
     ];
 
-    reverseeDateAdjustments(adjustments, tasks);
+    reverseDateAdjustments(adjustments, tasks);
 
     expect(tasks[0].startDate).toBe("2025-01-06");
     expect(tasks[0].endDate).toBe("2025-01-10");

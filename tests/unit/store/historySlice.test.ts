@@ -1894,3 +1894,141 @@ describe("History Store - markDirty behavior", () => {
     expect(useFileStore.getState().isDirty).toBe(true);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Auto-Scheduling Integration Tests
+// ---------------------------------------------------------------------------
+
+describe("History Store - Auto-Scheduling", () => {
+  beforeEach(resetStores);
+
+  it("toggleAutoScheduling cascades dates and records undoable command", () => {
+    const A = createTask("A", "Task A", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+      duration: 5,
+      order: 0,
+    });
+    const B = createTask("B", "Task B", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-08",
+      duration: 3,
+      order: 1,
+    });
+    useTaskStore.setState({ tasks: [A, B] });
+    useDependencyStore.setState({
+      dependencies: [createDependency("dep-1", "A", "B")],
+    });
+
+    // Toggle ON — B violates FS constraint, should cascade
+    useChartStore.getState().toggleAutoScheduling();
+
+    expect(useChartStore.getState().autoScheduling).toBe(true);
+    const tasks = useTaskStore.getState().tasks;
+    const taskB = tasks.find((t) => t.id === "B")!;
+    expect(taskB.startDate).toBe("2025-01-11");
+    expect(taskB.endDate).toBe("2025-01-13");
+
+    // Undo — should revert both the toggle and the date changes
+    useHistoryStore.getState().undo();
+
+    expect(useChartStore.getState().autoScheduling).toBe(false);
+    const undoTasks = useTaskStore.getState().tasks;
+    const undoB = undoTasks.find((t) => t.id === "B")!;
+    expect(undoB.startDate).toBe("2025-01-06");
+    expect(undoB.endDate).toBe("2025-01-08");
+
+    // Redo — should re-apply toggle and cascade
+    useHistoryStore.getState().redo();
+
+    expect(useChartStore.getState().autoScheduling).toBe(true);
+    const redoTasks = useTaskStore.getState().tasks;
+    const redoB = redoTasks.find((t) => t.id === "B")!;
+    expect(redoB.startDate).toBe("2025-01-11");
+    expect(redoB.endDate).toBe("2025-01-13");
+  });
+
+  it("addDependency with autoScheduling ON populates dateAdjustments", () => {
+    const A = createTask("A", "Task A", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+      duration: 5,
+      order: 0,
+    });
+    const B = createTask("B", "Task B", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-08",
+      duration: 3,
+      order: 1,
+    });
+    useTaskStore.setState({ tasks: [A, B] });
+    useChartStore.getState().setAutoScheduling(true);
+
+    useDependencyStore.getState().addDependency(tid("A"), tid("B"), "FS");
+
+    // B should have been cascaded forward
+    const taskB = useTaskStore.getState().tasks.find((t) => t.id === "B")!;
+    expect(taskB.startDate).toBe("2025-01-11");
+
+    // Undo should revert the date change and remove the dependency
+    useHistoryStore.getState().undo();
+
+    const undoB = useTaskStore.getState().tasks.find((t) => t.id === "B")!;
+    expect(undoB.startDate).toBe("2025-01-06");
+    expect(useDependencyStore.getState().dependencies).toHaveLength(0);
+  });
+
+  it("updateDependency type change cascades when autoScheduling ON", () => {
+    const A = createTask("A", "Task A", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+      duration: 5,
+      order: 0,
+    });
+    const B = createTask("B", "Task B", {
+      startDate: "2025-01-11",
+      endDate: "2025-01-13",
+      duration: 3,
+      order: 1,
+    });
+    useTaskStore.setState({ tasks: [A, B] });
+    useDependencyStore.setState({
+      dependencies: [createDependency("dep-1", "A", "B")],
+    });
+    useChartStore.getState().setAutoScheduling(true);
+
+    // Change type from FS to SS — B should move to start when A starts
+    useDependencyStore.getState().updateDependency("dep-1", { type: "SS" });
+
+    // SS: B.start >= A.start → B already satisfies (Jan 11 >= Jan 6), no move needed
+    const taskB = useTaskStore.getState().tasks.find((t) => t.id === "B")!;
+    expect(taskB.startDate).toBe("2025-01-11"); // unchanged
+    expect(useDependencyStore.getState().dependencies[0].type).toBe("SS");
+  });
+
+  it("toggleAutoScheduling with no violations shows no adjustments", () => {
+    const A = createTask("A", "Task A", {
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+      duration: 5,
+      order: 0,
+    });
+    const B = createTask("B", "Task B", {
+      startDate: "2025-01-20",
+      endDate: "2025-01-22",
+      duration: 3,
+      order: 1,
+    });
+    useTaskStore.setState({ tasks: [A, B] });
+    useDependencyStore.setState({
+      dependencies: [createDependency("dep-1", "A", "B")],
+    });
+
+    useChartStore.getState().toggleAutoScheduling();
+
+    // B already satisfies FS (Jan 20 > Jan 11) — no adjustments
+    const taskB = useTaskStore.getState().tasks.find((t) => t.id === "B")!;
+    expect(taskB.startDate).toBe("2025-01-20");
+    expect(taskB.endDate).toBe("2025-01-22");
+  });
+});

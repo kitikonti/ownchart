@@ -106,7 +106,7 @@ export function propagateDateChanges(
   dependencies: Dependency[],
   changedTaskIds?: TaskId[]
 ): DateAdjustment[] {
-  if (dependencies.length === 0) return [];
+  if (tasks.length === 0 || dependencies.length === 0) return [];
 
   // 1. Build working copy of task dates
   const workingCopy = new Map<TaskId, WorkingDates>();
@@ -213,20 +213,22 @@ export function propagateDateChanges(
 }
 
 // ---------------------------------------------------------------------------
-// Batch apply helper
+// Batch apply helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Apply date adjustments to a mutable tasks array (Immer draft).
+ * Apply or reverse date adjustments on a mutable tasks array (Immer draft).
  * Uses a Map index for O(1) lookup per adjustment.
  *
- * @param adjustments - DateAdjustment records to apply
+ * @param adjustments - DateAdjustment records to apply/reverse
  * @param tasks - Mutable tasks array (Immer draft)
+ * @param direction - "apply" uses new dates, "reverse" restores old dates
  * @returns Set of parent task IDs that may need summary recalculation
  */
-export function applyDateAdjustments(
+function batchUpdateDates(
   adjustments: DateAdjustment[],
-  tasks: Task[]
+  tasks: Task[],
+  direction: "apply" | "reverse"
 ): Set<TaskId> {
   if (adjustments.length === 0) return new Set();
 
@@ -243,9 +245,13 @@ export function applyDateAdjustments(
     if (idx === undefined) continue;
 
     const task = tasks[idx];
-    task.startDate = adj.newStartDate;
-    task.endDate = adj.newEndDate;
-    task.duration = calculateDuration(adj.newStartDate, adj.newEndDate);
+    const startDate =
+      direction === "apply" ? adj.newStartDate : adj.oldStartDate;
+    const endDate = direction === "apply" ? adj.newEndDate : adj.oldEndDate;
+
+    task.startDate = startDate;
+    task.endDate = endDate;
+    task.duration = calculateDuration(startDate, endDate);
 
     if (task.parent) {
       affectedParentIds.add(task.parent);
@@ -255,40 +261,18 @@ export function applyDateAdjustments(
   return affectedParentIds;
 }
 
-/**
- * Reverse-apply date adjustments (restore old dates) on a mutable tasks array.
- * Used for undo operations.
- *
- * @param adjustments - DateAdjustment records to reverse
- * @param tasks - Mutable tasks array (Immer draft)
- * @returns Set of parent task IDs that may need summary recalculation
- */
-export function reverseeDateAdjustments(
+/** Apply date adjustments (use new dates). Returns affected parent IDs. */
+export function applyDateAdjustments(
   adjustments: DateAdjustment[],
   tasks: Task[]
 ): Set<TaskId> {
-  if (adjustments.length === 0) return new Set();
+  return batchUpdateDates(adjustments, tasks, "apply");
+}
 
-  const taskIndex = new Map<TaskId, number>();
-  for (let i = 0; i < tasks.length; i++) {
-    taskIndex.set(tasks[i].id, i);
-  }
-
-  const affectedParentIds = new Set<TaskId>();
-
-  for (const adj of adjustments) {
-    const idx = taskIndex.get(adj.taskId);
-    if (idx === undefined) continue;
-
-    const task = tasks[idx];
-    task.startDate = adj.oldStartDate;
-    task.endDate = adj.oldEndDate;
-    task.duration = calculateDuration(adj.oldStartDate, adj.oldEndDate);
-
-    if (task.parent) {
-      affectedParentIds.add(task.parent);
-    }
-  }
-
-  return affectedParentIds;
+/** Reverse date adjustments (restore old dates). Returns affected parent IDs. */
+export function reverseDateAdjustments(
+  adjustments: DateAdjustment[],
+  tasks: Task[]
+): Set<TaskId> {
+  return batchUpdateDates(adjustments, tasks, "reverse");
 }

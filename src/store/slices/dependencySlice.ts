@@ -21,9 +21,12 @@ import { useHistoryStore } from "./historySlice";
 import { useChartStore } from "./chartSlice";
 import { useFileStore } from "./fileSlice";
 import { wouldCreateCycle } from "@/utils/graph/cycleDetection";
-import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
+import {
+  propagateDateChanges,
+  applyDateAdjustments,
+} from "@/utils/graph/dateAdjustment";
+import { recalculateSummaryAncestors } from "@/utils/hierarchy";
 import type { DateAdjustment } from "@/types/dependency.types";
-import { calculateDuration } from "@/utils/dateUtils";
 import toast from "react-hot-toast";
 
 /**
@@ -175,16 +178,12 @@ export const useDependencyStore = create<DependencyStore>()(
         );
         if (dateAdjustments.length > 0) {
           useTaskStore.setState((state) => {
-            for (const adj of dateAdjustments) {
-              const task = state.tasks.find((t) => t.id === adj.taskId);
-              if (task) {
-                task.startDate = adj.newStartDate;
-                task.endDate = adj.newEndDate;
-                task.duration = calculateDuration(
-                  adj.newStartDate,
-                  adj.newEndDate
-                );
-              }
+            const parentIds = applyDateAdjustments(
+              dateAdjustments,
+              state.tasks
+            );
+            if (parentIds.size > 0) {
+              recalculateSummaryAncestors(state.tasks, parentIds);
             }
           });
           toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);
@@ -284,16 +283,12 @@ export const useDependencyStore = create<DependencyStore>()(
         );
         if (dateAdjustments.length > 0) {
           useTaskStore.setState((state) => {
-            for (const adj of dateAdjustments) {
-              const task = state.tasks.find((t) => t.id === adj.taskId);
-              if (task) {
-                task.startDate = adj.newStartDate;
-                task.endDate = adj.newEndDate;
-                task.duration = calculateDuration(
-                  adj.newStartDate,
-                  adj.newEndDate
-                );
-              }
+            const parentIds = applyDateAdjustments(
+              dateAdjustments,
+              state.tasks
+            );
+            if (parentIds.size > 0) {
+              recalculateSummaryAncestors(state.tasks, parentIds);
             }
           });
           toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);

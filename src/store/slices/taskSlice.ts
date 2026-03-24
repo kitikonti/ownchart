@@ -31,8 +31,10 @@ import { useHistoryStore } from "./historySlice";
 import { useDependencyStore } from "./dependencySlice";
 import { CommandType } from "@/types/command.types";
 import type { DateAdjustment } from "@/types/dependency.types";
-import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
-import { calculateDuration as calcDuration } from "@/utils/dateUtils";
+import {
+  propagateDateChanges,
+  applyDateAdjustments,
+} from "@/utils/graph/dateAdjustment";
 import { useChartStore } from "./chartSlice";
 import {
   UNKNOWN_TASK_NAME,
@@ -255,13 +257,12 @@ export const useTaskStore = create<TaskStore>()(
         );
         if (dateAdjustments.length > 0) {
           set((state) => {
-            for (const adj of dateAdjustments) {
-              const task = state.tasks.find((t) => t.id === adj.taskId);
-              if (task) {
-                task.startDate = adj.newStartDate;
-                task.endDate = adj.newEndDate;
-                task.duration = calcDuration(adj.newStartDate, adj.newEndDate);
-              }
+            const parentIds = applyDateAdjustments(
+              dateAdjustments,
+              state.tasks
+            );
+            if (parentIds.size > 0) {
+              recalculateSummaryAncestors(state.tasks, parentIds);
             }
           });
         }
@@ -362,16 +363,12 @@ export const useTaskStore = create<TaskStore>()(
           );
           if (dateAdjustments.length > 0) {
             set((state) => {
-              for (const adj of dateAdjustments) {
-                const task = state.tasks.find((t) => t.id === adj.taskId);
-                if (task) {
-                  task.startDate = adj.newStartDate;
-                  task.endDate = adj.newEndDate;
-                  task.duration = calcDuration(
-                    adj.newStartDate,
-                    adj.newEndDate
-                  );
-                }
+              const parentIds = applyDateAdjustments(
+                dateAdjustments,
+                state.tasks
+              );
+              if (parentIds.size > 0) {
+                recalculateSummaryAncestors(state.tasks, parentIds);
               }
             });
           }

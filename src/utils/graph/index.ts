@@ -14,5 +14,5 @@ export {
   calculateConstrainedDates,
   propagateDateChanges,
   applyDateAdjustments,
-  reverseeDateAdjustments,
+  reverseDateAdjustments,
 } from "./dateAdjustment";

@@ -53,7 +53,11 @@ import { useTaskStore } from "./taskSlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
 import { useDependencyStore } from "./dependencySlice";
-import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
+import {
+  propagateDateChanges,
+  applyDateAdjustments,
+} from "@/utils/graph/dateAdjustment";
+import { recalculateSummaryAncestors } from "@/utils/hierarchy";
 
 /**
  * Anchor point for zoom operations.
@@ -658,16 +662,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
         dateAdjustments = propagateDateChanges(tasks, deps);
         if (dateAdjustments.length > 0) {
           useTaskStore.setState((state) => {
-            for (const adj of dateAdjustments) {
-              const task = state.tasks.find((t) => t.id === adj.taskId);
-              if (task) {
-                task.startDate = adj.newStartDate;
-                task.endDate = adj.newEndDate;
-                task.duration = calculateDuration(
-                  adj.newStartDate,
-                  adj.newEndDate
-                );
-              }
+            const parentIds = applyDateAdjustments(
+              dateAdjustments,
+              state.tasks
+            );
+            if (parentIds.size > 0) {
+              recalculateSummaryAncestors(state.tasks, parentIds);
             }
           });
           toast(
