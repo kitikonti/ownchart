@@ -12,6 +12,9 @@ import {
   SegmentedControl,
   type SegmentedControlOption,
 } from "@/components/common/SegmentedControl";
+import { Button } from "@/components/common/Button";
+import { FieldLabel } from "@/components/common/FieldLabel";
+import { Input } from "@/components/common/Input";
 import { Z_INDEX } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
@@ -236,9 +239,7 @@ export const DependencyPropertiesPanel = memo(
 
         {/* Type selector */}
         <div className="px-4 pt-3 pb-2">
-          <span className="block text-xs font-medium text-slate-600 mb-1.5">
-            Type
-          </span>
+          <FieldLabel>Type</FieldLabel>
           <SegmentedControl<DependencyType>
             options={TYPE_OPTIONS}
             value={dependency.type}
@@ -254,23 +255,18 @@ export const DependencyPropertiesPanel = memo(
 
         {/* Lag input */}
         <div className="px-4 pt-2 pb-3">
-          <label
-            htmlFor="dep-lag-input"
-            className="block text-xs font-medium text-slate-600 mb-1.5"
-          >
-            Lag
-          </label>
+          <FieldLabel htmlFor="dep-lag-input">Lag</FieldLabel>
           <div className="flex items-center gap-2">
-            <input
+            <Input
               id="dep-lag-input"
               type="number"
               value={lagDraft}
               onChange={(e) => setLagDraft(e.target.value)}
               onBlur={commitLag}
               onKeyDown={handleLagKeyDown}
-              className="w-20 px-2 py-1.5 text-sm font-mono border border-slate-300 rounded
-                         bg-white text-slate-800
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-brand-500"
+              mono
+              fullWidth={false}
+              className="w-20"
             />
             <span className="text-xs text-slate-500">days</span>
           </div>
@@ -281,16 +277,9 @@ export const DependencyPropertiesPanel = memo(
 
         {/* Delete button */}
         <div className="px-4 pb-3 pt-1 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onDelete}
-            className="w-full px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50
-                       rounded border border-red-200 hover:bg-red-100
-                       transition-colors duration-150
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-          >
+          <Button variant="danger" size="sm" fullWidth onClick={onDelete}>
             Delete Dependency
-          </button>
+          </Button>
         </div>
       </div>,
       document.body
