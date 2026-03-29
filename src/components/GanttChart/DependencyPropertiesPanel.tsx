@@ -4,17 +4,17 @@
  * Allows changing type (FS/SS/FF/SF), editing lag, and deleting the dependency.
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Dependency, DependencyType } from "@/types/dependency.types";
 import { DEPENDENCY_TYPES } from "@/types/dependency.types";
+import { Button } from "@/components/common/Button";
+import { FieldLabel } from "@/components/common/FieldLabel";
+import { Input } from "@/components/common/Input";
 import {
   SegmentedControl,
   type SegmentedControlOption,
 } from "@/components/common/SegmentedControl";
-import { Button } from "@/components/common/Button";
-import { FieldLabel } from "@/components/common/FieldLabel";
-import { Input } from "@/components/common/Input";
 import { Z_INDEX } from "@/styles/design-tokens";
 
 // ---------------------------------------------------------------------------
@@ -82,6 +82,10 @@ export const DependencyPropertiesPanel = memo(
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const onCloseRef = useRef(onClose);
     onCloseRef.current = onClose;
+
+    // Instance-unique ID prefix so multiple panels never share DOM IDs.
+    const instanceId = useId();
+    const lagInputId = `dep-lag-${instanceId}`;
 
     // Local draft state for lag input (commit on blur/Enter)
     const [lagDraft, setLagDraft] = useState(String(dependency.lag ?? 0));
@@ -255,10 +259,10 @@ export const DependencyPropertiesPanel = memo(
 
         {/* Lag input */}
         <div className="px-4 pt-2 pb-3">
-          <FieldLabel htmlFor="dep-lag-input">Lag</FieldLabel>
+          <FieldLabel htmlFor={lagInputId}>Lag</FieldLabel>
           <div className="flex items-center gap-2">
             <Input
-              id="dep-lag-input"
+              id={lagInputId}
               type="number"
               value={lagDraft}
               onChange={(e) => setLagDraft(e.target.value)}
