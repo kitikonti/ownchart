@@ -141,7 +141,7 @@ function buildTwoCornerPath(
  * A straight line would cross through task bars, so we extend middleY
  * below (or above) to produce a U-shaped S-curve instead.
  */
-function buildFFSSSameRowPath(
+function buildSameRowHookPath(
   from: Point,
   to: Point,
   turnX: number,
@@ -290,18 +290,16 @@ function calculateRoutedPath(
 
 /**
  * Compute routing parameters shared by calculateArrowPath and calculateDragPath.
- * Extracted to keep both call sites consistent — cornerRadius scales with rowHeight,
- * minGapForElbow derives from cornerRadius, and horizontalGap is the raw x-delta.
+ * Extracted to keep both call sites consistent — cornerRadius scales with rowHeight
+ * and minGapForElbow derives from cornerRadius.
  */
-function computeElbowParams(
-  from: Point,
-  to: Point,
-  rowHeight: number
-): { cornerRadius: number; minGapForElbow: number; horizontalGap: number } {
+function computeElbowParams(rowHeight: number): {
+  cornerRadius: number;
+  minGapForElbow: number;
+} {
   const cornerRadius = getScaledCornerRadius(rowHeight);
   const minGapForElbow = computeMinGapForElbow(cornerRadius);
-  const horizontalGap = to.x - from.x;
-  return { cornerRadius, minGapForElbow, horizontalGap };
+  return { cornerRadius, minGapForElbow };
 }
 
 /** FS: Finish-to-Start — source right edge, target left edge. */
@@ -406,14 +404,7 @@ export function calculateArrowPath(
   type: DependencyType = "FS"
 ): ArrowPath {
   const { from, to } = getConnectionPoints(type, fromPos, toPos);
-  const { cornerRadius, minGapForElbow } = computeElbowParams(
-    from,
-    to,
-    rowHeight
-  );
-
-  const exitDir = getExitDirection(type);
-  const entryDir = getEntryDirection(type);
+  const { cornerRadius, minGapForElbow } = computeElbowParams(rowHeight);
 
   let path: string;
   switch (type) {
@@ -423,21 +414,14 @@ export function calculateArrowPath(
       path =
         horizontalGap >= minGapForElbow
           ? buildTwoCornerPath(from, to, cornerRadius)
-          : calculateRoutedPath(
-              from,
-              to,
-              rowHeight,
-              cornerRadius,
-              exitDir,
-              entryDir
-            );
+          : calculateRoutedPath(from, to, rowHeight, cornerRadius);
       break;
     }
     case "FF": {
       // Hook-right: vertical turn to the right of both right edges
       const turnX = Math.max(from.x, to.x) + HORIZONTAL_SEGMENT;
       path = isSameRow(from, to)
-        ? buildFFSSSameRowPath(from, to, turnX, cornerRadius, rowHeight)
+        ? buildSameRowHookPath(from, to, turnX, cornerRadius, rowHeight)
         : buildElbowAtTurnX(from, to, turnX, cornerRadius);
       break;
     }
@@ -445,7 +429,7 @@ export function calculateArrowPath(
       // Hook-left: vertical turn to the left of both left edges
       const turnX = Math.min(from.x, to.x) - HORIZONTAL_SEGMENT;
       path = isSameRow(from, to)
-        ? buildFFSSSameRowPath(from, to, turnX, cornerRadius, rowHeight)
+        ? buildSameRowHookPath(from, to, turnX, cornerRadius, rowHeight)
         : buildElbowAtTurnX(from, to, turnX, cornerRadius);
       break;
     }
@@ -469,8 +453,8 @@ export function calculateArrowPath(
           to,
           middleY,
           cornerRadius,
-          exitDir,
-          entryDir
+          getExitDirection(type),
+          getEntryDirection(type)
         );
       }
       break;
@@ -507,11 +491,8 @@ export function calculateDragPath(
   to: Point,
   rowHeight: number = BASE_ROW_HEIGHT
 ): string {
-  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(
-    from,
-    to,
-    rowHeight
-  );
+  const { cornerRadius, minGapForElbow } = computeElbowParams(rowHeight);
+  const horizontalGap = to.x - from.x;
 
   if (horizontalGap >= minGapForElbow) {
     return buildTwoCornerPath(from, to, cornerRadius);
