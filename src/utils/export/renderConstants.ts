@@ -260,17 +260,17 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
 
 /**
  * Dash patterns per dependency type. `undefined` = solid line.
- * FS is solid (most common, default). Other types use distinct patterns
- * so users can distinguish dependency types at a glance.
+ * All types use solid lines — differentiation is via connection points only,
+ * matching the industry standard (MS Project, Smartsheet, etc.).
  */
 export const DEPENDENCY_DASH_PATTERNS: Record<
   DependencyType,
   string | undefined
 > = {
-  FS: undefined, // solid
-  SS: "6 4", // dashed
-  FF: "2 4", // dotted
-  SF: "8 4 2 4", // dash-dot
+  FS: undefined,
+  SS: undefined,
+  FF: undefined,
+  SF: undefined,
 } as const;
 
 /**
