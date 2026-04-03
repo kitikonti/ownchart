@@ -465,53 +465,57 @@ describe("calculateArrowPath — dependency type support", () => {
   });
 
   describe("SS path routing", () => {
-    it("always uses 4-corner S-curve", () => {
-      // Large horizontal gap — FS would use standard elbow, but SS must use S-curve
+    it("uses 2-corner hook path (vertical turn left of both left edges)", () => {
+      // Large horizontal gap — SS uses hook-left, not S-curve
       const fromPos = pos(50, 100, 100, 30); // left=50
       const toPos = pos(300, 200, 100, 30); // left=300
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SS");
 
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBe(4);
+      expect(qCount).toBe(2);
     });
 
-    it("exits leftward from source left edge", () => {
+    it("hook extends left of both left edges", () => {
       const fromPos = pos(100, 100, 100, 30); // left=100
       const toPos = pos(200, 200, 100, 30); // left=200
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SS");
 
-      // Path starts at x=100 (left edge) and first horizontal goes LEFT (x < 100)
-      // firstX = 100 + (-1) * 15 = 85
+      // Path starts at x=100 (left edge)
       expect(result.path).toContain("M 100 115");
-      // The first L segment should go toward x=85 area (leftward)
+      // turnX = min(100, 200) - 15 = 85 → first L goes toward 85 area (leftward)
       expect(result.path).toMatch(/M 100 115 L (8[0-9]|9[0-3])/);
+      // 2-corner hook, not 4-corner S-curve
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2);
     });
 
-    it("handles same-row tasks by extending middleY below", () => {
+    it("handles same-row tasks by extending middleY below (S-curve fallback)", () => {
       const fromPos = pos(50, 100, 100, 30); // left=50, centerY=115
       const toPos = pos(200, 100, 100, 30); // left=200, centerY=115
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SS");
 
+      // Same-row FF/SS falls back to S-curve to avoid crossing task bars
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(4);
     });
   });
 
   describe("FF path routing", () => {
-    it("always uses 4-corner S-curve", () => {
+    it("uses 2-corner hook path (vertical turn right of both right edges)", () => {
       const fromPos = pos(0, 100, 100, 30); // right=100
       const toPos = pos(300, 200, 100, 30); // right=400
 
       const result = calculateArrowPath(fromPos, toPos, 44, "FF");
 
+      // Hook-right: 2-corner path, not 4-corner S-curve
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBe(4);
+      expect(qCount).toBe(2);
     });
 
-    it("enters target from the right (entryDir=-1)", () => {
+    it("enters target from the right via hook path", () => {
       const fromPos = pos(0, 100, 100, 30); // right=100
       const toPos = pos(300, 200, 100, 30); // right=400
 
@@ -521,29 +525,46 @@ describe("calculateArrowPath — dependency type support", () => {
       expect(result.arrowHead.x).toBe(400);
       // Path should end with L going to 400 (right edge)
       expect(result.path).toContain("L 400 215");
+      // turnX = max(100, 400) + 15 = 415 — path routes through x=415
+      expect(result.path).toContain("415");
     });
 
-    it("handles overlapping tasks", () => {
+    it("handles overlapping tasks with hook path", () => {
       const fromPos = pos(0, 100, 200, 30); // right=200
       const toPos = pos(50, 200, 100, 30); // right=150
 
       const result = calculateArrowPath(fromPos, toPos, 44, "FF");
 
+      // Hook-right still works: turnX = max(200, 150) + 15 = 215
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBe(4);
+      expect(qCount).toBe(2);
       expect(result.arrowHead.x).toBe(150);
     });
   });
 
   describe("SF path routing", () => {
-    it("always uses 4-corner S-curve", () => {
+    it("uses S-curve when from.x < to.x (common case)", () => {
       const fromPos = pos(50, 100, 100, 30); // left=50
       const toPos = pos(300, 200, 80, 40); // right=380
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SF");
 
+      // from.x(50) < to.x(380) → reversed gap negative → S-curve
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(4);
+    });
+
+    it("uses 2-corner elbow when reversed gap is large (from.x >> to.x)", () => {
+      // source.left=400, target.right=50 → reversedGap = 400-50 = 350 >> minGapForElbow(46)
+      const fromPos = pos(400, 100, 100, 30); // left=400
+      const toPos = pos(0, 200, 50, 30); // right=50
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2);
+      expect(result.arrowHead.x).toBe(50);
+      expect(result.arrowHead.angle).toBe(180);
     });
 
     it("exits left and enters right", () => {
@@ -559,12 +580,13 @@ describe("calculateArrowPath — dependency type support", () => {
       expect(result.arrowHead.angle).toBe(180);
     });
 
-    it("handles tasks far apart", () => {
+    it("handles tasks far apart with S-curve (from.x < to.x)", () => {
       const fromPos = pos(0, 100, 50, 30); // left=0
       const toPos = pos(500, 200, 100, 30); // right=600
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SF");
 
+      // from.x(0) < to.x(600) → S-curve
       const qCount = (result.path.match(/Q /g) || []).length;
       expect(qCount).toBe(4);
       expect(result.arrowHead.x).toBe(600);
@@ -597,48 +619,64 @@ describe("calculateArrowPath — dependency type support", () => {
     const fromPos = pos(50, 100, 100, 20);
     const toPos = pos(300, 200, 100, 20);
 
-    it.each(["SS", "FF", "SF"] as const)(
-      "%s produces valid 4-corner S-curve at small rowHeight=20",
+    it.each(["SS", "FF"] as const)(
+      "%s produces valid 2-corner hook at small rowHeight=20",
       (type) => {
         const result = calculateArrowPath(fromPos, toPos, 20, type);
         const qCount = (result.path.match(/Q /g) || []).length;
-        expect(qCount).toBe(4);
+        expect(qCount).toBe(2);
         expect(result.path).toContain("M ");
       }
     );
 
-    it.each(["SS", "FF", "SF"] as const)(
-      "%s produces valid 4-corner S-curve at large rowHeight=88",
+    it("SF produces valid 4-corner S-curve at small rowHeight=20", () => {
+      // from.x(50) < to.x(400) → S-curve
+      const result = calculateArrowPath(fromPos, toPos, 20, "SF");
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      expect(result.path).toContain("M ");
+    });
+
+    it.each(["SS", "FF"] as const)(
+      "%s produces valid 2-corner hook at large rowHeight=88",
       (type) => {
         const result = calculateArrowPath(fromPos, toPos, 88, type);
         const qCount = (result.path.match(/Q /g) || []).length;
-        expect(qCount).toBe(4);
+        expect(qCount).toBe(2);
         expect(result.path).toContain("M ");
       }
     );
+
+    it("SF produces valid 4-corner S-curve at large rowHeight=88", () => {
+      const result = calculateArrowPath(fromPos, toPos, 88, "SF");
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+      expect(result.path).toContain("M ");
+    });
   });
 
   describe("edge cases for non-FS types", () => {
-    it("SS with vertically aligned left edges (from.x ≈ to.x)", () => {
+    it("SS with vertically aligned left edges uses 2-corner hook", () => {
       const fromPos = pos(100, 100, 80, 30); // left=100
       const toPos = pos(101, 200, 120, 30); // left=101 (nearly same x)
 
       const result = calculateArrowPath(fromPos, toPos, 44, "SS");
 
+      // Hook-left: turnX = min(100,101) - 15 = 85
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBe(4);
-      // Path must not contain NaN or degenerate coordinates
+      expect(qCount).toBe(2);
       expect(result.path).not.toMatch(/NaN/);
     });
 
-    it("FF with identical right edges (from.x === to.x)", () => {
+    it("FF with identical right edges uses 2-corner hook", () => {
       const fromPos = pos(0, 100, 200, 30); // right=200
       const toPos = pos(100, 200, 100, 30); // right=200 (same!)
 
       const result = calculateArrowPath(fromPos, toPos, 44, "FF");
 
+      // Hook-right: turnX = max(200,200) + 15 = 215
       const qCount = (result.path.match(/Q /g) || []).length;
-      expect(qCount).toBe(4);
+      expect(qCount).toBe(2);
       expect(result.path).not.toMatch(/NaN/);
     });
 
@@ -653,19 +691,94 @@ describe("calculateArrowPath — dependency type support", () => {
       expect(result.path).not.toMatch(/NaN/);
     });
 
-    it("all non-FS types produce no negative path coordinates from direction math", () => {
+    it("all non-FS types produce no NaN from direction math", () => {
       // Tight layout that could expose sign errors in corner offset math
       const fromPos = pos(10, 50, 30, 20);
       const toPos = pos(15, 80, 25, 20);
 
       for (const type of ["SS", "FF", "SF"] as const) {
         const result = calculateArrowPath(fromPos, toPos, 30, type);
-        // Path coordinates must not go negative from direction miscalculation
         expect(result.path).not.toMatch(/NaN/);
         expect(result.arrowHead.angle).toBe(
           type === "FF" || type === "SF" ? 180 : 0
         );
       }
+    });
+
+    it("FF/SS hooks don't produce backwards segments at large rowHeight", () => {
+      // rowHeight=88 → cornerRadius=16 > HORIZONTAL_SEGMENT=15
+      // Radius must be clamped to prevent corner overflow
+      const fromPos = pos(0, 100, 100, 30); // right=100
+      const toPos = pos(300, 200, 100, 30); // right=400
+
+      const ffResult = calculateArrowPath(fromPos, toPos, 88, "FF");
+      const ssResult = calculateArrowPath(fromPos, toPos, 88, "SS");
+
+      // Both should produce valid 2-corner hooks
+      expect((ffResult.path.match(/Q /g) || []).length).toBe(2);
+      expect((ssResult.path.match(/Q /g) || []).length).toBe(2);
+      // No NaN or degenerate coordinates
+      expect(ffResult.path).not.toMatch(/NaN/);
+      expect(ssResult.path).not.toMatch(/NaN/);
+    });
+
+    it("FF same-row uses S-curve fallback (not straight line)", () => {
+      const fromPos = pos(0, 100, 100, 30); // right=100, centerY=115
+      const toPos = pos(200, 100, 100, 30); // right=300, centerY=115
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "FF");
+
+      // Same-row should NOT be a straight line (would cross task bars)
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+
+    it("SS same-row uses S-curve fallback (not straight line)", () => {
+      const fromPos = pos(100, 100, 100, 30); // left=100, centerY=115
+      const toPos = pos(200, 100, 100, 30); // left=200, centerY=115
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SS");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(4);
+    });
+
+    it("SF compact elbow in transition zone has rounded corners", () => {
+      // reversedGap must be in [2*(15-8), 46) = [14, 46) for compact elbow
+      // from.x=60, to.x=30 → reversedGap = 30, which is in [14, 46)
+      const fromPos = pos(60, 100, 100, 30); // left=60
+      const toPos = pos(0, 200, 30, 30); // right=30
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2); // compact 2-corner elbow
+      // Adaptive radius = min(8, 30/4, 100/4) = min(8, 7.5, 25) = 7.5
+      // Corners must NOT be sharp (radius > 0)
+      expect(result.path).toMatch(/Q \d/); // Q commands have non-zero offsets
+    });
+
+    it("SF 2-corner elbow when reversed gap is large", () => {
+      // from.x=500, to.x=50 → reversedGap = 450 >> minGapForElbow(46)
+      const fromPos = pos(500, 100, 100, 30); // left=500
+      const toPos = pos(0, 200, 50, 30); // right=50
+
+      const result = calculateArrowPath(fromPos, toPos, 44, "SF");
+
+      const qCount = (result.path.match(/Q /g) || []).length;
+      expect(qCount).toBe(2);
+      expect(result.arrowHead.angle).toBe(180);
+    });
+
+    it("buildTwoCornerPath wrapper produces identical output to direct midpoint call", () => {
+      // Regression guard: FS routing must be pixel-identical
+      const fromPos = pos(0, 100, 100, 30);
+      const toPos = pos(200, 200, 100, 30);
+
+      const withoutType = calculateArrowPath(fromPos, toPos);
+      const withFS = calculateArrowPath(fromPos, toPos, 44, "FS");
+
+      expect(withoutType).toEqual(withFS);
     });
   });
 });

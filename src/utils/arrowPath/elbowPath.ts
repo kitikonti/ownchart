@@ -86,32 +86,73 @@ function quadraticCorner(controlPoint: Point, end: Point): string {
 }
 
 /**
- * Build a two-corner (standard elbow) path string.
- * Both corners meet at the horizontal midpoint between from and to.
- * Routing direction (up vs. down) is derived from the y-coordinates.
+ * Build a two-corner elbow path with an explicit turn-X coordinate.
+ * Generalizes the standard elbow: the vertical segment is placed at turnX
+ * instead of always at the midpoint. This enables "hook" shapes for FF/SS
+ * where the turn must be outside both endpoints, not between them.
+ * Corner directions (exitH / entryH) are derived from geometry.
  * Degenerates to a straight line when from and to are on the same row.
  */
-function buildTwoCornerPath(
+function buildElbowAtTurnX(
   from: Point,
   to: Point,
+  turnX: number,
   cornerRadius: number
 ): string {
   if (isSameRow(from, to)) {
     return buildStraightLine(from, to);
   }
 
-  const r = cornerRadius;
   const dir = getVerticalDir(from, to);
-  const midX = (from.x + to.x) / 2;
+  const exitH = turnX >= from.x ? 1 : -1;
+  const entryH = to.x >= turnX ? 1 : -1;
+
+  // Clamp radius to the shorter horizontal arm to prevent corner overflow
+  // (e.g., at rowHeight=88, cornerRadius=16 > HORIZONTAL_SEGMENT=15)
+  const armFrom = Math.abs(turnX - from.x);
+  const armTo = Math.abs(turnX - to.x);
+  const r = Math.min(cornerRadius, armFrom, armTo);
 
   return [
     `M ${from.x} ${from.y}`,
-    `L ${midX - r} ${from.y}`,
-    quadraticCorner({ x: midX, y: from.y }, { x: midX, y: from.y + dir * r }),
-    `L ${midX} ${to.y - dir * r}`,
-    quadraticCorner({ x: midX, y: to.y }, { x: midX + r, y: to.y }),
+    `L ${turnX - exitH * r} ${from.y}`,
+    quadraticCorner({ x: turnX, y: from.y }, { x: turnX, y: from.y + dir * r }),
+    `L ${turnX} ${to.y - dir * r}`,
+    quadraticCorner({ x: turnX, y: to.y }, { x: turnX + entryH * r, y: to.y }),
     `L ${to.x} ${to.y}`,
   ].join(" ");
+}
+
+/**
+ * Build a two-corner (standard elbow) path string.
+ * Both corners meet at the horizontal midpoint between from and to.
+ * Thin wrapper around buildElbowAtTurnX with turnX = midpoint.
+ */
+function buildTwoCornerPath(
+  from: Point,
+  to: Point,
+  cornerRadius: number
+): string {
+  return buildElbowAtTurnX(from, to, (from.x + to.x) / 2, cornerRadius);
+}
+
+/**
+ * Same-row fallback for FF/SS hooks.
+ * A straight line would cross through task bars, so we extend middleY
+ * below (or above) to produce a U-shaped S-curve instead.
+ */
+function buildFFSSSameRowPath(
+  from: Point,
+  to: Point,
+  turnX: number,
+  cornerRadius: number,
+  rowHeight: number
+): string {
+  const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
+  const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
+  const exitDir: 1 | -1 = turnX >= from.x ? 1 : -1;
+  const entryDir: 1 | -1 = turnX >= to.x ? -1 : 1;
+  return buildSCurvePath(from, to, middleY, cornerRadius, exitDir, entryDir);
 }
 
 /**
@@ -123,11 +164,11 @@ function calculateSimpleElbow(
   to: Point,
   baseRadius: number
 ): string {
-  const horizontalGap = to.x - from.x;
+  const horizontalGap = Math.abs(to.x - from.x);
   const verticalGap = Math.abs(to.y - from.y);
 
   // Clamp to zero: at large row heights the S-curve threshold can dip below zero,
-  // making horizontalGap negative here. A zero radius degrades to a sharp corner
+  // making horizontalGap near-zero here. A zero radius degrades to a sharp corner
   // rather than producing geometrically invalid (negative-coordinate) path data.
   const cornerRadius = Math.max(
     0,
@@ -346,9 +387,11 @@ function getEntryDirection(type: DependencyType): 1 | -1 {
  * Calculate the SVG path for a dependency arrow.
  * Uses orthogonal routing with rounded 90° corners.
  *
- * FS uses 3-zone routing (standard elbow → compact elbow → S-curve).
- * SS/FF/SF always use a direction-aware S-curve to avoid the left-to-right
- * flow assumption in the two-corner elbow path builders.
+ * Routing strategy per type:
+ * - FS: 3-zone routing (standard elbow → compact elbow → S-curve)
+ * - FF: Hook-right — vertical turn to the right of both right edges
+ * - SS: Hook-left — vertical turn to the left of both left edges
+ * - SF: Reversed 3-zone (elbow → compact elbow → S-curve, gap = from.x − to.x)
  *
  * @param fromPos - Position of predecessor task bar
  * @param toPos - Position of successor task bar
@@ -363,7 +406,7 @@ export function calculateArrowPath(
   type: DependencyType = "FS"
 ): ArrowPath {
   const { from, to } = getConnectionPoints(type, fromPos, toPos);
-  const { cornerRadius, minGapForElbow, horizontalGap } = computeElbowParams(
+  const { cornerRadius, minGapForElbow } = computeElbowParams(
     from,
     to,
     rowHeight
@@ -373,24 +416,65 @@ export function calculateArrowPath(
   const entryDir = getEntryDirection(type);
 
   let path: string;
-  if (type === "FS") {
-    // FS: existing 3-zone routing (standard elbow, compact elbow, S-curve)
-    path =
-      horizontalGap >= minGapForElbow
-        ? buildTwoCornerPath(from, to, cornerRadius)
-        : calculateRoutedPath(
-            from,
-            to,
-            rowHeight,
-            cornerRadius,
-            exitDir,
-            entryDir
-          );
-  } else {
-    // SS/FF/SF: always use direction-aware S-curve
-    const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
-    const middleY = calculateMiddleY(from, to, minSpaceForCurves, rowHeight);
-    path = buildSCurvePath(from, to, middleY, cornerRadius, exitDir, entryDir);
+  switch (type) {
+    case "FS": {
+      // FS: 3-zone routing (standard elbow, compact elbow, S-curve)
+      const horizontalGap = to.x - from.x;
+      path =
+        horizontalGap >= minGapForElbow
+          ? buildTwoCornerPath(from, to, cornerRadius)
+          : calculateRoutedPath(
+              from,
+              to,
+              rowHeight,
+              cornerRadius,
+              exitDir,
+              entryDir
+            );
+      break;
+    }
+    case "FF": {
+      // Hook-right: vertical turn to the right of both right edges
+      const turnX = Math.max(from.x, to.x) + HORIZONTAL_SEGMENT;
+      path = isSameRow(from, to)
+        ? buildFFSSSameRowPath(from, to, turnX, cornerRadius, rowHeight)
+        : buildElbowAtTurnX(from, to, turnX, cornerRadius);
+      break;
+    }
+    case "SS": {
+      // Hook-left: vertical turn to the left of both left edges
+      const turnX = Math.min(from.x, to.x) - HORIZONTAL_SEGMENT;
+      path = isSameRow(from, to)
+        ? buildFFSSSameRowPath(from, to, turnX, cornerRadius, rowHeight)
+        : buildElbowAtTurnX(from, to, turnX, cornerRadius);
+      break;
+    }
+    case "SF": {
+      // Reversed 3-zone: gap measured as from.x − to.x
+      const reversedGap = from.x - to.x;
+      if (reversedGap >= minGapForElbow) {
+        path = buildElbowAtTurnX(from, to, (from.x + to.x) / 2, cornerRadius);
+      } else if (reversedGap >= 2 * (HORIZONTAL_SEGMENT - cornerRadius)) {
+        path = calculateSimpleElbow(from, to, cornerRadius);
+      } else {
+        const minSpaceForCurves = CURVE_SPACE_MULTIPLIER * cornerRadius;
+        const middleY = calculateMiddleY(
+          from,
+          to,
+          minSpaceForCurves,
+          rowHeight
+        );
+        path = buildSCurvePath(
+          from,
+          to,
+          middleY,
+          cornerRadius,
+          exitDir,
+          entryDir
+        );
+      }
+      break;
+    }
   }
 
   // Arrowhead: 0° for left-edge targets (FS, SS), 180° for right-edge targets (FF, SF)
