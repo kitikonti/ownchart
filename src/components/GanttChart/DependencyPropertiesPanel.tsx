@@ -16,6 +16,7 @@ import {
   type SegmentedControlOption,
 } from "@/components/common/SegmentedControl";
 import { Z_INDEX } from "@/styles/design-tokens";
+import { isTextInputElement } from "@/hooks/useKeyboardShortcuts";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -82,6 +83,8 @@ export const DependencyPropertiesPanel = memo(
     const previousFocusRef = useRef<HTMLElement | null>(null);
     const onCloseRef = useRef(onClose);
     onCloseRef.current = onClose;
+    const onDeleteRef = useRef(onDelete);
+    onDeleteRef.current = onDelete;
 
     // Instance-unique ID prefix so multiple panels never share DOM IDs.
     const instanceId = useId();
@@ -148,12 +151,20 @@ export const DependencyPropertiesPanel = memo(
       };
     }, []);
 
-    // --- Close on Escape ---
+    // --- Keyboard shortcuts: Escape closes, Delete/Backspace removes ---
     useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent): void => {
         if (e.key === "Escape") {
           e.stopPropagation();
           onCloseRef.current();
+          return;
+        }
+        // Delete/Backspace removes the dependency — but not while typing in a text field
+        if (e.key === "Delete" || e.key === "Backspace") {
+          if (isTextInputElement(e.target as HTMLElement)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onDeleteRef.current();
         }
       };
       document.addEventListener("keydown", handleKeyDown, true);
