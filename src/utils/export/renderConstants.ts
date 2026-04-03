@@ -7,7 +7,6 @@
 
 import { getContrastTextColor } from "@/utils/colorUtils";
 import { COLORS, DARK_TEXT_COLOR } from "@/styles/design-tokens";
-import type { DependencyType } from "@/types/dependency.types";
 
 /**
  * Task rendering constants - matching TaskBar.tsx exactly
@@ -256,21 +255,6 @@ export const DEPENDENCY_RENDER_CONSTANTS = {
    * no additional buffer — keeps arrows tight to task bars.
    */
   elbowGapPadding: 0,
-} as const;
-
-/**
- * Dash patterns per dependency type. `undefined` = solid line.
- * All types use solid lines — differentiation is via connection points only,
- * matching the industry standard (MS Project, Smartsheet, etc.).
- */
-export const DEPENDENCY_DASH_PATTERNS: Record<
-  DependencyType,
-  string | undefined
-> = {
-  FS: undefined,
-  SS: undefined,
-  FF: undefined,
-  SF: undefined,
 } as const;
 
 /**
