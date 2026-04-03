@@ -110,10 +110,15 @@ export const ConnectionHandles = memo(function ConnectionHandles({
     onDrop?.(taskId, "end");
   }, [onDrop, taskId]);
 
-  // Keep task hovered when mouse enters handles
+  // Keep task hovered when mouse enters handles (bar → handle transition)
   const handleMouseEnter = useCallback(() => {
     onHover?.(taskId);
   }, [onHover, taskId]);
+
+  // Clear hover when mouse leaves handle area entirely
+  const handleMouseLeave = useCallback(() => {
+    onHover?.(null);
+  }, [onHover]);
 
   // Don't render if not visible and not a drop target
   if (!isVisible && !isValidDropTarget && !isInvalidDropTarget) {
@@ -127,7 +132,11 @@ export const ConnectionHandles = memo(function ConnectionHandles({
   const showRings = isValidDropTarget || isInvalidDropTarget;
 
   return (
-    <g className="connection-handles" onMouseEnter={handleMouseEnter}>
+    <g
+      className="connection-handles"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {handles.map(({ cx, side }) => {
         const radius =
           hoveredHandle === side ? HANDLE_RADIUS_HOVER : HANDLE_RADIUS_NORMAL;
