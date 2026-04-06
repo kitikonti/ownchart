@@ -37,6 +37,7 @@ import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
 import { SelectionHighlight } from "./SelectionHighlight";
 import { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
+import type { DependencyType } from "@/types/dependency.types";
 import {
   lagCalendarToWorking,
   lagWorkingToCalendar,
@@ -90,7 +91,7 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
   const panelPosition = useDependencyStore((s) => s.panelPosition);
 
   const handleUpdateType = useCallback(
-    (type: import("@/types/dependency.types").DependencyType): void => {
+    (type: DependencyType): void => {
       if (selectedDep) updateDependency(selectedDep.id, { type });
     },
     [selectedDep, updateDependency]

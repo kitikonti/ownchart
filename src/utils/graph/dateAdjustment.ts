@@ -24,6 +24,13 @@ import {
   addWorkingDays,
 } from "@/utils/workingDaysCalculator";
 
+/**
+ * Extra calendar-day headroom added to backward scans over working days.
+ * Accounts for worst-case clusters of consecutive non-working days
+ * (e.g., multi-day holiday blocks adjacent to weekends).
+ */
+const BACKWARD_SCAN_SAFETY_MARGIN = 60;
+
 // ---------------------------------------------------------------------------
 // Constraint calculation
 // ---------------------------------------------------------------------------
@@ -253,7 +260,7 @@ export function lagWorkingToCalendar(
     // between it and the reference point
     let candidateDate = addDays(ref, offset - 1);
     let found = 0;
-    const maxIter = absWorking * 7 + 60; // safety limit
+    const maxIter = absWorking * 7 + BACKWARD_SCAN_SAFETY_MARGIN;
     for (let i = 0; i < maxIter && found < absWorking; i++) {
       candidateDate = addDays(candidateDate, -1);
       const wd = calculateWorkingDays(

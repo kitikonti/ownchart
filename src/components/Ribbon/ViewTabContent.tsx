@@ -89,6 +89,8 @@ export function ViewTabContent(): JSX.Element {
     toggleHideUI,
   } = useViewTabActions();
 
+  const displayActive = altKeyHeld ? !autoScheduling : autoScheduling;
+
   return (
     <>
       {/* Show/Hide Toggles */}
@@ -158,29 +160,20 @@ export function ViewTabContent(): JSX.Element {
 
       {/* Scheduling — Alt key temporarily inverts the visual indicator */}
       <ToolbarGroup label="Scheduling">
-        {(() => {
-          const displayActive = altKeyHeld ? !autoScheduling : autoScheduling;
-          return (
-            <ToolbarButton
-              variant="toggle"
-              isActive={displayActive}
-              onClick={toggleAutoScheduling}
-              title={
-                displayActive
-                  ? "Disable Auto-Scheduling"
-                  : "Enable Auto-Scheduling"
-              }
-              aria-label={
-                displayActive
-                  ? "Disable Auto-Scheduling"
-                  : "Enable Auto-Scheduling"
-              }
-              icon={<Lightning size={ICON_SIZE} weight="light" />}
-              label="Auto-Schedule"
-              labelPriority={2}
-            />
-          );
-        })()}
+        <ToolbarButton
+          variant="toggle"
+          isActive={displayActive}
+          onClick={toggleAutoScheduling}
+          title={
+            displayActive ? "Disable Auto-Scheduling" : "Enable Auto-Scheduling"
+          }
+          aria-label={
+            displayActive ? "Disable Auto-Scheduling" : "Enable Auto-Scheduling"
+          }
+          icon={<Lightning size={ICON_SIZE} weight="light" />}
+          label="Auto-Schedule"
+          labelPriority={2}
+        />
       </ToolbarGroup>
 
       <ToolbarSeparator />

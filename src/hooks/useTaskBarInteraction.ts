@@ -30,6 +30,7 @@ import {
 } from "@/utils/taskBarDragHelpers";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
+import type { Dependency } from "@/types/dependency.types";
 import type { TimelineScale, TaskBarGeometry } from "@/utils/timelineUtils";
 import type {
   DragState,
@@ -73,26 +74,45 @@ function shouldCascade(altKey: boolean): boolean {
   return altKey ? !autoScheduling : autoScheduling;
 }
 
-/**
- * When a drag does NOT cascade, recalculate lag on all outgoing dependencies
- * of the moved tasks so the dependency "absorbs" the position change.
- */
+/** Shared context for post-drag dependency operations. */
+interface DragDependencyContext {
+  tasks: Task[];
+  dependencies: Dependency[];
+  taskMap: Map<TaskId, Task>;
+  movedSet: Set<TaskId>;
+}
+
+/** Build the shared lookup structures needed by autoUpdateLag and snapSuccessorToConstraint. */
+function buildDragDependencyContext(
+  movedTaskIds: TaskId[]
+): DragDependencyContext {
+  const { tasks } = useTaskStore.getState();
+  const { dependencies } = useDependencyStore.getState();
+  return {
+    tasks,
+    dependencies,
+    taskMap: new Map(tasks.map((t) => [t.id, t])),
+    movedSet: new Set(movedTaskIds),
+  };
+}
+
 /**
  * When a drag does NOT cascade, recalculate lag on all dependencies
  * involving the moved tasks so the dependency "absorbs" the position change.
  * Checks both directions: moved task as predecessor OR as successor.
+ *
+ * TODO: This bypasses undo/redo — it uses useDependencyStore.setState()
+ * directly instead of recording a history command. Lag updates during drag
+ * are intentionally silent; a proper solution would batch them into the
+ * parent drag command.
  */
-function autoUpdateLag(movedTaskIds: TaskId[]): void {
-  const { tasks } = useTaskStore.getState();
-  const { dependencies } = useDependencyStore.getState();
-  const taskMap = new Map(tasks.map((t) => [t.id, t]));
-  const movedSet = new Set(movedTaskIds);
-
-  for (const dep of dependencies) {
+function autoUpdateLag(ctx: DragDependencyContext): void {
+  for (const dep of ctx.dependencies) {
     // Update lag if either end of the dependency was moved
-    if (!movedSet.has(dep.fromTaskId) && !movedSet.has(dep.toTaskId)) continue;
-    const predecessor = taskMap.get(dep.fromTaskId);
-    const successor = taskMap.get(dep.toTaskId);
+    if (!ctx.movedSet.has(dep.fromTaskId) && !ctx.movedSet.has(dep.toTaskId))
+      continue;
+    const predecessor = ctx.taskMap.get(dep.fromTaskId);
+    const successor = ctx.taskMap.get(dep.toTaskId);
     if (!predecessor || !successor) continue;
 
     const newLag = calculateInitialLag(
@@ -116,17 +136,14 @@ function autoUpdateLag(movedTaskIds: TaskId[]): void {
  * defined by its predecessor dependencies. This enforces bidirectional
  * constraints: the successor can't freely move away from its predecessor.
  */
-function snapSuccessorToConstraint(movedTaskIds: TaskId[]): void {
-  const { tasks, updateTask } = useTaskStore.getState();
-  const { dependencies } = useDependencyStore.getState();
-  const taskMap = new Map(tasks.map((t) => [t.id, t]));
-  const movedSet = new Set(movedTaskIds);
+function snapSuccessorToConstraint(ctx: DragDependencyContext): void {
+  const { updateTask } = useTaskStore.getState();
 
-  for (const dep of dependencies) {
+  for (const dep of ctx.dependencies) {
     // Only snap tasks that were moved AND are successors
-    if (!movedSet.has(dep.toTaskId)) continue;
-    const predecessor = taskMap.get(dep.fromTaskId);
-    const successor = taskMap.get(dep.toTaskId);
+    if (!ctx.movedSet.has(dep.toTaskId)) continue;
+    const predecessor = ctx.taskMap.get(dep.fromTaskId);
+    const successor = ctx.taskMap.get(dep.toTaskId);
     if (!predecessor || !successor) continue;
 
     const duration =
@@ -151,8 +168,7 @@ function snapSuccessorToConstraint(movedTaskIds: TaskId[]): void {
         { forceAutoSchedule: true }
       );
       toast(
-        `"${successor.name}" is constrained by a dependency. Hold Alt while dragging to move independently.`,
-        { icon: "🔗" }
+        `"${successor.name}" is constrained by a dependency. Hold Alt while dragging to move independently.`
       );
     }
   }
@@ -190,11 +206,13 @@ function executeDragMoveCommit(
       updateMultipleTasks(updates, { forceAutoSchedule: true });
       // If a successor was dragged, snap it back to its constraint position
       // (propagateDateChanges only cascades forward from predecessors)
-      snapSuccessorToConstraint(effectiveTaskIds);
+      const ctx = buildDragDependencyContext(effectiveTaskIds);
+      snapSuccessorToConstraint(ctx);
     } else {
       // No cascade: move tasks without propagation, then update lag
       updateMultipleTasks(updates, { skipAutoSchedule: true });
-      autoUpdateLag(effectiveTaskIds);
+      const ctx = buildDragDependencyContext(effectiveTaskIds);
+      autoUpdateLag(ctx);
     }
   }
 }
@@ -217,10 +235,12 @@ function executeResizeCommit(
     const cascade = shouldCascade(altKey);
     if (cascade) {
       updateTask(taskId, resizeUpdate, { forceAutoSchedule: true });
-      snapSuccessorToConstraint([taskId]);
+      const ctx = buildDragDependencyContext([taskId]);
+      snapSuccessorToConstraint(ctx);
     } else {
       updateTask(taskId, resizeUpdate, { skipAutoSchedule: true });
-      autoUpdateLag([taskId]);
+      const ctx = buildDragDependencyContext([taskId]);
+      autoUpdateLag(ctx);
     }
   }
 }
