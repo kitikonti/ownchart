@@ -84,9 +84,14 @@ export interface TaskState {
  */
 export interface TaskActions {
   addTask: (taskData: Omit<Task, "id">) => void;
-  updateTask: (id: TaskId, updates: Partial<Task>) => void;
+  updateTask: (
+    id: TaskId,
+    updates: Partial<Task>,
+    options?: { skipAutoSchedule?: boolean; forceAutoSchedule?: boolean }
+  ) => void;
   updateMultipleTasks: (
-    updates: Array<{ id: TaskId; updates: Partial<Task> }>
+    updates: Array<{ id: TaskId; updates: Partial<Task> }>,
+    options?: { skipAutoSchedule?: boolean; forceAutoSchedule?: boolean }
   ) => void;
   deleteTask: (id: TaskId, cascade?: boolean) => void;
   deleteSelectedTasks: () => void;
@@ -180,7 +185,7 @@ export const useTaskStore = create<TaskStore>()(
       });
     },
 
-    updateTask: (id, updates): void => {
+    updateTask: (id, updates, options): void => {
       const previousValues: Partial<Task> = {};
       let taskName = "";
       const parentUpdates: Array<{
@@ -244,16 +249,20 @@ export const useTaskStore = create<TaskStore>()(
       // Auto-scheduling: propagate date changes to successors
       let dateAdjustments: DateAdjustment[] = [];
       const historyState = useHistoryStore.getState();
+      const shouldPropagate =
+        options?.forceAutoSchedule ||
+        (useChartStore.getState().autoScheduling && !options?.skipAutoSchedule);
       if (
         (updates.startDate !== undefined || updates.endDate !== undefined) &&
-        useChartStore.getState().autoScheduling &&
+        shouldPropagate &&
         !historyState.isUndoing &&
         !historyState.isRedoing
       ) {
         dateAdjustments = propagateDateChanges(
           get().tasks,
           useDependencyStore.getState().dependencies,
-          [id]
+          [id],
+          { bidirectional: true }
         );
         if (dateAdjustments.length > 0) {
           set((state) => {
@@ -289,7 +298,7 @@ export const useTaskStore = create<TaskStore>()(
       }
     },
 
-    updateMultipleTasks: (updates): void => {
+    updateMultipleTasks: (updates, options): void => {
       const taskChanges: Array<{
         id: TaskId;
         previousStartDate: string;
@@ -342,9 +351,12 @@ export const useTaskStore = create<TaskStore>()(
       // Auto-scheduling: propagate date changes to successors
       let dateAdjustments: DateAdjustment[] = [];
       const historyState = useHistoryStore.getState();
+      const shouldPropagate =
+        options?.forceAutoSchedule ||
+        (useChartStore.getState().autoScheduling && !options?.skipAutoSchedule);
       if (
         taskChanges.length > 0 &&
-        useChartStore.getState().autoScheduling &&
+        shouldPropagate &&
         !historyState.isUndoing &&
         !historyState.isRedoing
       ) {
@@ -359,7 +371,8 @@ export const useTaskStore = create<TaskStore>()(
           dateAdjustments = propagateDateChanges(
             get().tasks,
             useDependencyStore.getState().dependencies,
-            changedIds
+            changedIds,
+            { bidirectional: true }
           );
           if (dateAdjustments.length > 0) {
             set((state) => {

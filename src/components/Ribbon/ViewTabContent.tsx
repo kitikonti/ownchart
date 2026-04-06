@@ -30,10 +30,36 @@ import { TOOLBAR } from "@/styles/design-tokens";
 import { HolidayRegionPopover } from "./HolidayRegionPopover";
 import { ZoomDropdown } from "./ZoomDropdown";
 import { useViewTabActions } from "@/hooks/useViewTabActions";
+import { useChartStore } from "@/store/slices/chartSlice";
+import { useEffect } from "react";
 
 const ICON_SIZE = TOOLBAR.iconSize;
 
 export function ViewTabContent(): JSX.Element {
+  // Alt-key listener: temporarily inverts the auto-scheduling indicator
+  const altKeyHeld = useChartStore((s) => s.altKeyHeld);
+  const setAltKeyHeld = useChartStore((s) => s.setAltKeyHeld);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === "Alt") setAltKeyHeld(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent): void => {
+      if (e.key === "Alt") setAltKeyHeld(false);
+    };
+    // Also reset when window loses focus (user Alt-Tabs away)
+    const handleBlur = (): void => setAltKeyHeld(false);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [setAltKeyHeld]);
+
   const {
     showTodayMarker,
     toggleTodayMarker,
@@ -130,26 +156,31 @@ export function ViewTabContent(): JSX.Element {
 
       <ToolbarSeparator />
 
-      {/* Scheduling */}
+      {/* Scheduling — Alt key temporarily inverts the visual indicator */}
       <ToolbarGroup label="Scheduling">
-        <ToolbarButton
-          variant="toggle"
-          isActive={autoScheduling}
-          onClick={toggleAutoScheduling}
-          title={
-            autoScheduling
-              ? "Disable Auto-Scheduling"
-              : "Enable Auto-Scheduling"
-          }
-          aria-label={
-            autoScheduling
-              ? "Disable Auto-Scheduling"
-              : "Enable Auto-Scheduling"
-          }
-          icon={<Lightning size={ICON_SIZE} weight="light" />}
-          label="Auto-Schedule"
-          labelPriority={2}
-        />
+        {(() => {
+          const displayActive = altKeyHeld ? !autoScheduling : autoScheduling;
+          return (
+            <ToolbarButton
+              variant="toggle"
+              isActive={displayActive}
+              onClick={toggleAutoScheduling}
+              title={
+                displayActive
+                  ? "Disable Auto-Scheduling"
+                  : "Enable Auto-Scheduling"
+              }
+              aria-label={
+                displayActive
+                  ? "Disable Auto-Scheduling"
+                  : "Enable Auto-Scheduling"
+              }
+              icon={<Lightning size={ICON_SIZE} weight="light" />}
+              label="Auto-Schedule"
+              labelPriority={2}
+            />
+          );
+        })()}
       </ToolbarGroup>
 
       <ToolbarSeparator />

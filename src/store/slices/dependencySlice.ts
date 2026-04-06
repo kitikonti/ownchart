@@ -24,7 +24,13 @@ import { wouldCreateCycle } from "@/utils/graph/cycleDetection";
 import {
   propagateDateChanges,
   applyDateAdjustments,
+  calculateConstrainedDates,
 } from "@/utils/graph/dateAdjustment";
+import {
+  calculateWorkingDays,
+  addWorkingDays,
+} from "@/utils/workingDaysCalculator";
+import { addDays } from "@/utils/dateUtils";
 import { recalculateSummaryAncestors } from "@/utils/hierarchy";
 import type { DateAdjustment } from "@/types/dependency.types";
 import toast from "react-hot-toast";
@@ -81,6 +87,8 @@ function validateNewDependency(
 interface DependencyState {
   dependencies: Dependency[];
   selectedDependencyId: string | null;
+  /** Screen-space position for the properties panel (set on arrow click). */
+  panelPosition: { x: number; y: number } | null;
 }
 
 /**
@@ -103,7 +111,10 @@ interface DependencyActions {
   removeDependenciesForTask: (taskId: TaskId) => Dependency[];
 
   // Selection
-  selectDependency: (id: string | null) => void;
+  selectDependency: (
+    id: string | null,
+    position?: { x: number; y: number }
+  ) => void;
 
   // Queries
   getDependenciesForTask: (taskId: TaskId) => {
@@ -133,6 +144,7 @@ export const useDependencyStore = create<DependencyStore>()(
     // State
     dependencies: [],
     selectedDependencyId: null,
+    panelPosition: null,
 
     // Actions
     addDependency: (
@@ -227,6 +239,7 @@ export const useDependencyStore = create<DependencyStore>()(
         // Clear selection if deleted
         if (state.selectedDependencyId === id) {
           state.selectedDependencyId = null;
+          state.panelPosition = null;
         }
       });
 
@@ -268,30 +281,131 @@ export const useDependencyStore = create<DependencyStore>()(
         }
       });
 
-      // Auto-scheduling: propagate when type or lag changes
-      let dateAdjustments: DateAdjustment[] = [];
-      if (
-        useChartStore.getState().autoScheduling &&
-        !historyStore.isUndoing &&
-        !historyStore.isRedoing
-      ) {
+      // Panel edits (lag/type changes) ALWAYS enforce constraints — the user
+      // explicitly changed the relationship, so the successor must move to match.
+      // This is bidirectional: reducing lag can move a successor earlier.
+      const dateAdjustments: DateAdjustment[] = [];
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
         const taskStore = useTaskStore.getState();
-        dateAdjustments = propagateDateChanges(
-          taskStore.tasks,
-          get().dependencies,
-          [dependency.fromTaskId]
-        );
-        if (dateAdjustments.length > 0) {
-          useTaskStore.setState((state) => {
-            const parentIds = applyDateAdjustments(
-              dateAdjustments,
-              state.tasks
+        const updatedDep = get().dependencies.find((d) => d.id === id);
+        if (updatedDep) {
+          const predecessor = taskStore.tasks.find(
+            (t) => t.id === updatedDep.fromTaskId
+          );
+          const successor = taskStore.tasks.find(
+            (t) => t.id === updatedDep.toTaskId
+          );
+
+          if (predecessor && successor) {
+            const duration =
+              (successor.duration ?? 1) > 0 ? (successor.duration ?? 1) : 1;
+            const constrained = calculateConstrainedDates(
+              {
+                startDate: predecessor.startDate,
+                endDate: predecessor.endDate,
+              },
+              duration,
+              updatedDep.type,
+              updatedDep.lag ?? 0
             );
-            if (parentIds.size > 0) {
-              recalculateSummaryAncestors(state.tasks, parentIds);
+
+            // When working days mode is ON, preserve the successor's
+            // working-day duration instead of its calendar-day duration.
+            // For FS/SS: the constraint determines the start date → recompute end.
+            // For FF/SF: the constraint determines the end date → recompute start.
+            const { workingDaysMode, workingDaysConfig, holidayRegion } =
+              useChartStore.getState();
+            if (workingDaysMode && successor.type !== "milestone") {
+              const wdRegion = workingDaysConfig.excludeHolidays
+                ? holidayRegion
+                : undefined;
+              const workingDayDuration = calculateWorkingDays(
+                successor.startDate,
+                successor.endDate,
+                workingDaysConfig,
+                wdRegion
+              );
+              const wdCount = workingDayDuration > 0 ? workingDayDuration : 1;
+
+              if (updatedDep.type === "FS" || updatedDep.type === "SS") {
+                // Start is anchored by constraint → compute end from start
+                constrained.endDate = addWorkingDays(
+                  constrained.startDate,
+                  wdCount,
+                  workingDaysConfig,
+                  wdRegion
+                );
+              } else {
+                // FF/SF: End is anchored by constraint → compute start from end
+                // Walk backward from endDate to find the start that gives
+                // wdCount working days (inclusive of both start and end).
+                let candidate = constrained.endDate;
+                let found = 1; // end date itself counts as 1
+                const maxIter = wdCount * 7 + 60;
+                for (let i = 0; i < maxIter && found < wdCount; i++) {
+                  candidate = addDays(candidate, -1);
+                  if (
+                    calculateWorkingDays(
+                      candidate,
+                      candidate,
+                      workingDaysConfig,
+                      wdRegion
+                    ) > 0
+                  ) {
+                    found++;
+                  }
+                }
+                constrained.startDate = candidate;
+              }
             }
-          });
-          toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);
+
+            // Move the direct successor to the constrained position (bidirectional)
+            if (
+              constrained.startDate !== successor.startDate ||
+              constrained.endDate !== successor.endDate
+            ) {
+              const directAdjustment: DateAdjustment = {
+                taskId: successor.id,
+                oldStartDate: successor.startDate,
+                oldEndDate: successor.endDate,
+                newStartDate: constrained.startDate,
+                newEndDate: constrained.endDate,
+              };
+              dateAdjustments.push(directAdjustment);
+
+              // Apply the direct adjustment first
+              useTaskStore.setState((state) => {
+                const parentIds = applyDateAdjustments(
+                  [directAdjustment],
+                  state.tasks
+                );
+                if (parentIds.size > 0) {
+                  recalculateSummaryAncestors(state.tasks, parentIds);
+                }
+              });
+
+              // Then cascade forward from the successor (if it has its own successors)
+              const cascadeAdjustments = propagateDateChanges(
+                useTaskStore.getState().tasks,
+                get().dependencies,
+                [successor.id]
+              );
+              if (cascadeAdjustments.length > 0) {
+                dateAdjustments.push(...cascadeAdjustments);
+                useTaskStore.setState((state) => {
+                  const parentIds = applyDateAdjustments(
+                    cascadeAdjustments,
+                    state.tasks
+                  );
+                  if (parentIds.size > 0) {
+                    recalculateSummaryAncestors(state.tasks, parentIds);
+                  }
+                });
+              }
+
+              toast(`Adjusted ${dateAdjustments.length} task(s)`);
+            }
+          }
         }
       }
 
@@ -325,6 +439,7 @@ export const useDependencyStore = create<DependencyStore>()(
       set((state) => {
         state.dependencies = [];
         state.selectedDependencyId = null;
+        state.panelPosition = null;
       });
     },
 
@@ -355,9 +470,13 @@ export const useDependencyStore = create<DependencyStore>()(
       return toRemove;
     },
 
-    selectDependency: (id: string | null): void => {
+    selectDependency: (
+      id: string | null,
+      position?: { x: number; y: number }
+    ): void => {
       set((state) => {
         state.selectedDependencyId = id;
+        state.panelPosition = id && position ? position : null;
       });
     },
 

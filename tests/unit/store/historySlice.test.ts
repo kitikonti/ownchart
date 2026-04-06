@@ -1997,12 +1997,13 @@ describe("History Store - Auto-Scheduling", () => {
     });
     useChartStore.getState().setAutoScheduling(true);
 
-    // Change type from FS to SS — B should move to start when A starts
+    // Change type from FS to SS — panel edits enforce bidirectionally.
+    // SS with lag=0: B.start = A.start + 0 = Jan 6
     useDependencyStore.getState().updateDependency("dep-1", { type: "SS" });
 
-    // SS: B.start >= A.start → B already satisfies (Jan 11 >= Jan 6), no move needed
     const taskB = useTaskStore.getState().tasks.find((t) => t.id === "B")!;
-    expect(taskB.startDate).toBe("2025-01-11"); // unchanged
+    expect(taskB.startDate).toBe("2025-01-06"); // moved to match SS constraint
+    expect(taskB.endDate).toBe("2025-01-08"); // duration 3: Jan 6-8
     expect(useDependencyStore.getState().dependencies[0].type).toBe("SS");
   });
 

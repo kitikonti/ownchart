@@ -528,11 +528,12 @@ describe('useTaskBarInteraction', () => {
         document.dispatchEvent(new MouseEvent('mouseup'));
       });
 
-      expect(updateTaskSpy).toHaveBeenCalledWith(task.id, {
-        startDate: '2025-01-10',
-        endDate: '2025-01-22',
-        duration: 13,
-      });
+      // Auto-scheduling is OFF by default, so drag passes skipAutoSchedule
+      expect(updateTaskSpy).toHaveBeenCalledWith(
+        task.id,
+        { startDate: '2025-01-10', endDate: '2025-01-22', duration: 13 },
+        { skipAutoSchedule: true },
+      );
       expect(result.current.isDragging).toBe(false);
       expect(result.current.cursor).toBe('pointer');
     });

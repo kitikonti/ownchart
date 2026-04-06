@@ -101,6 +101,8 @@ interface ChartState {
   showDependencies: boolean;
   showProgress: boolean;
   autoScheduling: boolean;
+  /** Temporarily inverts the autoScheduling display while Alt is held. */
+  altKeyHeld: boolean;
   taskLabelPosition: TaskLabelPosition;
   workingDaysMode: boolean;
   workingDaysConfig: WorkingDaysConfig;
@@ -205,6 +207,7 @@ interface ChartActions {
   toggleProgress: () => void;
   toggleAutoScheduling: () => void;
   setAutoScheduling: (enabled: boolean) => void;
+  setAltKeyHeld: (held: boolean) => void;
   setShowWeekends: (show: boolean) => void;
   setShowTodayMarker: (show: boolean) => void;
   setShowHolidays: (show: boolean) => void;
@@ -309,6 +312,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     showDependencies: true,
     showProgress: true,
     autoScheduling: false,
+    altKeyHeld: false,
     taskLabelPosition: "inside",
     workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
@@ -699,6 +703,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
     setAutoScheduling: (enabled: boolean): void => {
       set((state) => {
         state.autoScheduling = enabled;
+      });
+    },
+
+    setAltKeyHeld: (held: boolean): void => {
+      set((state) => {
+        state.altKeyHeld = held;
       });
     },
 

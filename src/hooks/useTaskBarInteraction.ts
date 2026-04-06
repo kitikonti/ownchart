@@ -11,7 +11,13 @@ import { addDays } from "@/utils/dateUtils";
 import { getEffectiveTasksToMove } from "@/utils/hierarchy";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { getSVGPoint } from "@/utils/svgUtils";
+import {
+  calculateInitialLag,
+  calculateConstrainedDates,
+} from "@/utils/graph/dateAdjustment";
+import toast from "react-hot-toast";
 import {
   detectInteractionZone,
   determineInteractionMode,
@@ -54,8 +60,110 @@ function getWorkingDaysContext(): WorkingDaysContext {
   };
 }
 
+/**
+ * Determine whether this drag should cascade to successors.
+ * Alt key inverts the auto-scheduling toggle:
+ * - Auto-scheduling ON + no Alt  → cascade
+ * - Auto-scheduling ON + Alt     → no cascade (update lag instead)
+ * - Auto-scheduling OFF + no Alt → no cascade (update lag instead)
+ * - Auto-scheduling OFF + Alt    → cascade
+ */
+function shouldCascade(altKey: boolean): boolean {
+  const autoScheduling = useChartStore.getState().autoScheduling;
+  return altKey ? !autoScheduling : autoScheduling;
+}
+
+/**
+ * When a drag does NOT cascade, recalculate lag on all outgoing dependencies
+ * of the moved tasks so the dependency "absorbs" the position change.
+ */
+/**
+ * When a drag does NOT cascade, recalculate lag on all dependencies
+ * involving the moved tasks so the dependency "absorbs" the position change.
+ * Checks both directions: moved task as predecessor OR as successor.
+ */
+function autoUpdateLag(movedTaskIds: TaskId[]): void {
+  const { tasks } = useTaskStore.getState();
+  const { dependencies } = useDependencyStore.getState();
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const movedSet = new Set(movedTaskIds);
+
+  for (const dep of dependencies) {
+    // Update lag if either end of the dependency was moved
+    if (!movedSet.has(dep.fromTaskId) && !movedSet.has(dep.toTaskId)) continue;
+    const predecessor = taskMap.get(dep.fromTaskId);
+    const successor = taskMap.get(dep.toTaskId);
+    if (!predecessor || !successor) continue;
+
+    const newLag = calculateInitialLag(
+      { startDate: predecessor.startDate, endDate: predecessor.endDate },
+      { startDate: successor.startDate, endDate: successor.endDate },
+      dep.type
+    );
+    if (newLag !== (dep.lag ?? 0)) {
+      // Update lag directly in store without triggering the panel-edit
+      // enforce-constraints logic (which would move the successor).
+      useDependencyStore.setState((state) => {
+        const idx = state.dependencies.findIndex((d) => d.id === dep.id);
+        if (idx !== -1) state.dependencies[idx].lag = newLag;
+      });
+    }
+  }
+}
+
+/**
+ * After a successor task is moved, snap it back to the constraint position
+ * defined by its predecessor dependencies. This enforces bidirectional
+ * constraints: the successor can't freely move away from its predecessor.
+ */
+function snapSuccessorToConstraint(movedTaskIds: TaskId[]): void {
+  const { tasks, updateTask } = useTaskStore.getState();
+  const { dependencies } = useDependencyStore.getState();
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const movedSet = new Set(movedTaskIds);
+
+  for (const dep of dependencies) {
+    // Only snap tasks that were moved AND are successors
+    if (!movedSet.has(dep.toTaskId)) continue;
+    const predecessor = taskMap.get(dep.fromTaskId);
+    const successor = taskMap.get(dep.toTaskId);
+    if (!predecessor || !successor) continue;
+
+    const duration =
+      (successor.duration ?? 1) > 0 ? (successor.duration ?? 1) : 1;
+    const constrained = calculateConstrainedDates(
+      { startDate: predecessor.startDate, endDate: predecessor.endDate },
+      duration,
+      dep.type,
+      dep.lag ?? 0
+    );
+
+    // Snap back if the task moved away from its constraint position.
+    // Use forceAutoSchedule so the snap-back cascades to the task's own
+    // successors (e.g., A→B→C: dragging B snaps B back AND updates C).
+    if (
+      constrained.startDate !== successor.startDate ||
+      constrained.endDate !== successor.endDate
+    ) {
+      updateTask(
+        dep.toTaskId,
+        { startDate: constrained.startDate, endDate: constrained.endDate },
+        { forceAutoSchedule: true }
+      );
+      toast(
+        `"${successor.name}" is constrained by a dependency. Hold Alt while dragging to move independently.`,
+        { icon: "🔗" }
+      );
+    }
+  }
+}
+
 /** Commit a drag-move operation to the store. */
-function executeDragMoveCommit(current: DragState, taskId: TaskId): void {
+function executeDragMoveCommit(
+  current: DragState,
+  taskId: TaskId,
+  altKey: boolean = false
+): void {
   const previewStart = current.currentPreviewStart || current.originalStartDate;
   const deltaDays = calculateDeltaDaysFromDates(
     current.originalStartDate,
@@ -74,24 +182,47 @@ function executeDragMoveCommit(current: DragState, taskId: TaskId): void {
   const ctx = getWorkingDaysContext();
   const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
 
-  if (updates.length > 0) updateMultipleTasks(updates);
+  if (updates.length > 0) {
+    const cascade = shouldCascade(altKey);
+    if (cascade) {
+      // Cascade: propagate date constraints to successors.
+      // Use forceAutoSchedule when Alt inverts OFF→ON.
+      updateMultipleTasks(updates, { forceAutoSchedule: true });
+      // If a successor was dragged, snap it back to its constraint position
+      // (propagateDateChanges only cascades forward from predecessors)
+      snapSuccessorToConstraint(effectiveTaskIds);
+    } else {
+      // No cascade: move tasks without propagation, then update lag
+      updateMultipleTasks(updates, { skipAutoSchedule: true });
+      autoUpdateLag(effectiveTaskIds);
+    }
+  }
 }
 
 /** Commit a resize operation to the store. */
 function executeResizeCommit(
   current: DragState,
   taskId: TaskId,
-  fallbackTask: Task
+  fallbackTask: Task,
+  altKey: boolean = false
 ): void {
   const { tasks, updateTask } = useTaskStore.getState();
-  // Fetch the freshest task to avoid acting on stale drag-start values.
   const freshTask = tasks.find((t) => t.id === taskId) ?? fallbackTask;
   const resizeUpdate = buildResizeUpdate(
     freshTask,
     current.currentPreviewStart,
     current.currentPreviewEnd
   );
-  if (resizeUpdate) updateTask(taskId, resizeUpdate);
+  if (resizeUpdate) {
+    const cascade = shouldCascade(altKey);
+    if (cascade) {
+      updateTask(taskId, resizeUpdate, { forceAutoSchedule: true });
+      snapSuccessorToConstraint([taskId]);
+    } else {
+      updateTask(taskId, resizeUpdate, { skipAutoSchedule: true });
+      autoUpdateLag([taskId]);
+    }
+  }
 }
 
 /**
@@ -122,13 +253,16 @@ export function useTaskBarInteraction(
   // fresh closure values. The stable callbacks never change identity,
   // ensuring removeEventListener always matches addEventListener.
   const mouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
-  const mouseUpRef = useRef<() => void>(() => {});
+  const mouseUpRef = useRef<(e: MouseEvent) => void>(() => {});
 
   const stableMouseMove = useCallback(
     (e: MouseEvent): void => mouseMoveRef.current(e),
     []
   );
-  const stableMouseUp = useCallback((): void => mouseUpRef.current(), []);
+  const stableMouseUp = useCallback(
+    (e: MouseEvent): void => mouseUpRef.current(e),
+    []
+  );
 
   // Keep document handlers fresh on every render
   mouseMoveRef.current = (e: MouseEvent): void => {
@@ -172,7 +306,7 @@ export function useTaskBarInteraction(
     });
   };
 
-  mouseUpRef.current = (): void => {
+  mouseUpRef.current = (e: MouseEvent): void => {
     const current = dragStateRef.current;
     if (!current) return;
 
@@ -182,9 +316,9 @@ export function useTaskBarInteraction(
     }
 
     if (current.mode === "dragging") {
-      executeDragMoveCommit(current, task.id);
+      executeDragMoveCommit(current, task.id, e.altKey);
     } else {
-      executeResizeCommit(current, task.id, task);
+      executeResizeCommit(current, task.id, task, e.altKey);
     }
 
     document.removeEventListener("mousemove", stableMouseMove);
