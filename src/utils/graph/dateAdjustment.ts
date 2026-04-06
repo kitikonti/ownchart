@@ -5,6 +5,17 @@
  * Used when auto-scheduling is enabled to cascade predecessor date changes
  * to successor tasks based on dependency type (FS, SS, FF, SF) and lag.
  *
+ * Duration semantics:
+ * - The Task.duration field and all constraint calculations use **calendar days**.
+ * - When working-days mode is enabled, constraint propagation preserves each
+ *   task's **working-day duration** (the number of non-excluded days in its date
+ *   range). This prevents tasks that span weekends from silently shrinking when
+ *   snapped back to a constraint boundary — the calendar span may change, but the
+ *   number of working days stays constant.
+ * - Working-day adjustment is a post-processing step on top of calendar-based
+ *   constraint calculation, matching the pattern in enforceDepConstraint()
+ *   (dependencySlice.ts).
+ *
  * All functions are pure — no store dependencies.
  */
 
@@ -284,6 +295,7 @@ export function lagWorkingToCalendar(
 interface WorkingDates {
   startDate: string;
   endDate: string;
+  /** Calendar-day duration (inclusive). Used by calculateConstrainedDates(). */
   duration: number;
 }
 
@@ -293,6 +305,12 @@ interface WorkingDates {
  * Uses topological sort to process tasks in dependency order, then enforces
  * each predecessor constraint. When a task has multiple predecessors, the most
  * restrictive constraint (latest required start date) wins.
+ *
+ * Note on working-days mode: this function operates purely on calendar-day
+ * durations. The caller is responsible for ensuring tasks have the correct
+ * calendar-day duration before propagation. In particular, the drag snap-back
+ * path in useTaskBarInteraction uses pre-drag calendar durations so that tasks
+ * spanning weekends are not silently shortened.
  *
  * @param tasks - All tasks in the project
  * @param dependencies - All dependencies

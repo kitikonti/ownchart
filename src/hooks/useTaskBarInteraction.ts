@@ -80,19 +80,38 @@ interface DragDependencyContext {
   dependencies: Dependency[];
   taskMap: Map<TaskId, Task>;
   movedSet: Set<TaskId>;
+  /**
+   * Calendar-day durations captured BEFORE the drag update was applied.
+   * Used by snapSuccessorToConstraint to restore the correct duration when
+   * working-days mode is on (the drag may have shortened the calendar span
+   * to match the working-day count).
+   */
+  preDragDurations: Map<TaskId, number>;
 }
 
-/** Build the shared lookup structures needed by autoUpdateLag and snapSuccessorToConstraint. */
+/**
+ * Build the shared lookup structures needed by autoUpdateLag and
+ * snapSuccessorToConstraint.
+ *
+ * @param movedTaskIds - IDs of tasks being dragged
+ * @param preDragDurations - Calendar-day durations before the drag update.
+ *   When not provided, current durations from the store are used (which is
+ *   correct for autoUpdateLag but incorrect for snap-back in working-days mode).
+ */
 function buildDragDependencyContext(
-  movedTaskIds: TaskId[]
+  movedTaskIds: TaskId[],
+  preDragDurations?: Map<TaskId, number>
 ): DragDependencyContext {
   const { tasks } = useTaskStore.getState();
   const { dependencies } = useDependencyStore.getState();
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
   return {
     tasks,
     dependencies,
-    taskMap: new Map(tasks.map((t) => [t.id, t])),
+    taskMap,
     movedSet: new Set(movedTaskIds),
+    preDragDurations:
+      preDragDurations ?? new Map(tasks.map((t) => [t.id, t.duration ?? 1])),
   };
 }
 
@@ -146,8 +165,12 @@ function snapSuccessorToConstraint(ctx: DragDependencyContext): void {
     const successor = ctx.taskMap.get(dep.toTaskId);
     if (!predecessor || !successor) continue;
 
-    const duration =
-      (successor.duration ?? 1) > 0 ? (successor.duration ?? 1) : 1;
+    // Use the pre-drag calendar duration so that working-days mode doesn't
+    // silently shrink tasks. The drag may have shortened the calendar span
+    // to match the working-day count (e.g., Mon-Sun 7d → Mon-Fri 5d), but
+    // the constraint should place the task back with its original span.
+    const preDragDuration = ctx.preDragDurations.get(dep.toTaskId) ?? 1;
+    const duration = preDragDuration > 0 ? preDragDuration : 1;
     const constrained = calculateConstrainedDates(
       { startDate: predecessor.startDate, endDate: predecessor.endDate },
       duration,
@@ -158,13 +181,19 @@ function snapSuccessorToConstraint(ctx: DragDependencyContext): void {
     // Snap back if the task moved away from its constraint position.
     // Use forceAutoSchedule so the snap-back cascades to the task's own
     // successors (e.g., A→B→C: dragging B snaps B back AND updates C).
+    // Include duration so it's restored to the pre-drag calendar span —
+    // otherwise a stale duration value causes the same bug on the next drag.
     if (
       constrained.startDate !== successor.startDate ||
       constrained.endDate !== successor.endDate
     ) {
       updateTask(
         dep.toTaskId,
-        { startDate: constrained.startDate, endDate: constrained.endDate },
+        {
+          startDate: constrained.startDate,
+          endDate: constrained.endDate,
+          duration,
+        },
         { forceAutoSchedule: true }
       );
       toast(
@@ -199,6 +228,13 @@ function executeDragMoveCommit(
   const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
 
   if (updates.length > 0) {
+    // Capture calendar-day durations BEFORE the update is applied.
+    // The drag may shorten the calendar span (working-days preservation),
+    // but snap-back needs the original span to avoid shrinking tasks.
+    const preDragDurations = new Map<TaskId, number>(
+      tasks.map((t) => [t.id, t.duration ?? 1])
+    );
+
     const cascade = shouldCascade(altKey);
     if (cascade) {
       // Cascade: propagate date constraints to successors.
@@ -206,13 +242,16 @@ function executeDragMoveCommit(
       updateMultipleTasks(updates, { forceAutoSchedule: true });
       // If a successor was dragged, snap it back to its constraint position
       // (propagateDateChanges only cascades forward from predecessors)
-      const ctx = buildDragDependencyContext(effectiveTaskIds);
-      snapSuccessorToConstraint(ctx);
+      const depCtx = buildDragDependencyContext(
+        effectiveTaskIds,
+        preDragDurations
+      );
+      snapSuccessorToConstraint(depCtx);
     } else {
       // No cascade: move tasks without propagation, then update lag
       updateMultipleTasks(updates, { skipAutoSchedule: true });
-      const ctx = buildDragDependencyContext(effectiveTaskIds);
-      autoUpdateLag(ctx);
+      const depCtx = buildDragDependencyContext(effectiveTaskIds);
+      autoUpdateLag(depCtx);
     }
   }
 }
