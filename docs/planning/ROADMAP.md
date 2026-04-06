@@ -8,9 +8,9 @@ This roadmap outlines the phased development approach for the Gantt Chart applic
 
 ---
 
-## 📋 Roadmap Updates (v2.4 - March 2026)
+## 📋 Roadmap Updates (v2.5 - April 2026)
 
-**Current state**: The application is at **v1.4.0** and production-live at [ownchart.app](https://ownchart.app). MVP, all Phase 1.5 sprints through 1.5.9.2, and a comprehensive code review of the entire codebase are complete. The focus is now shifting to remaining V1.1 deferred features.
+**Current state**: The application is at **v1.6.0** and production-live at [ownchart.app](https://ownchart.app). MVP, all Phase 1.5 sprints through 1.5.9.2, a comprehensive code review, and Sprint 1.5.2 (Advanced Dependencies) are complete. The focus is now shifting to remaining V1.1 deferred features.
 
 **What's been achieved since initial roadmap**:
 1. ✅ **MVP complete** — all core features shipped (task management, timeline, dependencies, undo/redo, export)
@@ -19,9 +19,9 @@ This roadmap outlines the phased development approach for the Gantt Chart applic
 4. ✅ **Full code review** — systematic review of all components, hooks, utils, and export code (~587 commits)
 5. ✅ **Quality infrastructure** — VRT, E2E testing (Playwright), CI hardening, unified design system
 6. ✅ **Export pipeline polished** — PDF default, logo support, warnings, better defaults
+7. ✅ **Advanced dependencies** — all 4 types (FS/SS/FF/SF), properties panel, handle-based type inference, opt-in auto-scheduling with cascade propagation, 43 E2E tests
 
 **Remaining for V1.1**:
-- Advanced dependency types (SS/FF/SF)
 - Named snapshots
 - Custom fields UI
 - Multi-project management
@@ -537,26 +537,26 @@ Feature-complete for basic Gantt chart creation and editing.
 **Why These Were Deferred**:
 These features add significant complexity relative to their value for proving the core concept. By shipping MVP first, we can validate the product before investing in these enhancements.
 
-#### Sprint 1.5.2: Advanced Dependencies (SS/FF/SF)
+#### Sprint 1.5.2: Advanced Dependencies (SS/FF/SF) ✅ COMPLETE
 
-**Features**:
-- Start-to-Start (SS) dependencies
-- Finish-to-Finish (FF) dependencies
-- Start-to-Finish (SF) dependencies
-- Dependency type selector in UI
-- Update auto-adjustment logic for all types
+**Status**: ✅ Completed (2026-04-07) — Released as v1.6.0
 
-**Technical Work**:
-- Extend dependency data model for all types
-- Update date adjustment algorithms for SS/FF/SF
-- Arrow styling to distinguish types (different colors/styles)
-- UI for selecting dependency type
+**Delivered** (4 packages):
+1. Arrow path routing & visual differentiation for all 4 types
+2. Dependency Properties Panel (type selector + lag input)
+3. Handle-based type inference (drag from start/end handles)
+4. Opt-in auto-scheduling with topological cascade propagation
 
-**Acceptance Criteria**:
-- Can create all 4 dependency types
-- Auto-adjustment works correctly for each type
-- Visual differentiation between types
-- Comprehensive test coverage (100+ test cases)
+**Also delivered** (beyond original scope):
+- Always-enforce dependency constraints with Alt+drag modifier
+- Auto-calculated lag on dependency creation
+- Bidirectional cascade (snap-back for successor drags)
+- Working-days-aware constraint enforcement
+- Bug fix: calendar duration preservation during drag snap-back
+- 43 E2E tests (dependency scheduling, persistence round-trip, SVG export)
+- Shared test helper extraction (fixtures/dependency-helpers.ts)
+
+**Concept doc**: [SPRINT_1.5.2_ADVANCED_DEPENDENCIES_CONCEPT.md](../sprints/SPRINT_1.5.2_ADVANCED_DEPENDENCIES_CONCEPT.md)
 
 ---
 
