@@ -1,9 +1,6 @@
 /**
  * E2E test: working-days drag preserves calendar duration.
  *
- * Reproduces a bug where dragging a task with auto-scheduling ON and
- * working-days mode ON causes the task's calendar duration to shrink.
- *
  * Scenario (mirrors test02.ownchart):
  *   alpha: Mon Apr 6 – Sun Apr 12 (7 cal days, 5 working days)
  *   bravo: Mon Apr 13 – Sun Apr 19 (7 cal days, 5 working days)
@@ -17,12 +14,16 @@
  * match working-day count, and snap-back used that shortened duration.
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { type StoragePayloadOptions } from "./fixtures/sample-data";
 import {
-  buildStoragePayload,
-  type StoragePayloadOptions,
-} from "./fixtures/sample-data";
-import { getCell } from "./fixtures/helpers";
+  injectAndNavigate,
+  fitAndWaitForArrows,
+  getStartDate,
+  getEndDate,
+  getDuration,
+  dragTaskBar,
+} from "./fixtures/dependency-helpers";
 
 // SVG drag relies on pixel-accurate boundingBox() — Chromium only.
 test.skip(
@@ -137,82 +138,11 @@ function buildOptions(): StoragePayloadOptions {
   };
 }
 
-async function injectAndNavigate(page: Page): Promise<void> {
-  const options = buildOptions();
-  const payload = buildStoragePayload(options);
-
-  await page.addInitScript(
-    ({ tabId, payload }) => {
-      localStorage.setItem("ownchart-welcome-dismissed", "true");
-      localStorage.setItem("ownchart-tour-completed", "true");
-      localStorage.setItem("ownchart-multi-tab-state", payload);
-      sessionStorage.setItem("ownchart-tab-id", tabId);
-    },
-    { tabId: options.tabId, payload }
-  );
-
-  await page.goto("/");
-  await expect(page.locator("#root")).toBeVisible();
-  await expect(
-    page.getByLabel("Task spreadsheet").getByText("alpha")
-  ).toBeVisible({ timeout: 10_000 });
-}
-
-async function setupAndFit(page: Page): Promise<void> {
-  await injectAndNavigate(page);
-  // Fit timeline so task bars are visible
-  await page.keyboard.press("f");
-  await expect(page.locator(".dependency-arrow").first()).toBeVisible({
-    timeout: 10_000,
-  });
-  await page.waitForTimeout(500);
-}
-
-/** Read a task's start date from the table. */
-async function getStartDate(page: Page, taskName: string): Promise<string> {
-  const cell = getCell(page, taskName, "startDate");
-  const text = await cell.textContent();
-  return text?.trim() ?? "";
-}
-
-/** Read a task's end date from the table. */
-async function getEndDate(page: Page, taskName: string): Promise<string> {
-  const cell = getCell(page, taskName, "endDate");
-  const text = await cell.textContent();
-  return text?.trim() ?? "";
-}
-
-/** Read a task's duration from the table. */
-async function getDuration(page: Page, taskName: string): Promise<string> {
-  const cell = getCell(page, taskName, "duration");
-  const text = await cell.textContent();
-  return text?.trim() ?? "";
-}
-
-/** Drag a task bar horizontally by a pixel offset. */
-async function dragTaskBar(
-  page: Page,
-  taskName: string,
-  pixelDelta: number
+async function setupAndFit(
+  page: import("@playwright/test").Page
 ): Promise<void> {
-  const taskBar = page
-    .locator(".task-bar")
-    .filter({
-      has: page.locator(`text:has-text("${taskName}")`),
-    })
-    .first();
-
-  const box = await taskBar.boundingBox();
-  expect(box, `Task bar for "${taskName}" should be visible`).not.toBeNull();
-  const { x, y, width, height } = box!;
-
-  const centerX = x + width / 2;
-  const centerY = y + height / 2;
-
-  await page.mouse.move(centerX, centerY);
-  await page.mouse.down();
-  await page.mouse.move(centerX + pixelDelta, centerY, { steps: 10 });
-  await page.mouse.up();
+  await injectAndNavigate(page, buildOptions(), "alpha");
+  await fitAndWaitForArrows(page);
 }
 
 // ---------------------------------------------------------------------------
@@ -235,8 +165,6 @@ test.describe("Working-days drag duration preservation", () => {
     expect(initialEnd).toContain("04/19/2026");
 
     // Drag bravo ~3 weeks to the right (large enough pixel delta)
-    // At zoom=1 fit, we need enough pixels to move 21+ days.
-    // Use a large delta to ensure significant displacement.
     await dragTaskBar(page, "bravo", DRAG_PIXEL_DELTA);
 
     // Wait for auto-schedule snap-back to complete

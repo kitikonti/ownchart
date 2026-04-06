@@ -16,6 +16,13 @@ import {
   type StoragePayloadOptions,
 } from "./fixtures/sample-data";
 import { getCell } from "./fixtures/helpers";
+import {
+  getStartDate,
+  getEndDate,
+  openDependencyPanel,
+  getLagInput,
+  dragTaskBar,
+} from "./fixtures/dependency-helpers";
 
 // SVG drag relies on pixel-accurate boundingBox() — Chromium only.
 test.skip(
@@ -173,46 +180,6 @@ async function setupAndFit(
   await page.waitForTimeout(500);
 }
 
-/** Click a dependency arrow to select it and open the properties panel. */
-async function openDependencyPanel(
-  page: Page,
-  fromName: string,
-  toName: string
-): Promise<void> {
-  // For hook-shaped arrows (SS/FF/SF), the <g> bounding box center can land
-  // in empty space. Use JS dispatchEvent to reliably trigger the click handler.
-  await page.evaluate((label) => {
-    const g = document.querySelector(
-      `g[aria-label^="Dependency from ${label}"]`
-    );
-    if (g) g.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-  }, `${fromName} to ${toName}`);
-  await expect(
-    page.getByRole("dialog", { name: "Edit dependency" })
-  ).toBeVisible({ timeout: 5_000 });
-}
-
-/** Get the lag input element inside the open properties panel. */
-function getLagInput(page: Page) {
-  return page
-    .getByRole("dialog", { name: "Edit dependency" })
-    .locator('input[type="number"]');
-}
-
-/** Read a task's start date from the table. */
-async function getStartDate(page: Page, taskName: string): Promise<string> {
-  const cell = getCell(page, taskName, "startDate");
-  const text = await cell.textContent();
-  return text?.trim() ?? "";
-}
-
-/** Read a task's end date from the table. */
-async function getEndDate(page: Page, taskName: string): Promise<string> {
-  const cell = getCell(page, taskName, "endDate");
-  const text = await cell.textContent();
-  return text?.trim() ?? "";
-}
-
 /** Toggle auto-scheduling via the toolbar button. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function toggleAutoScheduling(page: Page): Promise<void> {
@@ -221,46 +188,6 @@ async function toggleAutoScheduling(page: Page): Promise<void> {
   await page.getByRole("tab", { name: "View" }).click();
   const btn = page.getByRole("button", { name: /Auto-Scheduling/i });
   await btn.click();
-}
-
-/**
- * Drag a task bar horizontally by a pixel offset.
- * @param modifiers - Keyboard modifiers to hold during drag (e.g. ['Alt'])
- */
-async function dragTaskBar(
-  page: Page,
-  taskName: string,
-  pixelDelta: number,
-  modifiers: ("Alt" | "Shift" | "Control")[] = []
-): Promise<void> {
-  const taskBar = page
-    .locator(".task-bar")
-    .filter({
-      has: page.locator(`text:has-text("${taskName}")`),
-    })
-    .first();
-
-  const box = await taskBar.boundingBox();
-  expect(box, `Task bar for "${taskName}" should be visible`).not.toBeNull();
-  const { x, y, width, height } = box!;
-
-  const centerX = x + width / 2;
-  const centerY = y + height / 2;
-
-  // Hold modifier keys
-  for (const mod of modifiers) {
-    await page.keyboard.down(mod);
-  }
-
-  await page.mouse.move(centerX, centerY);
-  await page.mouse.down();
-  await page.mouse.move(centerX + pixelDelta, centerY, { steps: 10 });
-  await page.mouse.up();
-
-  // Release modifier keys
-  for (const mod of modifiers) {
-    await page.keyboard.up(mod);
-  }
 }
 
 // ===========================================================================
