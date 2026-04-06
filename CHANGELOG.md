@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.0](https://github.com/kitikonti/ownchart/compare/v1.5.0...v1.6.0) (2026-04-06)
+
+
+### Features
+
+* add arrow path routing and visual differentiation for all 4 dependency types (SS/FF/SF) ([ae1a645](https://github.com/kitikonti/ownchart/commit/ae1a645f62a19dce0d413974485797e37c92606f))
+* add Dependency Properties Panel for editing type and lag ([98c02d4](https://github.com/kitikonti/ownchart/commit/98c02d4bf90d165513d0d26504aabf11b8b22e9c))
+* add handle-based type inference for dependency creation (SS/FF/SF) ([13c8f0b](https://github.com/kitikonti/ownchart/commit/13c8f0b4e544740fffb46c43f64a226216300338))
+* add opt-in auto-scheduling with date cascade propagation ([cea71ed](https://github.com/kitikonti/ownchart/commit/cea71eda4077b295facb18e52cb0d26a384f6b02))
+* always-enforce dependency constraints, Alt+drag modifier, and successor snap-back ([cc77f49](https://github.com/kitikonti/ownchart/commit/cc77f492d7d038d7159c0d93e0c43f6803001319))
+* auto-calculated lag on dependency creation and bidirectional cascade ([299bf47](https://github.com/kitikonti/ownchart/commit/299bf47ae6a7fa87dcd765a20ff619b992a56885))
+
+
+### Bug Fixes
+
+* dependency handles not disappearing when mouse leaves horizontally ([4e90b3b](https://github.com/kitikonti/ownchart/commit/4e90b3b8ac5a120c547de80439114ad342cd57e0))
+* improve arrow routing for FF/SS/SF dependency types ([186c928](https://github.com/kitikonti/ownchart/commit/186c92833a90cec911468e54d6328826c113c6f8))
+* move DependencyPropertiesPanel out of SVG context to fix input behavior ([df0c040](https://github.com/kitikonti/ownchart/commit/df0c040c9461b8d77e950ffd92a425012e2fe5ac))
+* preserve calendar duration during drag snap-back in working-days mode ([a4451d6](https://github.com/kitikonti/ownchart/commit/a4451d69aef7bd694d64921c50d4464306658295))
+* restore Delete/Backspace key deletion when dependency panel is open ([2786e40](https://github.com/kitikonti/ownchart/commit/2786e4015fe7052206319041c7878e70e54299c2))
+
+
+### Code Refactoring
+
+* address review findings for auto-scheduling ([ac1ef72](https://github.com/kitikonti/ownchart/commit/ac1ef72f6bda394726d02cb2bf698e96e3ab3878))
+* address review findings for dependency arrow paths ([52cce33](https://github.com/kitikonti/ownchart/commit/52cce33538d55023f6c07587fc9c51716fb81b85))
+* address review findings for dependency properties panel ([2fbec27](https://github.com/kitikonti/ownchart/commit/2fbec278089d4d09e1d7e44de8759a5ec99dfe03))
+* address review findings for DependencyPropertiesPanel ([62b085f](https://github.com/kitikonti/ownchart/commit/62b085fbf98325ae9f5217a4779d8fdd13c03ea0))
+* address review findings for handle-based type inference ([1499b30](https://github.com/kitikonti/ownchart/commit/1499b30fecb0ebbf7369879e3d254fec052c2c49))
+* apply code review findings from dependency scheduling review ([e8e87f6](https://github.com/kitikonti/ownchart/commit/e8e87f61b78a6de3cf427502c0dbbc4e63cec1b9))
+* apply code review findings to working-days drag fix ([13052ce](https://github.com/kitikonti/ownchart/commit/13052cebc268daf41e0f3e243a8f3781cd9ce26b))
+* clean up arrow path code from review findings ([c4938e8](https://github.com/kitikonti/ownchart/commit/c4938e8fbfa9add482b551c51072a53676fc4e57))
+* extract shared dependency E2E helpers to reduce duplication ([6c23423](https://github.com/kitikonti/ownchart/commit/6c234238474888a20b4a474fafdd81db5d43958f))
+* remove dead DEPENDENCY_DASH_PATTERNS constant and usages ([f17ae25](https://github.com/kitikonti/ownchart/commit/f17ae25fcc46e99e4b275c37bb66d272271e9623))
+* use shared Button, Input, and FieldLabel in DependencyPropertiesPanel ([8bf0ebf](https://github.com/kitikonti/ownchart/commit/8bf0ebf04263243b1df1b36a27a1e8a762960023))
+
+
+### UI/UX
+
+* use uniform solid lines for all dependency types ([21b3808](https://github.com/kitikonti/ownchart/commit/21b3808e15afc4131a57815bc310fda5c3a71d31))
+
 ## [1.5.0](https://github.com/kitikonti/ownchart/compare/v1.4.2...v1.5.0) (2026-03-22)
 
 
