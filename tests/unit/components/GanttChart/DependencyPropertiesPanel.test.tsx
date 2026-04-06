@@ -45,6 +45,8 @@ function renderPanel(
   render(
     <DependencyPropertiesPanel
       dependency={baseDependency}
+      displayLag={(overrides.dependency ?? baseDependency).lag ?? 0}
+      lagUnit="days"
       fromTaskName="Task Alpha"
       toTaskName="Task Beta"
       position={{ x: 200, y: 150 }}
@@ -238,6 +240,8 @@ describe("DependencyPropertiesPanel", () => {
       const { rerender } = render(
         <DependencyPropertiesPanel
           dependency={{ ...baseDependency, lag: 2 }}
+          displayLag={2}
+          lagUnit="days"
           fromTaskName="Task Alpha"
           toTaskName="Task Beta"
           position={{ x: 200, y: 150 }}
@@ -249,10 +253,16 @@ describe("DependencyPropertiesPanel", () => {
       );
       expect(screen.getByLabelText("Lag")).toHaveValue(2);
 
+      // Blur the input so the sync effect can update it
+      // (the mount effect auto-focuses the input; the sync skips focused inputs)
+      screen.getByLabelText("Lag").blur();
+
       // Simulate external change (e.g. undo/redo)
       rerender(
         <DependencyPropertiesPanel
           dependency={{ ...baseDependency, lag: 7 }}
+          displayLag={7}
+          lagUnit="days"
           fromTaskName="Task Alpha"
           toTaskName="Task Beta"
           position={{ x: 200, y: 150 }}

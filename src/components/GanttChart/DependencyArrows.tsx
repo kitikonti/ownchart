@@ -1,15 +1,13 @@
 /**
- * DependencyArrows - Container for all dependency arrows
- * Renders all dependency arrows and the properties panel for the Gantt chart.
+ * DependencyArrows - Container for all dependency arrows in the Gantt chart.
  * Supports all 4 dependency types (FS/SS/FF/SF).
  */
 
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import type {
   DependencyDragState,
-  DependencyType,
   TaskPosition,
 } from "@/types/dependency.types";
 import type {
@@ -23,7 +21,6 @@ import {
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
-import { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
 
 interface DependencyArrowsProps {
   tasks: Task[];
@@ -59,15 +56,6 @@ export function DependencyArrows({
   const removeDependency = useDependencyStore(
     (state) => state.removeDependency
   );
-  const updateDependency = useDependencyStore(
-    (state) => state.updateDependency
-  );
-
-  // Panel position for the properties panel (screen-space coordinates from click)
-  const [panelPosition, setPanelPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
 
   // Create task map for quick lookup
   const taskMap = useMemo(() => {
@@ -107,8 +95,7 @@ export function DependencyArrows({
   const handleSelect = useCallback(
     (id: string, position?: { x: number; y: number }) => {
       const newId = id === selectedDependencyId ? null : id;
-      selectDependency(newId);
-      setPanelPosition(newId && position ? position : null);
+      selectDependency(newId, position);
     },
     [selectDependency, selectedDependencyId]
   );
@@ -142,89 +129,39 @@ export function DependencyArrows({
     };
   }, [dragState, taskPositions]);
 
-  // Resolve selected dependency and its tasks for the properties panel
-  const selectedDep = selectedDependencyId
-    ? (dependencies.find((d) => d.id === selectedDependencyId) ?? null)
-    : null;
-  const selectedFromTask = selectedDep
-    ? taskMap.get(selectedDep.fromTaskId)
-    : undefined;
-  const selectedToTask = selectedDep
-    ? taskMap.get(selectedDep.toTaskId)
-    : undefined;
-
-  // Stable callbacks for the properties panel (avoids defeating React.memo)
-  const handlePanelUpdateType = useCallback(
-    (type: DependencyType): void => {
-      if (selectedDep) updateDependency(selectedDep.id, { type });
-    },
-    [selectedDep, updateDependency]
-  );
-
-  const handlePanelUpdateLag = useCallback(
-    (lag: number): void => {
-      if (selectedDep) updateDependency(selectedDep.id, { lag });
-    },
-    [selectedDep, updateDependency]
-  );
-
-  const handlePanelDelete = useCallback((): void => {
-    if (selectedDep) removeDependency(selectedDep.id);
-  }, [selectedDep, removeDependency]);
-
-  const handlePanelClose = useCallback((): void => {
-    selectDependency(null);
-  }, [selectDependency]);
-
   return (
-    <>
-      <g className="layer-dependencies">
-        {/* Render all visible dependency arrows */}
-        {visibleDependencies.map((dep) => {
-          const fromTask = taskMap.get(dep.fromTaskId);
-          const toTask = taskMap.get(dep.toTaskId);
-          if (!fromTask || !toTask) return null;
+    <g className="layer-dependencies">
+      {/* Render all visible dependency arrows */}
+      {visibleDependencies.map((dep) => {
+        const fromTask = taskMap.get(dep.fromTaskId);
+        const toTask = taskMap.get(dep.toTaskId);
+        if (!fromTask || !toTask) return null;
 
-          return (
-            <DependencyArrow
-              key={dep.id}
-              dependency={dep}
-              fromTaskName={fromTask.name}
-              toTaskName={toTask.name}
-              taskPositions={taskPositions}
-              rowHeight={rowHeight}
-              isSelected={selectedDependencyId === dep.id}
-              onSelect={handleSelect}
-              onDelete={removeDependency}
-            />
-          );
-        })}
-
-        {/* Drag preview (temporary arrow while creating dependency) */}
-        {dragState?.isDragging && dragStartPosition && (
-          <DependencyDragPreview
-            startX={dragStartPosition.x}
-            startY={dragStartPosition.y}
-            endX={dragState.currentPosition.x}
-            endY={dragState.currentPosition.y}
+        return (
+          <DependencyArrow
+            key={dep.id}
+            dependency={dep}
+            fromTaskName={fromTask.name}
+            toTaskName={toTask.name}
+            taskPositions={taskPositions}
             rowHeight={rowHeight}
+            isSelected={selectedDependencyId === dep.id}
+            onSelect={handleSelect}
+            onDelete={removeDependency}
           />
-        )}
-      </g>
+        );
+      })}
 
-      {/* Dependency Properties Panel (portal-rendered to document.body) */}
-      {selectedDep && selectedFromTask && selectedToTask && panelPosition && (
-        <DependencyPropertiesPanel
-          dependency={selectedDep}
-          fromTaskName={selectedFromTask.name}
-          toTaskName={selectedToTask.name}
-          position={panelPosition}
-          onUpdateType={handlePanelUpdateType}
-          onUpdateLag={handlePanelUpdateLag}
-          onDelete={handlePanelDelete}
-          onClose={handlePanelClose}
+      {/* Drag preview (temporary arrow while creating dependency) */}
+      {dragState?.isDragging && dragStartPosition && (
+        <DependencyDragPreview
+          startX={dragStartPosition.x}
+          startY={dragStartPosition.y}
+          endX={dragState.currentPosition.x}
+          endY={dragState.currentPosition.y}
+          rowHeight={rowHeight}
         />
       )}
-    </>
+    </g>
   );
 }

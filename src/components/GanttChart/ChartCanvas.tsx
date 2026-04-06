@@ -35,6 +35,150 @@ import { useTimelineBarContextMenu } from "@/hooks/useTimelineBarContextMenu";
 import { useTimelineAreaContextMenu } from "@/hooks/useTimelineAreaContextMenu";
 import { ContextMenu } from "@/components/ContextMenu/ContextMenu";
 import { SelectionHighlight } from "./SelectionHighlight";
+import { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
+import { useDependencyStore } from "@/store/slices/dependencySlice";
+import {
+  lagCalendarToWorking,
+  lagWorkingToCalendar,
+} from "@/utils/graph/dateAdjustment";
+
+// ---------------------------------------------------------------------------
+// DependencyPanelBridge — renders the dependency properties panel OUTSIDE the
+// SVG element. React portals inherit the namespace of their React parent, so
+// a portal created inside <svg> produces SVG-namespaced DOM elements where
+// native <input> behavior (selection, spinners, cursor) is broken.
+// This bridge reads dependency store state and renders the panel in HTML context.
+// ---------------------------------------------------------------------------
+
+interface DependencyPanelBridgeProps {
+  tasks: Task[];
+}
+
+const DependencyPanelBridge = memo(function DependencyPanelBridge({
+  tasks,
+}: DependencyPanelBridgeProps): JSX.Element | null {
+  const dependencies = useDependencyStore((s) => s.dependencies);
+  const selectedDependencyId = useDependencyStore(
+    (s) => s.selectedDependencyId
+  );
+  const selectDependency = useDependencyStore((s) => s.selectDependency);
+  const updateDependency = useDependencyStore((s) => s.updateDependency);
+  const removeDependency = useDependencyStore((s) => s.removeDependency);
+
+  const selectedDep = useMemo(
+    () =>
+      selectedDependencyId
+        ? (dependencies.find((d) => d.id === selectedDependencyId) ?? null)
+        : null,
+    [selectedDependencyId, dependencies]
+  );
+
+  const taskMap = useMemo(
+    () => new Map<TaskId, Task>(tasks.map((t) => [t.id, t])),
+    [tasks]
+  );
+
+  const selectedFromTask = selectedDep
+    ? taskMap.get(selectedDep.fromTaskId)
+    : undefined;
+  const selectedToTask = selectedDep
+    ? taskMap.get(selectedDep.toTaskId)
+    : undefined;
+
+  // Panel position is stored alongside selection in the dependency store.
+  // DependencyArrows sets it when an arrow is clicked.
+  const panelPosition = useDependencyStore((s) => s.panelPosition);
+
+  const handleUpdateType = useCallback(
+    (type: import("@/types/dependency.types").DependencyType): void => {
+      if (selectedDep) updateDependency(selectedDep.id, { type });
+    },
+    [selectedDep, updateDependency]
+  );
+
+  // Working days context for lag conversion
+  const workingDaysMode = useChartStore((s) => s.workingDaysMode);
+  const workingDaysConfig = useChartStore((s) => s.workingDaysConfig);
+  const holidayRegion = useChartStore((s) => s.holidayRegion);
+
+  const handleUpdateLag = useCallback(
+    (displayLag: number): void => {
+      if (!selectedDep || !selectedFromTask) return;
+      // Convert from display units (working days if mode ON) to calendar days
+      const calendarLag = workingDaysMode
+        ? lagWorkingToCalendar(
+            displayLag,
+            {
+              startDate: selectedFromTask.startDate,
+              endDate: selectedFromTask.endDate,
+            },
+            selectedDep.type,
+            {
+              config: workingDaysConfig,
+              holidayRegion: workingDaysConfig.excludeHolidays
+                ? holidayRegion
+                : undefined,
+            }
+          )
+        : displayLag;
+      updateDependency(selectedDep.id, { lag: calendarLag });
+    },
+    [
+      selectedDep,
+      selectedFromTask,
+      updateDependency,
+      workingDaysMode,
+      workingDaysConfig,
+      holidayRegion,
+    ]
+  );
+
+  const handleDelete = useCallback((): void => {
+    if (selectedDep) removeDependency(selectedDep.id);
+  }, [selectedDep, removeDependency]);
+
+  const handleClose = useCallback((): void => {
+    selectDependency(null);
+  }, [selectDependency]);
+
+  if (!selectedDep || !selectedFromTask || !selectedToTask || !panelPosition) {
+    return null;
+  }
+
+  // Convert stored calendar-day lag to display units
+  const displayLag = workingDaysMode
+    ? lagCalendarToWorking(
+        selectedDep.lag ?? 0,
+        {
+          startDate: selectedFromTask.startDate,
+          endDate: selectedFromTask.endDate,
+        },
+        selectedDep.type,
+        {
+          config: workingDaysConfig,
+          holidayRegion: workingDaysConfig.excludeHolidays
+            ? holidayRegion
+            : undefined,
+        }
+      )
+    : (selectedDep.lag ?? 0);
+
+  return (
+    <DependencyPropertiesPanel
+      key={selectedDep.id}
+      dependency={selectedDep}
+      displayLag={displayLag}
+      lagUnit={workingDaysMode ? "working days" : "days"}
+      fromTaskName={selectedFromTask.name}
+      toTaskName={selectedToTask.name}
+      position={panelPosition}
+      onUpdateType={handleUpdateType}
+      onUpdateLag={handleUpdateLag}
+      onDelete={handleDelete}
+      onClose={handleClose}
+    />
+  );
+});
 
 // ---------------------------------------------------------------------------
 // SelectionRows — memoized sub-component for Layer 2.5 selection highlights
@@ -470,6 +614,12 @@ export function ChartCanvas({
           ariaLabel="Timeline area actions"
         />
       )}
+
+      {/* Dependency Properties Panel — rendered OUTSIDE the SVG element so
+          React creates the portal in the HTML namespace (not SVG namespace).
+          Portals from within SVG create elements in the wrong namespace,
+          breaking native input behavior (selection, spinners, cursor). */}
+      <DependencyPanelBridge tasks={tasks} />
     </div>
   );
 }

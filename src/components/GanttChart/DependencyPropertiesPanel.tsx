@@ -4,13 +4,12 @@
  * Allows changing type (FS/SS/FF/SF), editing lag, and deleting the dependency.
  */
 
-import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Dependency, DependencyType } from "@/types/dependency.types";
 import { DEPENDENCY_TYPES } from "@/types/dependency.types";
 import { Button } from "@/components/common/Button";
 import { FieldLabel } from "@/components/common/FieldLabel";
-import { Input } from "@/components/common/Input";
 import {
   SegmentedControl,
   type SegmentedControlOption,
@@ -54,11 +53,16 @@ const V_SCROLL_SELECTOR = "[data-scroll-driver]";
 
 interface DependencyPropertiesPanelProps {
   dependency: Dependency;
+  /** Lag value converted to display units (working days or calendar days). */
+  displayLag: number;
+  /** Label for the lag unit ("days" or "working days"). */
+  lagUnit: string;
   fromTaskName: string;
   toTaskName: string;
   /** Screen-space position (clientX/clientY from the click event). */
   position: { x: number; y: number };
   onUpdateType: (type: DependencyType) => void;
+  /** Called with the lag in display units (working days or calendar days). */
   onUpdateLag: (lag: number) => void;
   onDelete: () => void;
   onClose: () => void;
@@ -71,6 +75,8 @@ interface DependencyPropertiesPanelProps {
 export const DependencyPropertiesPanel = memo(
   function DependencyPropertiesPanel({
     dependency,
+    displayLag,
+    lagUnit,
     fromTaskName,
     toTaskName,
     position,
@@ -80,7 +86,7 @@ export const DependencyPropertiesPanel = memo(
     onClose,
   }: DependencyPropertiesPanelProps): JSX.Element {
     const panelRef = useRef<HTMLDivElement>(null);
-    const previousFocusRef = useRef<HTMLElement | null>(null);
+    const lagInputRef = useRef<HTMLInputElement>(null);
     const onCloseRef = useRef(onClose);
     onCloseRef.current = onClose;
     const onDeleteRef = useRef(onDelete);
@@ -90,24 +96,24 @@ export const DependencyPropertiesPanel = memo(
     const instanceId = useId();
     const lagInputId = `dep-lag-${instanceId}`;
 
-    // Local draft state for lag input (commit on blur/Enter)
-    const [lagDraft, setLagDraft] = useState(String(dependency.lag ?? 0));
-
-    // Re-sync draft when dependency.lag changes externally (e.g. undo/redo)
-    useEffect(() => {
-      setLagDraft(String(dependency.lag ?? 0));
-    }, [dependency.lag]);
-
     // --- Focus management ---
-    // Save previous focus on mount, restore on unmount.
+    // Focus the lag input on mount so keystrokes don't escape to global
+    // handlers (e.g. cell navigation in the table behind the dialog).
+    // Per W3C ARIA APG: do NOT make the dialog container focusable — focus
+    // the first interactive element inside instead.
     useEffect(() => {
-      previousFocusRef.current = document.activeElement as HTMLElement;
-      // Focus the panel container so keyboard events land here
-      panelRef.current?.focus();
-      return () => {
-        previousFocusRef.current?.focus();
-      };
+      lagInputRef.current?.focus();
     }, []);
+
+    // Sync from store when dependency changes externally (e.g. undo/redo, type change).
+    // Uses an uncontrolled input (defaultValue + ref) so React never resets
+    // the DOM value during re-renders — preserving native cursor position,
+    // text selection, and spinner arrow behavior.
+    useEffect(() => {
+      const el = lagInputRef.current;
+      if (!el || el === document.activeElement) return;
+      el.value = String(displayLag);
+    }, [displayLag]);
 
     // --- Viewport clamping ---
     // Position the panel within viewport bounds (ContextMenu pattern).
@@ -202,17 +208,22 @@ export const DependencyPropertiesPanel = memo(
     );
 
     const commitLag = useCallback((): void => {
-      const parsed = parseInt(lagDraft, 10);
+      const el = lagInputRef.current;
+      if (!el) return;
+      const parsed = parseInt(el.value, 10);
       if (Number.isNaN(parsed)) {
-        setLagDraft(String(dependency.lag ?? 0));
+        // Revert to display value on invalid input
+        el.value = String(displayLag);
         return;
       }
       const clamped = Math.max(-MAX_LAG, Math.min(MAX_LAG, parsed));
-      setLagDraft(String(clamped));
+      el.value = String(clamped);
       // Skip no-op updates to avoid polluting the undo stack
-      if (clamped === (dependency.lag ?? 0)) return;
+      if (clamped === displayLag) return;
+      // onUpdateLag receives the value in display units (working days or calendar)
+      // — the bridge component converts to calendar days before storing
       onUpdateLag(clamped);
-    }, [lagDraft, dependency.lag, onUpdateLag]);
+    }, [displayLag, onUpdateLag]);
 
     const handleLagKeyDown = useCallback(
       (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -230,8 +241,7 @@ export const DependencyPropertiesPanel = memo(
         role="dialog"
         aria-label="Edit dependency"
         aria-modal="true"
-        tabIndex={-1}
-        className="bg-white rounded-lg shadow-lg border border-slate-200 outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+        className="bg-white rounded-lg shadow-lg border border-slate-200"
         style={{
           position: "fixed",
           zIndex: Z_INDEX.popover,
@@ -268,22 +278,23 @@ export const DependencyPropertiesPanel = memo(
           </p>
         </div>
 
-        {/* Lag input */}
+        {/* Lag input — uses a raw <input> instead of the Input wrapper.
+            React's controlled input pattern (value + onChange) resets native
+            DOM state (cursor, selection, spinners) on every re-render.
+            An uncontrolled raw input avoids this entirely. */}
         <div className="px-4 pt-2 pb-3">
           <FieldLabel htmlFor={lagInputId}>Lag</FieldLabel>
           <div className="flex items-center gap-2">
-            <Input
+            <input
+              ref={lagInputRef}
               id={lagInputId}
               type="number"
-              value={lagDraft}
-              onChange={(e) => setLagDraft(e.target.value)}
+              defaultValue={displayLag}
               onBlur={commitLag}
               onKeyDown={handleLagKeyDown}
-              mono
-              fullWidth={false}
-              className="w-20"
+              className="px-3 py-2 text-sm bg-white border rounded border-slate-300 font-mono w-20 focus:outline-none focus:ring-1 focus:ring-brand-600 focus:border-brand-600 hover:border-slate-400"
             />
-            <span className="text-xs text-slate-500">days</span>
+            <span className="text-xs text-slate-500">{lagUnit}</span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
             Negative = overlap (lead time)
