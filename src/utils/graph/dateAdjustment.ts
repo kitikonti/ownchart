@@ -7,14 +7,14 @@
  *
  * Duration semantics:
  * - The Task.duration field and all constraint calculations use **calendar days**.
- * - When working-days mode is enabled, constraint propagation preserves each
- *   task's **working-day duration** (the number of non-excluded days in its date
- *   range). This prevents tasks that span weekends from silently shrinking when
- *   snapped back to a constraint boundary — the calendar span may change, but the
- *   number of working days stays constant.
- * - Working-day adjustment is a post-processing step on top of calendar-based
- *   constraint calculation, matching the pattern in enforceDepConstraint()
- *   (dependencySlice.ts).
+ * - This module is NOT working-days-aware. When working-days mode is enabled,
+ *   callers are responsible for passing tasks with the correct calendar-day
+ *   duration. In particular, the drag snap-back path in useTaskBarInteraction
+ *   captures pre-drag calendar durations so that tasks spanning weekends are
+ *   not silently shortened (see preDragDurations in DragDependencyContext).
+ * - For single-dependency enforcement with working-days awareness, see
+ *   enforceDepConstraint() in dependencySlice.ts, which post-processes
+ *   constraint results using addWorkingDays().
  *
  * All functions are pure — no store dependencies.
  */

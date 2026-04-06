@@ -11,11 +11,10 @@
  *   FS deps: alpha→bravo→charlie, lag=0
  *   autoScheduling=true, workingDaysMode=true, excludeSat+Sun
  *
- * Bug: dragging bravo right 3+ weeks triggers auto-schedule snap-back,
- * but the task ends up Mon–Fri (5 cal days) instead of Mon–Sun (7 cal days).
- * The working-days drag code preserves working-day count (5) as the new
- * calendar duration, then propagateDateChanges uses that shortened calendar
- * duration when snapping back.
+ * Regression guard: dragging bravo right triggers auto-schedule snap-back.
+ * Before the fix, the task would end up Mon–Fri (5 cal days) instead of
+ * Mon–Sun (7 cal days) because the drag shortened the calendar span to
+ * match working-day count, and snap-back used that shortened duration.
  */
 
 import { test, expect, type Page } from "@playwright/test";
@@ -94,6 +93,13 @@ const DEP_BRAVO_CHARLIE = {
 
 const ALL_TASKS = [ALPHA, BRAVO, CHARLIE];
 const ALL_DEPS = [DEP_ALPHA_BRAVO, DEP_BRAVO_CHARLIE];
+
+/**
+ * Pixel displacement for drag operations. Must be large enough to move the
+ * task several weeks at the fit-to-view zoom level (~32 px/day) so that
+ * auto-scheduling snap-back is triggered reliably.
+ */
+const DRAG_PIXEL_DELTA = 500;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -231,7 +237,7 @@ test.describe("Working-days drag duration preservation", () => {
     // Drag bravo ~3 weeks to the right (large enough pixel delta)
     // At zoom=1 fit, we need enough pixels to move 21+ days.
     // Use a large delta to ensure significant displacement.
-    await dragTaskBar(page, "bravo", 500);
+    await dragTaskBar(page, "bravo", DRAG_PIXEL_DELTA);
 
     // Wait for auto-schedule snap-back to complete
     await page.waitForTimeout(500);
@@ -244,10 +250,10 @@ test.describe("Working-days drag duration preservation", () => {
     // The start date should snap back to the constrained position
     expect(afterStart).toContain("04/13/2026");
 
-    // BUG: The end date changes from Sunday (Apr 19) to Friday (Apr 17)
-    // or Saturday (Apr 18) because the working-days drag code converts
-    // 7 calendar days to 5 working days, then propagateDateChanges uses
-    // that shortened calendar duration when snapping back.
+    // Regression: before the fix, the end date would shift from Sunday
+    // (Apr 19) to Friday or Saturday because the drag code shortened the
+    // calendar span to match the working-day count, and snap-back used
+    // that shortened duration. Now pre-drag durations are preserved.
     expect(afterEnd).toContain("04/19/2026");
     expect(afterDuration).toBe(initialDuration);
   });
@@ -259,7 +265,7 @@ test.describe("Working-days drag duration preservation", () => {
 
     // Perform multiple drag-and-snap-back cycles with large pixel deltas
     for (let i = 0; i < 3; i++) {
-      await dragTaskBar(page, "bravo", 500);
+      await dragTaskBar(page, "bravo", DRAG_PIXEL_DELTA);
       await page.waitForTimeout(500);
     }
 
@@ -267,7 +273,7 @@ test.describe("Working-days drag duration preservation", () => {
     const afterEnd = await getEndDate(page, "bravo");
 
     // Bravo should snap back to Mon-Sun (Apr 13-19) after each drag.
-    // The bug causes it to shrink to Mon-Sat (Apr 13-18) or Mon-Fri (Apr 13-17).
+    // Before the fix, repeated drags would shrink it progressively.
     expect(afterStart).toContain("04/13/2026");
     expect(afterEnd).toContain("04/19/2026");
   });
@@ -280,7 +286,7 @@ test.describe("Working-days drag duration preservation", () => {
     const initialCharlieDuration = await getDuration(page, "charlie");
 
     // Drag bravo right — auto-schedule should cascade to charlie too
-    await dragTaskBar(page, "bravo", 500);
+    await dragTaskBar(page, "bravo", DRAG_PIXEL_DELTA);
     await page.waitForTimeout(500);
 
     const afterCharlieStart = await getStartDate(page, "charlie");

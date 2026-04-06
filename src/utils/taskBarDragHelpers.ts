@@ -4,9 +4,9 @@
  *
  * Duration semantics: when working-days mode is on, drag operations preserve
  * the task's **working-day duration** (via computeEndDateForDrag). This may
- * change the calendar-day duration. The downstream constraint propagation in
- * dateAdjustment.ts is responsible for also preserving working-day duration
- * during snap-back — see PropagationWorkingDaysContext.
+ * change the calendar-day duration. The snap-back path in
+ * useTaskBarInteraction captures pre-drag calendar durations to prevent
+ * tasks from shrinking — see preDragDurations in DragDependencyContext.
  */
 
 import type { Task, TaskType } from "@/types/chart.types";
