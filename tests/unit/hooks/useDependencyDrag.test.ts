@@ -296,7 +296,8 @@ describe("useDependencyDrag", () => {
       result.current.endDrag(TASK_B.id, "start");
     });
 
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS");
+    // Both tasks share identical dates → FS lag = -10 (full overlap)
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS", -10);
     expect(result.current.dragState.isDragging).toBe(false);
   });
 
@@ -345,7 +346,8 @@ describe("useDependencyDrag", () => {
     });
 
     // Direction is always source→target; type inferred from handle combination
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SS");
+    // Both tasks start on same date → SS lag = 0
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SS", 0);
   });
 
   it("creates FF dependency when end→end drag", () => {
@@ -366,7 +368,8 @@ describe("useDependencyDrag", () => {
       result.current.endDrag(TASK_B.id, "end");
     });
 
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FF");
+    // Both tasks end on same date → FF lag = 0
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FF", 0);
   });
 
   it("creates SF dependency when start→end drag", () => {
@@ -387,7 +390,8 @@ describe("useDependencyDrag", () => {
       result.current.endDrag(TASK_B.id, "end");
     });
 
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SF");
+    // SF: successor.end(Jan 10) - predecessor.start(Jan 1) = 9
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "SF", 9);
   });
 
   it("defaults to 'start' target side when endDrag called without side (body drop)", () => {
@@ -409,7 +413,8 @@ describe("useDependencyDrag", () => {
       result.current.endDrag(TASK_B.id);
     });
 
-    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS");
+    // Body drop defaults to FS; same dates → lag = -10
+    expect(addDepSpy).toHaveBeenCalledWith(TASK_A.id, TASK_B.id, "FS", -10);
   });
 
   // -------------------------------------------------------------------------

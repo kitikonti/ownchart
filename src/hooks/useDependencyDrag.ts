@@ -13,13 +13,15 @@ import type {
 } from "@/types/dependency.types";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { clientToSvgCoords } from "@/utils/svgCoords";
+import { calculateInitialLag } from "@/utils/graph/dateAdjustment";
 import toast from "react-hot-toast";
 
 /** Adds a dependency of the given type; returns success/failure with an optional message. */
 type AddDependencyFn = (
   fromId: TaskId,
   toId: TaskId,
-  type?: DependencyType
+  type?: DependencyType,
+  lag?: number
 ) => { success: boolean; error?: string };
 
 /** Checks whether adding a dependency would create a cycle in the graph. */
@@ -166,7 +168,22 @@ function attemptCreateDependency({
       targetSide
     );
 
-    const result = addDependency(fromId, toId, type);
+    // Auto-calculate lag from current task positions so tasks don't move
+    const fromTask = tasks.find((t) => t.id === fromId);
+    const toTask = tasks.find((t) => t.id === toId);
+    const lag =
+      fromTask?.startDate &&
+      fromTask?.endDate &&
+      toTask?.startDate &&
+      toTask?.endDate
+        ? calculateInitialLag(
+            { startDate: fromTask.startDate, endDate: fromTask.endDate },
+            { startDate: toTask.startDate, endDate: toTask.endDate },
+            type
+          )
+        : 0;
+
+    const result = addDependency(fromId, toId, type, lag);
 
     if (result.success) {
       const fromTask = tasks.find((t) => t.id === fromId);

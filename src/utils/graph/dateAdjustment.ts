@@ -16,7 +16,13 @@ import type {
   DateAdjustment,
 } from "@/types/dependency.types";
 import { addDays, calculateDuration } from "@/utils/dateUtils";
+import { differenceInDays, parseISO } from "date-fns";
 import { topologicalSort, getSuccessors } from "./topologicalSort";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
+import {
+  calculateWorkingDays,
+  addWorkingDays,
+} from "@/utils/workingDaysCalculator";
 
 // ---------------------------------------------------------------------------
 // Constraint calculation
@@ -77,6 +83,193 @@ export function calculateConstrainedDates(
   }
 }
 
+/**
+ * Calculate the initial lag that preserves the current task positions when
+ * creating a dependency. This is the inverse of calculateConstrainedDates:
+ * given the actual positions of predecessor and successor, it computes the lag
+ * that would produce those exact positions under the given dependency type.
+ *
+ * @param predecessor - Start/end dates of the predecessor task
+ * @param successor - Start/end dates of the successor task
+ * @param type - Dependency type (FS, SS, FF, SF)
+ * @returns The lag in days (positive = gap, negative = overlap)
+ */
+export function calculateInitialLag(
+  predecessor: PredecessorDates,
+  successor: PredecessorDates,
+  type: DependencyType
+): number {
+  switch (type) {
+    case "FS":
+      // Inverse of: successor.start = predecessor.end + 1 + lag
+      return (
+        differenceInDays(
+          parseISO(successor.startDate),
+          parseISO(predecessor.endDate)
+        ) - 1
+      );
+    case "SS":
+      // Inverse of: successor.start = predecessor.start + lag
+      return differenceInDays(
+        parseISO(successor.startDate),
+        parseISO(predecessor.startDate)
+      );
+    case "FF":
+      // Inverse of: successor.end = predecessor.end + lag
+      return differenceInDays(
+        parseISO(successor.endDate),
+        parseISO(predecessor.endDate)
+      );
+    case "SF":
+      // Inverse of: successor.end = predecessor.start + lag
+      return differenceInDays(
+        parseISO(successor.endDate),
+        parseISO(predecessor.startDate)
+      );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lag ↔ working-days conversion
+// ---------------------------------------------------------------------------
+
+/** Working-days context for lag conversion. */
+export interface LagWorkingDaysContext {
+  config: WorkingDaysConfig;
+  holidayRegion?: string;
+}
+
+/**
+ * Get the reference date from which lag is measured for a given dependency type.
+ * - FS: predecessor end date (lag counts from day after end)
+ * - SS: predecessor start date (lag counts from start)
+ * - FF: predecessor end date (lag counts from end)
+ * - SF: predecessor start date (lag counts from start)
+ */
+function getLagReferenceDate(
+  predecessor: PredecessorDates,
+  type: DependencyType
+): string {
+  switch (type) {
+    case "FS":
+    case "FF":
+      return predecessor.endDate;
+    case "SS":
+    case "SF":
+      return predecessor.startDate;
+  }
+}
+
+/**
+ * Convert a calendar-day lag to a working-day lag for display.
+ *
+ * The conversion is context-dependent: it uses the predecessor's reference
+ * date to determine which specific calendar days fall in the gap, then
+ * counts how many of those are working days.
+ *
+ * @param calendarLag - Lag in calendar days (stored value)
+ * @param predecessor - Predecessor task dates
+ * @param type - Dependency type
+ * @param ctx - Working days configuration
+ * @returns Lag expressed in working days
+ */
+export function lagCalendarToWorking(
+  calendarLag: number,
+  predecessor: PredecessorDates,
+  type: DependencyType,
+  ctx: LagWorkingDaysContext
+): number {
+  if (calendarLag === 0) return 0;
+
+  const ref = getLagReferenceDate(predecessor, type);
+  // For FS, lag is measured from ref+1. For SS/FF/SF, from ref itself.
+  const offset = type === "FS" ? 1 : 0;
+
+  if (calendarLag > 0) {
+    const gapStart = addDays(ref, offset);
+    const gapEnd = addDays(ref, offset + calendarLag - 1);
+    return calculateWorkingDays(
+      gapStart,
+      gapEnd,
+      ctx.config,
+      ctx.holidayRegion
+    );
+  } else {
+    // Negative lag (overlap): count working days in the overlap range
+    const overlapStart = addDays(ref, offset + calendarLag);
+    const overlapEnd = addDays(ref, offset - 1);
+    return -calculateWorkingDays(
+      overlapStart,
+      overlapEnd,
+      ctx.config,
+      ctx.holidayRegion
+    );
+  }
+}
+
+/**
+ * Convert a working-day lag (user input) to a calendar-day lag for storage.
+ *
+ * Given a desired working-day gap, compute how many calendar days are needed
+ * from the predecessor's reference date to span that many working days.
+ *
+ * @param workingLag - Lag in working days (user input)
+ * @param predecessor - Predecessor task dates
+ * @param type - Dependency type
+ * @param ctx - Working days configuration
+ * @returns Lag expressed in calendar days (for storage)
+ */
+export function lagWorkingToCalendar(
+  workingLag: number,
+  predecessor: PredecessorDates,
+  type: DependencyType,
+  ctx: LagWorkingDaysContext
+): number {
+  if (workingLag === 0) return 0;
+
+  const ref = getLagReferenceDate(predecessor, type);
+  const offset = type === "FS" ? 1 : 0;
+
+  if (workingLag > 0) {
+    // Compute the successor's start date directly using working-day math.
+    // For FS: the successor starts at the (workingLag + 1)th working day
+    // after pred.end (the +1 accounts for the successor start itself).
+    // Then derive the calendar lag from the start date.
+    const dayAfterRef = addDays(ref, offset);
+    const successorStart = addWorkingDays(
+      dayAfterRef,
+      workingLag + 1,
+      ctx.config,
+      ctx.holidayRegion
+    );
+    // FS: calendarLag = successorStart - pred.end - 1
+    // SS: calendarLag = successorStart - pred.start
+    return differenceInDays(parseISO(successorStart), parseISO(ref)) - offset;
+  } else {
+    // Negative lag: advance backward (approximate via forward scan)
+    // For negative working-day lag, count backward from the reference point
+    const absWorking = -workingLag;
+    // Scan backward: find the date such that there are absWorking working days
+    // between it and the reference point
+    let candidateDate = addDays(ref, offset - 1);
+    let found = 0;
+    const maxIter = absWorking * 7 + 60; // safety limit
+    for (let i = 0; i < maxIter && found < absWorking; i++) {
+      candidateDate = addDays(candidateDate, -1);
+      const wd = calculateWorkingDays(
+        candidateDate,
+        candidateDate,
+        ctx.config,
+        ctx.holidayRegion
+      );
+      if (wd > 0) found++;
+    }
+    return (
+      differenceInDays(parseISO(candidateDate), parseISO(ref)) - offset + 1
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Date propagation
 // ---------------------------------------------------------------------------
@@ -104,7 +297,8 @@ interface WorkingDates {
 export function propagateDateChanges(
   tasks: Task[],
   dependencies: Dependency[],
-  changedTaskIds?: TaskId[]
+  changedTaskIds?: TaskId[],
+  options?: { bidirectional?: boolean }
 ): DateAdjustment[] {
   if (tasks.length === 0 || dependencies.length === 0) return [];
 
@@ -186,11 +380,19 @@ export function propagateDateChanges(
       }
     }
 
-    // Apply adjustment if the task needs to move forward
-    if (
+    // Apply adjustment if the task needs to move.
+    // Forward-only (default): only move if constraint requires a later start.
+    // Bidirectional: move to the exact constraint position (earlier or later).
+    const needsMove =
       latestRequiredStart !== null &&
       latestRequiredEnd !== null &&
-      latestRequiredStart > current.startDate
+      (options?.bidirectional
+        ? latestRequiredStart !== current.startDate
+        : latestRequiredStart > current.startDate);
+    if (
+      needsMove &&
+      latestRequiredStart !== null &&
+      latestRequiredEnd !== null
     ) {
       adjustments.push({
         taskId: task.id,
