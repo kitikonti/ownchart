@@ -20,6 +20,10 @@ import type {
   LagWorkingDaysContext,
   WorkingDaysContext,
 } from "@/utils/graph/dateAdjustment";
+import {
+  WD_THANKSGIVING,
+  wdThanksgivingTuple,
+} from "../../fixtures/wdThanksgiving";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
 import type { TaskId, HexColor } from "@/types/branded.types";
@@ -1253,12 +1257,7 @@ describe("calculateInitialLag — working days", () => {
 });
 
 describe("propagateDateChanges — Thanksgiving golden fixture (#82 stage 6)", () => {
-  it("cascades the WD_THANKSGIVING fixture through the Thanksgiving holiday", async () => {
-    // Late-bind the fixture import so the test file's prelude doesn't get
-    // longer for tests that don't need it.
-    const { WD_THANKSGIVING, wdThanksgivingTuple } = await import(
-      "../../fixtures/wdThanksgiving"
-    );
+  it("cascades the WD_THANKSGIVING fixture through the Thanksgiving holiday", () => {
     const { tasks, dependencies } = wdThanksgivingTuple();
     const wdCtxHolidays: WorkingDaysContext = {
       enabled: true,

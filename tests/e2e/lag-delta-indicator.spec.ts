@@ -151,9 +151,10 @@ test.describe("Lag-delta indicator pill", () => {
     await expect(pill).toHaveAttribute("data-dep-id", "dep-lagdelta-ab");
     // The text should match the Xd → Yd arrow form. We don't pin the
     // exact numbers because the calendar-day delta depends on the
-    // pixels-per-day scale, but the format is invariant.
+    // pixels-per-day scale, but the format is invariant. The leading
+    // `−?` matches the Unicode minus sign used by formatLagValue.
     const text = await pill.locator("text").textContent();
-    expect(text).toMatch(/^[\u22120-9\d]+d → [\u22120-9\d]+d$/);
+    expect(text).toMatch(/^−?\d+d → −?\d+d$/u);
 
     // Release — pill must disappear.
     await page.mouse.up();
@@ -161,9 +162,10 @@ test.describe("Lag-delta indicator pill", () => {
   });
 
   test("does NOT appear when auto-scheduling is ON", async ({ page }) => {
+    const opts = buildOptions();
     await injectAndNavigate(page, {
-      ...buildOptions(),
-      chartState: { ...buildOptions().chartState, autoScheduling: true },
+      ...opts,
+      chartState: { ...opts.chartState, autoScheduling: true },
     });
 
     const taskB = page

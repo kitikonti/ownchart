@@ -573,24 +573,26 @@ describe("workingDaysCalculator", () => {
 
   // ── addWorkingDays loop guard ──────────────────────────────────────────────
 
-  // ── DST boundary behaviour (#82 stage 6 follow-up) ────────────────────────
+  // ── Calendar arithmetic invariants across DST windows ────────────────────
   //
-  // The YYYY-MM-DD string contract requires that addWorkingDays /
-  // subtractWorkingDays / calculateWorkingDays operate on calendar dates,
-  // never on Date *instants*. date-fns parseISO("YYYY-MM-DD") returns local
-  // midnight, and date-fns addDays advances by 24h * n. The danger is that
-  // when the local DST transition lands inside one of those 24h windows,
-  // the resulting Date may skew by ±1 hour, and format(date, "yyyy-MM-dd")
-  // could produce the wrong calendar day.
+  // **Honesty caveat**: in CI, Node defaults to UTC, where there is no DST
+  // and these tests prove only that the helpers handle the DST date *windows*
+  // correctly under whatever TZ the test process uses. They do NOT prove
+  // correctness in a real DST timezone unless you run them with TZ set:
   //
-  // These tests construct ranges that span DST transitions in a non-UTC
-  // timezone (US: spring-forward Mar 9 2025, fall-back Nov 2 2025) and
-  // verify the YYYY-MM-DD outputs are correct. The tests pass in any
-  // timezone Node defaults to because parseISO/format are local-anchored —
-  // what they guard against is a future refactor that reaches for
-  // Date.UTC() or new Date("YYYY-MM-DDTHH:MM:SSZ"), which WOULD drift.
+  //     TZ=America/Santiago npm run test:unit -- workingDaysCalculator
+  //
+  // What they DO catch under any TZ: a future refactor that swaps the
+  // calendar-day pipeline (parseISO + addDays + format from date-fns,
+  // all local-time anchored) for Date.UTC() / "YYYY-MM-DDTHH:MM:SSZ"
+  // parsing — those would drift by ±1 hour across DST and shift the
+  // YYYY-MM-DD output.
+  //
+  // The 2025 spring-forward (Mar 9) and fall-back (Nov 2) US dates are
+  // chosen because they're the most common DST boundary in CI test runners
+  // configured for North American timezones.
 
-  describe("DST boundary correctness", () => {
+  describe("calendar arithmetic across DST windows", () => {
     it("addWorkingDays crosses spring-forward (Mar 9 2025) without drift", () => {
       // Mon 2025-03-03 + 10 working days (Sat+Sun excluded) = Fri 2025-03-14
       // The range crosses the spring-forward boundary on Sun Mar 9.
