@@ -14,9 +14,10 @@ import { useChartStore } from "@/store/slices/chartSlice";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { getSVGPoint } from "@/utils/svgUtils";
 import {
-  calculateInitialLag,
   calculateConstrainedDates,
+  calculateInitialLag,
 } from "@/utils/graph/dateAdjustment";
+import { computeLagDeltaForPreview } from "@/utils/lagDeltaHelpers";
 import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import toast from "react-hot-toast";
 import {
@@ -48,56 +49,6 @@ export interface UseTaskBarInteractionReturn {
   isDragging: boolean;
   onMouseDown: (e: React.MouseEvent<SVGGElement>) => void;
   onMouseMove: (e: React.MouseEvent<SVGGElement>) => void;
-}
-
-/**
- * Compute the would-be new lag for the FIRST dependency that the dragged
- * task participates in, given a *preview* (start, end) for the task. Returns
- * `null` when:
- *   - the task isn't part of any dependency,
- *   - the would-be lag matches the stored lag (no visible delta),
- *   - the predecessor or successor task can't be resolved.
- *
- * Selection rule (matches the "winning constraint" wording in the #82 spec):
- * preferred match is the first dep where the dragged task is the *successor*
- * (incoming dependency); falls back to the first outgoing dep otherwise.
- * Sibling deps deliberately stay static — only one pill is shown per gesture.
- *
- * Pure relative to the store: the caller passes the snapshot, so this can
- * run inside an animation frame without re-reading state on every tick.
- */
-function computeLagDeltaForPreview(
-  draggedTaskId: TaskId,
-  previewStart: string,
-  previewEnd: string,
-  tasks: readonly Task[],
-  dependencies: readonly Dependency[],
-  wdCtx: WorkingDaysContext
-): { depId: string; oldLag: number; newLag: number } | null {
-  // Prefer incoming deps so the pill anchors near the dragged task itself
-  // (the natural "this is what your drag is doing" surface). Outgoing deps
-  // are a secondary fallback for tasks that have no predecessors.
-  const incoming = dependencies.find((d) => d.toTaskId === draggedTaskId);
-  const dep = incoming ?? dependencies.find((d) => d.fromTaskId === draggedTaskId);
-  if (!dep) return null;
-
-  const predecessor = tasks.find((t) => t.id === dep.fromTaskId);
-  const successor = tasks.find((t) => t.id === dep.toTaskId);
-  if (!predecessor || !successor) return null;
-
-  const predDates =
-    dep.fromTaskId === draggedTaskId
-      ? { startDate: previewStart, endDate: previewEnd }
-      : { startDate: predecessor.startDate, endDate: predecessor.endDate };
-  const succDates =
-    dep.toTaskId === draggedTaskId
-      ? { startDate: previewStart, endDate: previewEnd }
-      : { startDate: successor.startDate, endDate: successor.endDate };
-
-  const newLag = calculateInitialLag(predDates, succDates, dep.type, wdCtx);
-  const oldLag = dep.lag ?? 0;
-  if (newLag === oldLag) return null;
-  return { depId: dep.id, oldLag, newLag };
 }
 
 /**

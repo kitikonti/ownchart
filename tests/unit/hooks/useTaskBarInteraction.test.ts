@@ -396,6 +396,31 @@ describe('useTaskBarInteraction', () => {
       // Start should remain original, end should shift
       expect(result.current.previewGeometry?.startDate).toBe('2025-01-10');
       expect(result.current.previewGeometry?.endDate).toBe('2025-01-22');
+      // Resize-path lag-delta wiring (#82 stage 4): the setter must be
+      // called even when no dependency exists (it pushes null in that case),
+      // proving the resize branch is no longer skipping the indicator hook.
+      expect(setLagDeltaSpy).toHaveBeenCalled();
+    });
+
+    it('updates lag-delta indicator on drag mousemove (#82 stage 4)', async () => {
+      mockGetSVGPoint.mockReturnValue({ x: 200, y: 50 });
+      const task = createTask();
+      const scale = createScale({ pixelsPerDay: 25 });
+
+      const { result } = renderHook(() =>
+        useTaskBarInteraction(task, scale, createGeometry()),
+      );
+
+      act(() => {
+        result.current.onMouseDown(createMockSVGEvent(200));
+      });
+      await act(async () => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 275 }));
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+      });
+
+      // No deps in fixture → setLagDelta(null) is called, but it IS called.
+      expect(setLagDeltaSpy).toHaveBeenCalled();
     });
 
     it('updates preview for resize-left', async () => {

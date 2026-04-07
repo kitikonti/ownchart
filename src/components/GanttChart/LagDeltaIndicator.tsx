@@ -20,18 +20,23 @@ import { calculateArrowPath } from "@/utils/arrowPath";
 import { COLORS } from "@/styles/design-tokens";
 
 /**
- * Format a lag value for the pill. Always uses the suffix `d` (matches the
- * existing dependency panel label). Negative values use a Unicode minus
- * (`−`) instead of a hyphen so they aren't visually mistaken for a
- * hyphenation point in `Xd − Yd`.
+ * Format a single lag value for display. Always uses the suffix `d` (matches
+ * the existing dependency panel label). Negative values use a Unicode minus
+ * (`−`) instead of an ASCII hyphen so they aren't visually mistaken for a
+ * hyphenation point inside the `Xd → Yd` arrow form.
+ *
+ * Exported for unit tests.
+ */
+export function formatLagValue(value: number): string {
+  if (value < 0) return `−${Math.abs(value)}d`;
+  return `${value}d`;
+}
+
+/**
+ * Format the full `Xd → Yd` arrow text for the pill. Exported for tests.
  */
 export function formatLagDeltaText(oldLag: number, newLag: number): string {
   return `${formatLagValue(oldLag)} → ${formatLagValue(newLag)}`;
-}
-
-function formatLagValue(value: number): string {
-  if (value < 0) return `−${Math.abs(value)}d`;
-  return `${value}d`;
 }
 
 // ─── Geometry constants ─────────────────────────────────────────────────────
