@@ -18,7 +18,7 @@ export interface GanttFile {
   // Format identification
   fileVersion: string; // "1.0.0" - file format version
   appVersion?: string; // "0.0.1" - app version that created it (optional on load)
-  schemaVersion?: number; // 1 - for migration tracking (optional on load)
+  schemaVersion?: number; // current = 2 (#82) — see config/version.ts
 
   // Chart data
   chart: {
@@ -173,7 +173,19 @@ export interface SerializedDependency {
   from: string; // fromTaskId
   to: string; // toTaskId
   type: "FS" | "SS" | "FF" | "SF";
-  lag?: number; // Offset days
+  /**
+   * Lag/lead in the unit dictated by the file's working-days mode.
+   *
+   * - When the chart's `workingDaysMode === false`: lag is in **calendar days**.
+   * - When `workingDaysMode === true`: lag is in **working days** governed by
+   *   the file's `workingDaysConfig` and `holidayRegion` (#82 stage 2).
+   *
+   * Positive values are gaps; negative values are overlaps. Round-trip is
+   * stable: serialize → load → serialize yields the same lag value because
+   * the unit is implied by the global mode flag, not stored per-dependency
+   * (see decision D1 in epic #79).
+   */
+  lag?: number;
   createdAt?: string;
 }
 

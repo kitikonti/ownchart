@@ -141,8 +141,17 @@ function extractUnknownFields(
 }
 
 /**
- * Deserialize GanttFile JSON string to app state
- * Applies all 6 validation layers + migration + sanitization
+ * Deserialize GanttFile JSON string to app state.
+ * Applies all 6 validation layers + migration + sanitization.
+ *
+ * **Settings precedence on import (#82 stage 5):** the file's view settings —
+ * including `workingDaysMode`, `workingDaysConfig`, and `holidayRegion` — win
+ * over the user's current app preferences. There is no merge prompt: opening
+ * a chart that was authored with a different working-days configuration
+ * applies that configuration to the app state, because the dependency lag
+ * values inside the file are interpreted in the unit dictated by the file's
+ * own mode flag (D1 in epic #79). The user can change the configuration
+ * after load via the existing settings UI.
  *
  * @param content - JSON string from file
  * @param fileName - Original file name

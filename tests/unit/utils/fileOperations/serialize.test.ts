@@ -83,7 +83,10 @@ describe('File Operations - Serialization', () => {
       const json = serializeToGanttFile([], createSampleViewSettings());
       const parsed = JSON.parse(json);
 
-      expect(parsed.schemaVersion).toBe(1);
+      // #82 stage 5: bumped 1 → 2 to mark the lag-in-working-days semantic
+      // change. Hygiene only — no migration logic, but newly written files
+      // must carry the new revision.
+      expect(parsed.schemaVersion).toBe(2);
     });
   });
 
