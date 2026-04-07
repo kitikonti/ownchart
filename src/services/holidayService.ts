@@ -388,6 +388,27 @@ class _HolidayService {
   }
 
   /**
+   * Synchronously prime the per-year cache for every calendar year intersected
+   * by `[startDate, endDate]`. Subsequent `getHolidaysForYear` /
+   * `getHolidayForDateString` calls for those years are guaranteed cache hits,
+   * which is what makes the otherwise-async holiday data safe to consume from
+   * the synchronous scheduling pass in `dateAdjustment.ts`.
+   *
+   * No-op when no region is set or when the range is inverted.
+   */
+  preloadRange(startDate: Date, endDate: Date): void {
+    if (!this.currentCountry) return;
+    const start = toLocalMidnight(startDate);
+    const end = toLocalMidnight(endDate);
+    if (start > end) return;
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+    for (let year = startYear; year <= endYear; year++) {
+      this.getHolidaysForYear(year);
+    }
+  }
+
+  /**
    * Clear all cached holiday data without touching the active region.
    *
    * Use this when you want to force a fresh fetch for subsequent

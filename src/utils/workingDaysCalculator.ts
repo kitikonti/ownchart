@@ -46,6 +46,26 @@ export interface WorkingDaysSummary {
  */
 const WORKING_DAYS_LOOP_BUFFER = 60;
 
+/**
+ * Hard cap for {@link snapForwardToWorkingDay}. A degenerate config (e.g.
+ * Sat+Sun excluded *and* a holiday region that marks every weekday as a
+ * holiday) could otherwise loop indefinitely. Two years of calendar days is
+ * far beyond any realistic gap between working days.
+ */
+const SNAP_FORWARD_MAX_ITERATIONS = 366 * 2;
+
+/**
+ * Typed error thrown by {@link addWorkingDays} and {@link snapForwardToWorkingDay}
+ * when the iteration guard fires. Callers at the store/UI boundary catch this
+ * and surface a toast rather than letting a partial cascade leak through.
+ */
+export class WorkingDaysLoopError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "WorkingDaysLoopError";
+  }
+}
+
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 /**
@@ -145,14 +165,11 @@ function advanceByWorkingDays(
 
   while (remaining > 0) {
     if (iterations++ >= maxIterations) {
-      if (import.meta.env.DEV) {
-        console.warn(
-          "[addWorkingDays] Iteration guard fired — result is incorrect. " +
-            "A new exclusion axis may have been added to WorkingDaysConfig " +
-            "without updating addWorkingDays."
-        );
-      }
-      break;
+      throw new WorkingDaysLoopError(
+        "addWorkingDays iteration guard fired — the working-days configuration " +
+          "may exclude every day. Check excludeSaturday/Sunday/Holidays and the " +
+          "active holiday region."
+      );
     }
     currentDate = addDays(currentDate, 1);
     if (isWorkingDay(currentDate, config, holidayRegion)) {
@@ -299,6 +316,51 @@ export function addWorkingDays(
   if (remainingDays === 0) return startDate;
 
   return advanceByWorkingDays(startDate, remainingDays, config, holidayRegion);
+}
+
+/**
+ * Snap a date forward to the next working day (idempotent — returns the input
+ * unchanged if it is already a working day).
+ *
+ * This is the **single shared anchor-normalisation helper** referenced by D4
+ * in epic #79: any operation that may land a task start/end on a non-working
+ * day (drag, resize, paste, CSV import, dependency cascade landing on a
+ * holiday/weekend) routes through this function so that all four code paths
+ * agree on the rule.
+ *
+ * @throws {WorkingDaysLoopError} when the iteration cap is exceeded (degenerate
+ *   config that excludes every calendar day).
+ */
+export function snapForwardToWorkingDay(
+  dateString: string,
+  config: WorkingDaysConfig,
+  holidayRegion?: string
+): string {
+  // Fast path: nothing excluded → every day is a working day.
+  if (
+    !config.excludeSaturday &&
+    !config.excludeSunday &&
+    !config.excludeHolidays
+  ) {
+    return dateString;
+  }
+
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
+  }
+
+  let current = dateString;
+  let iterations = 0;
+  while (!isWorkingDay(current, config, holidayRegion)) {
+    if (iterations++ >= SNAP_FORWARD_MAX_ITERATIONS) {
+      throw new WorkingDaysLoopError(
+        "snapForwardToWorkingDay iteration guard fired — the working-days " +
+          "configuration may exclude every day."
+      );
+    }
+    current = addDays(current, 1);
+  }
+  return current;
 }
 
 /**
