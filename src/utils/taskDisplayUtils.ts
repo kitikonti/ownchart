@@ -48,15 +48,14 @@ export function computeDisplayTask(
   wdContext?: WorkingDaysDisplayContext
 ): Task {
   const useWd = wdContext?.mode === true;
+  // Capture as a narrowed local so the closure below doesn't need non-null
+  // assertions on `wdContext` after the guard.
+  const wdConfig = useWd ? wdContext.config : undefined;
+  const wdRegion = useWd ? wdContext.region : undefined;
 
   const computeDuration = (startDate: string, endDate: string): number =>
-    useWd
-      ? calculateWorkingDays(
-          startDate,
-          endDate,
-          wdContext!.config,
-          wdContext!.region
-        )
+    wdConfig
+      ? calculateWorkingDays(startDate, endDate, wdConfig, wdRegion)
       : calculateDuration(startDate, endDate);
 
   if (task.type === "summary" && tasks) {

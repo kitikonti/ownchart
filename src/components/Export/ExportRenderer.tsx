@@ -48,6 +48,13 @@ interface ExportRendererProps {
   currentAppZoom?: number;
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
+  /**
+   * When true, the duration column header is suffixed with "(wd)". Plumbed
+   * from the export entry point so this component stays a pure props-driven
+   * renderer (no store reads for cross-cutting export state). Defaults to
+   * `false` when omitted. See #79/#81.
+   */
+  workingDaysMode?: boolean;
 }
 
 /** Column definitions for export (labels must match app's tableColumns.ts) */
@@ -256,14 +263,13 @@ export function ExportRenderer({
   currentAppZoom = 1,
   projectDateRange: providedProjectDateRange,
   visibleDateRange,
+  workingDaysMode = false,
 }: ExportRendererProps): JSX.Element {
   // Get density configuration based on selected density
   const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
 
   // Get holiday region from chart settings (for holiday highlighting)
   const holidayRegion = useChartStore((state) => state.holidayRegion);
-  // Working-days mode controls duration column header label suffix
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   // Build flattened task list (show all tasks, none collapsed for export)
   const flattenedTasks = useMemo(() => {

@@ -2,10 +2,31 @@
  * Tests for computeDisplayTask pure utility.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { parseISO } from "date-fns";
+
+// Mock holidayService so the holiday test below is deterministic and does not
+// depend on network or runtime locale data. computeDisplayTask only reaches
+// the service via calculateWorkingDays when `excludeHolidays === true`, so
+// existing tests with the weekend-only config are unaffected.
+vi.mock("@/services/holidayService", () => ({
+  holidayService: {
+    setRegion: vi.fn(),
+    getHolidayForDateString: vi.fn().mockReturnValue(null),
+    getHolidaysInRange: vi.fn().mockReturnValue([]),
+  },
+}));
+
 import { computeDisplayTask } from "@/utils/taskDisplayUtils";
+import { holidayService } from "@/services/holidayService";
 import type { Task } from "@/types/chart.types";
 import type { WorkingDaysConfig } from "@/types/preferences.types";
+
+const mockGetHolidayForDateString =
+  holidayService.getHolidayForDateString as ReturnType<typeof vi.fn>;
+const mockGetHolidaysInRange = holidayService.getHolidaysInRange as ReturnType<
+  typeof vi.fn
+>;
 import { tid } from "../../helpers/branded";
 import { hex } from "../../helpers/branded";
 
@@ -28,6 +49,12 @@ function makeTask(overrides: Partial<Task> = {}): Task {
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockGetHolidayForDateString.mockReturnValue(null);
+  mockGetHolidaysInRange.mockReturnValue([]);
+});
 
 describe("computeDisplayTask", () => {
   it("should recalculate duration for a regular task with both dates", () => {
@@ -167,6 +194,54 @@ describe("computeDisplayTask", () => {
       });
 
       expect(result.duration).toBe(7);
+    });
+
+    it("returns 0 WD for a milestone-style single-day task on a weekend", () => {
+      // 2025-01-11 is a Saturday → 0 working days under EXCLUDE_WEEKENDS.
+      // Milestones in the data model have start === end; the display utility
+      // should not crash and should report 0.
+      const milestone = makeTask({
+        type: "milestone",
+        startDate: "2025-01-11",
+        endDate: "2025-01-11",
+      });
+
+      const result = computeDisplayTask(milestone, null, {
+        mode: true,
+        config: wdConfig,
+      });
+
+      expect(result.duration).toBe(0);
+    });
+
+    it("excludes a holiday in the span when excludeHolidays is true", () => {
+      // 2025-01-06 (Mon) → 2025-01-10 (Fri) = 5 working days normally.
+      // Mock 2025-01-08 as a holiday → expected 4 WD.
+      mockGetHolidayForDateString.mockImplementation((dateStr: string) =>
+        dateStr === "2025-01-08"
+          ? { date: parseISO("2025-01-08"), name: "Test", type: "public" }
+          : null
+      );
+      mockGetHolidaysInRange.mockReturnValue([
+        { date: parseISO("2025-01-08"), name: "Test", type: "public" as const },
+      ]);
+
+      const task = makeTask({
+        startDate: "2025-01-06",
+        endDate: "2025-01-10",
+      });
+
+      const result = computeDisplayTask(task, null, {
+        mode: true,
+        config: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: true,
+        },
+        region: "US",
+      });
+
+      expect(result.duration).toBe(4);
     });
 
     it("computes parent WD duration over the parent's calendar span (D5), not sum of child WDs", () => {

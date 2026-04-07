@@ -14,7 +14,6 @@ import type {
   FlattenedTask,
 } from "./types";
 import { HEADER_LABELS, getColumnDisplayValue } from "./columns";
-import { useChartStore } from "@/store/slices/chartSlice";
 import { getDefaultColumnWidth } from "./calculations";
 import {
   HEADER_HEIGHT,
@@ -499,6 +498,12 @@ function renderTaskRow(
 interface HeaderCellContext {
   y: number;
   cellPaddingX: number;
+  /**
+   * When true, the duration column header is suffixed with "(wd)" so the
+   * unit is unambiguous in PNG/PDF/SVG exports. Plumbed through from the
+   * export entry point — keeps this module pure (no store access).
+   */
+  workingDaysMode: boolean;
 }
 
 function renderHeaderCell(
@@ -508,13 +513,8 @@ function renderHeaderCell(
   ctx: HeaderCellContext
 ): void {
   const { colX, colWidth } = layout;
-  const { y, cellPaddingX } = ctx;
-  // Working-days display: when WD mode is on, the duration column header is
-  // suffixed with "(wd)" so the unit is unambiguous in PNG/PDF/SVG exports.
-  // Read straight from the store rather than threading the flag through every
-  // export option type — this is a leaf-most, sync read at render time.
+  const { y, cellPaddingX, workingDaysMode } = ctx;
   const baseLabel = HEADER_LABELS[key] ?? "";
-  const workingDaysMode = useChartStore.getState().workingDaysMode;
   const label =
     key === "duration" && workingDaysMode && baseLabel
       ? `${baseLabel} (wd)`
@@ -559,6 +559,11 @@ export interface TaskTableHeaderOptions {
   x: number;
   y: number;
   density: UiDensity;
+  /**
+   * When true, the duration column header label is suffixed with "(wd)".
+   * Defaults to false when omitted (calendar-day mode). See #79/#81.
+   */
+  workingDaysMode?: boolean;
 }
 
 /**
@@ -572,11 +577,20 @@ export function renderTaskTableHeader(
   svg: SVGSVGElement,
   options: TaskTableHeaderOptions
 ): SVGGElement {
-  const { selectedColumns, columnWidths, totalWidth, x, y, density } = options;
+  const {
+    selectedColumns,
+    columnWidths,
+    totalWidth,
+    x,
+    y,
+    density,
+    workingDaysMode = false,
+  } = options;
   const densityConfig = DENSITY_CONFIG[density];
   const headerCtx: HeaderCellContext = {
     y,
     cellPaddingX: densityConfig.cellPaddingX,
+    workingDaysMode,
   };
 
   const group = createSVGEl("g");

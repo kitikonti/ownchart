@@ -7,7 +7,6 @@ import { useCallback, useMemo, useEffect } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TimelineScale } from "@/utils/timelineUtils";
 import { prepareExportTasks } from "@/utils/export/prepareExportTasks";
-import { calculateWorkingDays } from "@/utils/workingDaysCalculator";
 import type {
   ExportFormat,
   ExportOptions,
@@ -240,28 +239,17 @@ export function useExportDialog(): UseExportDialogResult {
     [projectTitle, fileName]
   );
 
-  const exportTasks = useMemo(() => {
-    const filtered = prepareExportTasks(tasks, hiddenTaskIds);
-    // When working-days mode is on, override each task's stored (calendar)
-    // duration with the working-day count of its calendar span. This keeps
-    // exported PNG/PDF/SVG aligned with the table view (#81). Storage is not
-    // mutated — only the in-memory copy passed to the export pipeline.
-    if (!workingDaysMode) return filtered;
-    return filtered.map((task) => {
-      if (task.type === "milestone" || !task.startDate || !task.endDate) {
-        return task;
-      }
-      return {
-        ...task,
-        duration: calculateWorkingDays(
-          task.startDate,
-          task.endDate,
-          workingDaysConfig,
-          holidayRegion
-        ),
-      };
-    });
-  }, [tasks, hiddenTaskIds, workingDaysMode, workingDaysConfig, holidayRegion]);
+  const exportTasks = useMemo(
+    () =>
+      prepareExportTasks(tasks, hiddenTaskIds, {
+        workingDays: {
+          mode: workingDaysMode,
+          config: workingDaysConfig,
+          region: holidayRegion,
+        },
+      }),
+    [tasks, hiddenTaskIds, workingDaysMode, workingDaysConfig, holidayRegion]
+  );
   const hiddenTaskCount = useMemo(
     () => tasks.length - exportTasks.length,
     [tasks.length, exportTasks.length]
@@ -368,6 +356,7 @@ export function useExportDialog(): UseExportDialogResult {
           projectDateRange,
           visibleDateRange,
           projectName,
+          workingDaysMode,
         });
       } else if (selectedExportFormat === "pdf") {
         const { exportToPdf } = await import("@/utils/export/pdfExport");
@@ -385,6 +374,7 @@ export function useExportDialog(): UseExportDialogResult {
           projectLogo: projectLogo ?? undefined,
           dateFormat,
           colorModeState,
+          workingDaysMode,
           onProgress: setExportProgress,
         });
       } else if (selectedExportFormat === "svg") {
@@ -399,6 +389,7 @@ export function useExportDialog(): UseExportDialogResult {
           visibleDateRange,
           projectName,
           colorModeState,
+          workingDaysMode,
           onProgress: setExportProgress,
         });
       }

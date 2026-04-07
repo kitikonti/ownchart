@@ -216,11 +216,23 @@ export const TASK_COLUMNS: ColumnDefinition[] = [
 /** Default pixel width for columns without a density-specific default */
 const DEFAULT_COLUMN_WIDTH_PX = 100;
 
+/** Stable identifier for the duration column — referenced by WD-mode width logic. */
+const DURATION_COLUMN_ID: ColumnId = "duration";
+
 /**
- * Extra pixels added to the duration column's default width when working-days
- * mode is on. The duration header switches from "DURATION" to "DURATION wd"
- * (with a small "wd" badge) and the base width is too tight to fit the badge
- * without touching the right border.
+ * Extra pixels added to the duration column's effective width when working-days
+ * mode is on.
+ *
+ * **Policy**: WD mode imposes a *minimum* on the duration column's rendered
+ * width (`base + DURATION_WD_EXTRA_PX`) so the "wd" badge in the header has
+ * breathing room. The minimum applies to *both* the density-aware default
+ * *and* any user-stored custom width — a narrower stored value is widened at
+ * render time only. Storage is never mutated, so toggling WD mode off restores
+ * the original width exactly. The user can still resize the column wider in
+ * either mode; only the *floor* changes with WD mode.
+ *
+ * The header switches from "DURATION" to "DURATION wd" (small badge) and the
+ * base width is too tight to fit the badge without touching the right border.
  */
 const DURATION_WD_EXTRA_PX = 28;
 
@@ -289,13 +301,11 @@ export function getColumnPixelWidth(
   }
   const base =
     getDensityDefault(columnId, densityConfig) ?? DEFAULT_COLUMN_WIDTH_PX;
+  // See DURATION_WD_EXTRA_PX above for the rendered-floor policy.
   const wdMin =
-    columnId === "duration" && workingDaysMode
+    columnId === DURATION_COLUMN_ID && workingDaysMode
       ? base + DURATION_WD_EXTRA_PX
       : 0;
-  // Working-days mode enforces a minimum width on the duration column so the
-  // "wd" badge in the header doesn't touch the column border, even when the
-  // user (or auto-fit) has stored a narrower custom width.
   if (columnWidths[columnId] !== undefined) {
     return Math.max(columnWidths[columnId], wdMin);
   }
@@ -318,7 +328,7 @@ export function getDensityAwareWidth(
   const defaultPx = getDensityDefault(columnId, densityConfig);
   if (defaultPx !== undefined) {
     const px =
-      columnId === "duration" && workingDaysMode
+      columnId === DURATION_COLUMN_ID && workingDaysMode
         ? defaultPx + DURATION_WD_EXTRA_PX
         : defaultPx;
     return `${px}px`;
@@ -342,9 +352,10 @@ export function buildGridTemplateColumns(
   return visibleColumns
     .map((col) => {
       const customWidth = columnWidths[col.id];
-      // Duration column under WD mode: enforce a minimum width so the header
-      // "wd" badge fits, regardless of any narrower stored custom width.
-      if (col.id === "duration" && workingDaysMode) {
+      // Duration column under WD mode: route through getColumnPixelWidth so
+      // the WD-min floor (see DURATION_WD_EXTRA_PX) is enforced uniformly,
+      // even when the user has stored a narrower custom width.
+      if (col.id === DURATION_COLUMN_ID && workingDaysMode) {
         const px = getColumnPixelWidth(
           col.id,
           columnWidths,

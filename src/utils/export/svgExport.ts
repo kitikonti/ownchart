@@ -65,6 +65,7 @@ export interface ExportToSvgParams {
   visibleDateRange?: { start: Date; end: Date };
   projectName?: string;
   colorModeState: ColorModeState;
+  workingDaysMode?: boolean;
   onProgress?: (progress: number) => void;
 }
 
@@ -130,6 +131,7 @@ async function renderAndSerializeSvg(
     visibleDateRange,
     colorModeState,
     projectName,
+    workingDaysMode,
     onProgress,
   } = params;
 
@@ -140,6 +142,7 @@ async function renderAndSerializeSvg(
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
+    workingDaysMode,
   });
   onProgress?.(40);
 
@@ -155,6 +158,7 @@ async function renderAndSerializeSvg(
     dimensions,
     colorModeState,
     projectName,
+    workingDaysMode,
   });
   onProgress?.(80);
 
@@ -190,6 +194,7 @@ export async function renderExportComponentAndWait(
     currentAppZoom: number;
     projectDateRange?: { start: Date; end: Date };
     visibleDateRange?: { start: Date; end: Date };
+    workingDaysMode?: boolean;
   }
 ): Promise<void> {
   await new Promise<void>((resolve) => {
@@ -404,6 +409,7 @@ interface RenderTaskTableSectionOptions {
   bodyYOffset: number;
   options: ExportOptions;
   colorModeState: ColorModeState;
+  workingDaysMode?: boolean;
 }
 
 /**
@@ -424,6 +430,7 @@ export function renderTaskTableSection(
     bodyYOffset,
     options,
     colorModeState,
+    workingDaysMode,
   } = sectionOpts;
 
   if (options.includeHeader) {
@@ -434,6 +441,7 @@ export function renderTaskTableSection(
       x: 0,
       y: 0,
       density: options.density,
+      workingDaysMode,
     };
     renderTaskTableHeader(svg, headerOpts);
   }
@@ -461,6 +469,7 @@ export interface BuildCompleteSvgParams {
   dimensions: { width: number; height: number };
   colorModeState: ColorModeState;
   projectName?: string;
+  workingDaysMode?: boolean;
 }
 
 /**
@@ -491,6 +500,7 @@ export function buildCompleteSvg(
     dimensions,
     colorModeState,
     projectName,
+    workingDaysMode,
   } = params;
 
   const { selectedColumns, taskTableWidth } = resolveExportLayout(
@@ -518,6 +528,7 @@ export function buildCompleteSvg(
     bodyYOffset,
     options,
     colorModeState,
+    workingDaysMode,
   });
 
   if (options.includeHeader && headerSvg) {
