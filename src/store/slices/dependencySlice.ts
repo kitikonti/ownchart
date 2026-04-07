@@ -25,7 +25,7 @@ import {
   propagateDateChanges,
   applyDateAdjustments,
 } from "@/utils/graph/dateAdjustment";
-import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import { recalculateSummaryAncestors } from "@/utils/hierarchy";
 import type { DateAdjustment } from "@/types/dependency.types";
 import toast from "react-hot-toast";
@@ -74,24 +74,6 @@ function validateNewDependency(
   }
 
   return { valid: true, fromTask, toTask };
-}
-
-/**
- * Build the working-days context from chartSlice. Lives here (rather than
- * shared) because three slices need it and the alternative — a chartSlice
- * selector — would force callers to import from yet another module. The
- * shape is identical in dependencySlice / taskSlice / useTaskBarInteraction.
- */
-function getWorkingDaysContext(): WorkingDaysContext {
-  const { workingDaysMode, workingDaysConfig, holidayRegion } =
-    useChartStore.getState();
-  return {
-    enabled: workingDaysMode,
-    config: workingDaysConfig,
-    holidayRegion: workingDaysConfig.excludeHolidays
-      ? holidayRegion
-      : undefined,
-  };
 }
 
 /**
@@ -307,6 +289,19 @@ export const useDependencyStore = create<DependencyStore>()(
       // The previous `enforceDepConstraint` post-processor is gone — all
       // working-days-aware math now lives in propagateDateChanges via the
       // workingDays context (#82 stage 3).
+      //
+      // Note: `changedTaskIds = [fromTaskId]` is used as a *scope filter*,
+      // not because the predecessor's dates changed — they didn't, the
+      // *dependency* changed. Passing the predecessor's id ensures the
+      // reachable-set in propagateDateChanges contains every transitive
+      // successor of this dependency. A future refactor could expose a
+      // dedicated `changedDependencyIds` parameter to make this intent
+      // explicit at the call site.
+      //
+      // Bidirectional cascade: with bidirectional=true, *every* reachable
+      // task can move earlier or later, not just the direct successor. This
+      // is intentional and is exercised by the WD-mode panel-edit test
+      // in dependencySlice.test.ts.
       let dateAdjustments: DateAdjustment[] = [];
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         const taskStore = useTaskStore.getState();

@@ -17,7 +17,7 @@ import {
   calculateInitialLag,
   calculateConstrainedDates,
 } from "@/utils/graph/dateAdjustment";
-import { calculateWorkingDays } from "@/utils/workingDaysCalculator";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import toast from "react-hot-toast";
 import {
   detectInteractionZone,
@@ -28,6 +28,7 @@ import {
   calculateDeltaDaysFromDates,
   buildMoveUpdates,
   buildResizeUpdate,
+  capturePreDragDurations,
 } from "@/utils/taskBarDragHelpers";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
@@ -47,19 +48,6 @@ export interface UseTaskBarInteractionReturn {
   isDragging: boolean;
   onMouseDown: (e: React.MouseEvent<SVGGElement>) => void;
   onMouseMove: (e: React.MouseEvent<SVGGElement>) => void;
-}
-
-/** Build working-days context from chart store. */
-function getWorkingDaysContext(): WorkingDaysContext {
-  const { workingDaysMode, workingDaysConfig, holidayRegion } =
-    useChartStore.getState();
-  return {
-    enabled: workingDaysMode,
-    config: workingDaysConfig,
-    holidayRegion: workingDaysConfig.excludeHolidays
-      ? holidayRegion
-      : undefined,
-  };
 }
 
 /**
@@ -119,59 +107,17 @@ function buildDragDependencyContext(
   const { tasks } = useTaskStore.getState();
   const { dependencies } = useDependencyStore.getState();
   const taskMap = new Map(tasks.map((t) => [t.id, t]));
-  const fallbackDurations = wdCtx.enabled
-    ? new Map(
-        tasks.map((t) => [
-          t.id,
-          Math.max(
-            1,
-            calculateWorkingDays(
-              t.startDate,
-              t.endDate,
-              wdCtx.config,
-              wdCtx.holidayRegion
-            )
-          ),
-        ])
-      )
-    : new Map(tasks.map((t) => [t.id, t.duration ?? 1]));
   return {
     tasks,
     dependencies,
     taskMap,
     movedSet: new Set(movedTaskIds),
-    preDragDurations: preDragDurations ?? fallbackDurations,
+    // Fallback to current durations (post-drag) when an explicit pre-drag
+    // map isn't supplied — correct for autoUpdateLag, which wants the lag
+    // to absorb the new positions.
+    preDragDurations: preDragDurations ?? capturePreDragDurations(tasks, wdCtx),
     wdCtx,
   };
-}
-
-/**
- * Capture the per-task duration map needed by `snapSuccessorToConstraint`,
- * in the unit dictated by the active working-days context. Called BEFORE
- * the drag update is committed so the original span is preserved even when
- * WD mode would shorten the calendar range.
- */
-function capturePreDragDurations(
-  tasks: Task[],
-  wdCtx: WorkingDaysContext
-): Map<TaskId, number> {
-  if (!wdCtx.enabled) {
-    return new Map(tasks.map((t) => [t.id, t.duration ?? 1]));
-  }
-  return new Map(
-    tasks.map((t) => [
-      t.id,
-      Math.max(
-        1,
-        calculateWorkingDays(
-          t.startDate,
-          t.endDate,
-          wdCtx.config,
-          wdCtx.holidayRegion
-        )
-      ),
-    ])
-  );
 }
 
 /**

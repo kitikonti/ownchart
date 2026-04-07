@@ -3,6 +3,7 @@ import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useHistoryStore } from "@/store/slices/historySlice";
 import { useFileStore } from "@/store/slices/fileSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import type { Dependency } from "@/types/dependency.types";
 import type { Task } from "@/types/chart.types";
 import { CommandType } from "@/types/command.types";
@@ -759,6 +760,159 @@ describe("Dependency Store", () => {
       const result = checkWouldCreateCycle("task-c", "task-a");
 
       expect(result.hasCycle).toBe(true);
+    });
+  });
+
+  // ─── Working-days-aware panel-edit propagation (#82 stage 3) ──────────────
+  //
+  // These tests pin the new contract: dependency panel edits route through
+  // propagateDateChanges with the workingDays context, replacing the deleted
+  // enforceDepConstraint post-processor. They also document the (intentional)
+  // behaviour change that the cascade is now bidirectional throughout the
+  // chain — previously only the direct successor moved bidirectionally.
+
+  describe("updateDependency — working-days mode", () => {
+    beforeEach(() => {
+      useChartStore.setState({
+        autoScheduling: true,
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: false,
+        },
+        holidayRegion: "US",
+      });
+    });
+
+    it("snaps successor to Monday when predecessor ends Friday and lag=0wd", () => {
+      // Reference week: Mon 2026-01-05 .. Fri 2026-01-09 (predecessor),
+      // Sat 10 / Sun 11 excluded, Mon 12 .. (successor).
+      const pred = createTestTask({
+        id: tid("pred"),
+        startDate: "2026-01-05",
+        endDate: "2026-01-09",
+        duration: 5,
+      });
+      const succ = createTestTask({
+        id: tid("succ"),
+        // Start somewhere far away so the panel edit must move it.
+        startDate: "2026-01-20",
+        endDate: "2026-01-22",
+        duration: 3,
+      });
+      useTaskStore.setState({ tasks: [pred, succ] });
+
+      const dep = createTestDependency({
+        id: "dep-fs",
+        fromTaskId: tid("pred"),
+        toTaskId: tid("succ"),
+        type: "FS",
+        lag: 5, // arbitrary; will be reset to 0
+      });
+      useDependencyStore.setState({ dependencies: [dep] });
+
+      const { updateDependency } = useDependencyStore.getState();
+      updateDependency("dep-fs", { lag: 0 });
+
+      const after = useTaskStore
+        .getState()
+        .tasks.find((t) => t.id === tid("succ"));
+      // FS lag=0 in WD mode → first working day on/after dayAfterPred (Sat 10)
+      // → Mon 2026-01-12. Span = 3 working days → ends Wed 2026-01-14.
+      expect(after?.startDate).toBe("2026-01-12");
+      expect(after?.endDate).toBe("2026-01-14");
+    });
+
+    it("cascades bidirectionally through a 3-task chain on lag reduction", () => {
+      // A → B (FS lag=5wd) → C (FS lag=0wd)
+      // Initial positions are correct for the *current* lag, then we shrink
+      // A→B's lag and verify both B and C move *earlier*. Pre-stage-3 the
+      // direct successor (B) would move earlier but C would not, because
+      // the cascade was forward-only and only triggered when later positions
+      // were forced.
+      const a = createTestTask({
+        id: tid("a"),
+        startDate: "2026-01-05",
+        endDate: "2026-01-09",
+        duration: 5,
+      });
+      const b = createTestTask({
+        id: tid("b"),
+        // FS lag=5wd from A: dayAfter Sat 10 → Mon 12 (lag=0) → +5wd → Mon 19
+        startDate: "2026-01-19",
+        endDate: "2026-01-21",
+        duration: 3,
+      });
+      const c = createTestTask({
+        id: tid("c"),
+        // FS lag=0 from B: dayAfter Wed 21 → Thu 22
+        startDate: "2026-01-22",
+        endDate: "2026-01-23",
+        duration: 2,
+      });
+      useTaskStore.setState({ tasks: [a, b, c] });
+
+      const ab = createTestDependency({
+        id: "dep-ab",
+        fromTaskId: tid("a"),
+        toTaskId: tid("b"),
+        type: "FS",
+        lag: 5,
+      });
+      const bc = createTestDependency({
+        id: "dep-bc",
+        fromTaskId: tid("b"),
+        toTaskId: tid("c"),
+        type: "FS",
+        lag: 0,
+      });
+      useDependencyStore.setState({ dependencies: [ab, bc] });
+
+      const { updateDependency } = useDependencyStore.getState();
+      updateDependency("dep-ab", { lag: 0 });
+
+      const tasks = useTaskStore.getState().tasks;
+      const newB = tasks.find((t) => t.id === tid("b"));
+      const newC = tasks.find((t) => t.id === tid("c"));
+      // B snaps to Mon 12 (FS lag=0 from A ending Fri 09).
+      expect(newB?.startDate).toBe("2026-01-12");
+      // C cascades bidirectionally — moves earlier to follow B.
+      // FS lag=0 from B ending Wed 14 → dayAfter Thu 15 → Thu 15.
+      expect(newC?.startDate).toBe("2026-01-15");
+    });
+
+    it("falls back to calendar arithmetic when workingDaysMode is off", () => {
+      useChartStore.setState({ workingDaysMode: false });
+      const pred = createTestTask({
+        id: tid("pred"),
+        startDate: "2026-01-05",
+        endDate: "2026-01-09",
+        duration: 5,
+      });
+      const succ = createTestTask({
+        id: tid("succ"),
+        startDate: "2026-01-20",
+        endDate: "2026-01-22",
+        duration: 3,
+      });
+      useTaskStore.setState({ tasks: [pred, succ] });
+
+      const dep = createTestDependency({
+        id: "dep-fs",
+        fromTaskId: tid("pred"),
+        toTaskId: tid("succ"),
+        type: "FS",
+        lag: 5,
+      });
+      useDependencyStore.setState({ dependencies: [dep] });
+
+      useDependencyStore.getState().updateDependency("dep-fs", { lag: 0 });
+      const after = useTaskStore
+        .getState()
+        .tasks.find((t) => t.id === tid("succ"));
+      // Calendar mode: dayAfter Fri = Sat 10. No snap.
+      expect(after?.startDate).toBe("2026-01-10");
     });
   });
 

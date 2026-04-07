@@ -56,6 +56,42 @@ export interface DragState {
 export type { WorkingDaysContext };
 
 /**
+ * Capture per-task durations in the unit dictated by the active working-days
+ * context. Used by `useTaskBarInteraction` BEFORE a drag/resize update is
+ * committed so that snap-back paths can restore the original span — in
+ * working-days mode the drag may have shortened the calendar range to match
+ * the working-day count, and reading the post-update duration would
+ * silently shrink the task on every snap-back.
+ *
+ * Pure: no store dependencies, safe to test directly.
+ */
+export function capturePreDragDurations(
+  tasks: readonly Task[],
+  wdCtx: WorkingDaysContext
+): Map<TaskId, number> {
+  // Both branches clamp to ≥ 1 — a zero-day duration would make
+  // calculateConstrainedDates produce a degenerate range and corrupt the
+  // snap-back position. Defensively normalised here so every caller is safe.
+  if (!wdCtx.enabled) {
+    return new Map(tasks.map((t) => [t.id, Math.max(1, t.duration ?? 1)]));
+  }
+  return new Map(
+    tasks.map((t) => [
+      t.id,
+      Math.max(
+        1,
+        calculateWorkingDays(
+          t.startDate,
+          t.endDate,
+          wdCtx.config,
+          wdCtx.holidayRegion
+        )
+      ),
+    ])
+  );
+}
+
+/**
  * Detect which zone of the task bar the mouse is in.
  */
 export function detectInteractionZone(

@@ -19,6 +19,7 @@ import {
   calculateDeltaDaysFromDates,
   buildMoveUpdates,
   buildResizeUpdate,
+  capturePreDragDurations,
   type DragState,
   type WorkingDaysContext,
 } from '@/utils/taskBarDragHelpers';
@@ -460,5 +461,75 @@ describe('buildResizeUpdate', () => {
       endDate: '2025-01-20',
       duration: 9,
     });
+  });
+});
+
+// ─── capturePreDragDurations ───────────────────────────────────────────
+//
+// These guard against the resize-path bug fixed in #82 stage 3 (resize was
+// previously NOT capturing pre-drag durations, so successors with WD-mode
+// snap-back would silently shrink on every resize). Also pin the
+// unit-of-measure contract: WD when ctx.enabled, calendar otherwise.
+
+describe('capturePreDragDurations', () => {
+  beforeEach(() => {
+    mockCalcWorkingDays.mockReturnValue(5);
+  });
+
+  it('returns calendar-day durations when ctx.enabled is false', () => {
+    const tasks = [
+      createTask({ id: toTaskId('a'), duration: 7 }),
+      createTask({ id: toTaskId('b'), duration: 3 }),
+    ];
+    const result = capturePreDragDurations(tasks, disabledCtx);
+    expect(result.get(toTaskId('a'))).toBe(7);
+    expect(result.get(toTaskId('b'))).toBe(3);
+    expect(mockCalcWorkingDays).not.toHaveBeenCalled();
+  });
+
+  it('returns working-day counts when ctx.enabled is true', () => {
+    const tasks = [
+      createTask({
+        id: toTaskId('a'),
+        startDate: '2025-01-06',
+        endDate: '2025-01-12', // Mon-Sun, 7 calendar days, 5 WD with weekend exclusion
+        duration: 7,
+      }),
+    ];
+    const result = capturePreDragDurations(tasks, enabledCtx);
+    expect(result.get(toTaskId('a'))).toBe(5); // mocked WD count
+    expect(mockCalcWorkingDays).toHaveBeenCalledWith(
+      '2025-01-06',
+      '2025-01-12',
+      enabledCtx.config,
+      undefined,
+    );
+  });
+
+  it('clamps degenerate WD counts to 1', () => {
+    mockCalcWorkingDays.mockReturnValue(0); // e.g. weekend-only span
+    const tasks = [createTask({ id: toTaskId('a') })];
+    const result = capturePreDragDurations(tasks, enabledCtx);
+    expect(result.get(toTaskId('a'))).toBe(1);
+  });
+
+  it('falls back to 1 when task.duration is missing in calendar mode', () => {
+    const tasks: Task[] = [
+      { ...createTask({ id: toTaskId('a') }), duration: 0 },
+    ];
+    const result = capturePreDragDurations(tasks, disabledCtx);
+    expect(result.get(toTaskId('a'))).toBe(1);
+  });
+
+  it('produces a Map keyed by task id', () => {
+    const tasks = [
+      createTask({ id: toTaskId('a') }),
+      createTask({ id: toTaskId('b') }),
+      createTask({ id: toTaskId('c') }),
+    ];
+    const result = capturePreDragDurations(tasks, disabledCtx);
+    expect(result.size).toBe(3);
+    expect(result.has(toTaskId('a'))).toBe(true);
+    expect(result.has(toTaskId('c'))).toBe(true);
   });
 });
