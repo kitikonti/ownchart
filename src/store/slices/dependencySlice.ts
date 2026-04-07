@@ -24,14 +24,8 @@ import { wouldCreateCycle } from "@/utils/graph/cycleDetection";
 import {
   propagateDateChanges,
   applyDateAdjustments,
-  calculateConstrainedDates,
 } from "@/utils/graph/dateAdjustment";
-import {
-  calculateWorkingDays,
-  addWorkingDays,
-  isWorkingDay,
-} from "@/utils/workingDaysCalculator";
-import { addDays } from "@/utils/dateUtils";
+import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
 import { recalculateSummaryAncestors } from "@/utils/hierarchy";
 import type { DateAdjustment } from "@/types/dependency.types";
 import toast from "react-hot-toast";
@@ -83,119 +77,37 @@ function validateNewDependency(
 }
 
 /**
- * Extra calendar-day headroom added to backward scans over working days.
- * Accounts for worst-case clusters of consecutive non-working days
- * (e.g., multi-day holiday blocks adjacent to weekends).
+ * Build the working-days context from chartSlice. Lives here (rather than
+ * shared) because three slices need it and the alternative — a chartSlice
+ * selector — would force callers to import from yet another module. The
+ * shape is identical in dependencySlice / taskSlice / useTaskBarInteraction.
  */
-const BACKWARD_SCAN_SAFETY_MARGIN = 60;
-
-/**
- * Enforce dependency constraints after a panel edit (type or lag change).
- * Moves the successor to the position dictated by the dependency, then
- * cascades forward to downstream successors.
- *
- * @returns Array of date adjustments applied (for undo/redo recording)
- */
-function enforceDepConstraint(
-  dep: Dependency,
-  predecessor: Task,
-  successor: Task
-): DateAdjustment[] {
-  const dateAdjustments: DateAdjustment[] = [];
-  const duration =
-    (successor.duration ?? 1) > 0 ? (successor.duration ?? 1) : 1;
-  const constrained = calculateConstrainedDates(
-    { startDate: predecessor.startDate, endDate: predecessor.endDate },
-    duration,
-    dep.type,
-    dep.lag ?? 0
-  );
-
-  // When working days mode is ON, preserve the successor's
-  // working-day duration instead of its calendar-day duration.
-  // For FS/SS: the constraint determines the start date -> recompute end.
-  // For FF/SF: the constraint determines the end date -> recompute start.
+function getWorkingDaysContext(): WorkingDaysContext {
   const { workingDaysMode, workingDaysConfig, holidayRegion } =
     useChartStore.getState();
-  if (workingDaysMode && successor.type !== "milestone") {
-    const wdRegion = workingDaysConfig.excludeHolidays
+  return {
+    enabled: workingDaysMode,
+    config: workingDaysConfig,
+    holidayRegion: workingDaysConfig.excludeHolidays
       ? holidayRegion
-      : undefined;
-    const workingDayDuration = calculateWorkingDays(
-      successor.startDate,
-      successor.endDate,
-      workingDaysConfig,
-      wdRegion
-    );
-    const wdCount = workingDayDuration > 0 ? workingDayDuration : 1;
+      : undefined,
+  };
+}
 
-    if (dep.type === "FS" || dep.type === "SS") {
-      // Start is anchored by constraint -> compute end from start
-      constrained.endDate = addWorkingDays(
-        constrained.startDate,
-        wdCount,
-        workingDaysConfig,
-        wdRegion
-      );
-    } else {
-      // FF/SF: End is anchored by constraint -> compute start from end
-      // Walk backward from endDate to find the start that gives
-      // wdCount working days (inclusive of both start and end).
-      let candidate = constrained.endDate;
-      let found = 1; // end date itself counts as 1
-      const maxIter = wdCount * 7 + BACKWARD_SCAN_SAFETY_MARGIN;
-      for (let i = 0; i < maxIter && found < wdCount; i++) {
-        candidate = addDays(candidate, -1);
-        if (isWorkingDay(candidate, workingDaysConfig, wdRegion)) {
-          found++;
-        }
-      }
-      constrained.startDate = candidate;
+/**
+ * Apply a list of date adjustments to the task store and emit a toast.
+ * Centralised so updateDependency / addDependency / and the panel-edit path
+ * all touch the store the same way and follow the same parent-recalc rule.
+ */
+function commitDateAdjustments(adjustments: DateAdjustment[]): void {
+  if (adjustments.length === 0) return;
+  useTaskStore.setState((state) => {
+    const parentIds = applyDateAdjustments(adjustments, state.tasks);
+    if (parentIds.size > 0) {
+      recalculateSummaryAncestors(state.tasks, parentIds);
     }
-  }
-
-  // Move the direct successor to the constrained position (bidirectional)
-  if (
-    constrained.startDate !== successor.startDate ||
-    constrained.endDate !== successor.endDate
-  ) {
-    const directAdjustment: DateAdjustment = {
-      taskId: successor.id,
-      oldStartDate: successor.startDate,
-      oldEndDate: successor.endDate,
-      newStartDate: constrained.startDate,
-      newEndDate: constrained.endDate,
-    };
-    dateAdjustments.push(directAdjustment);
-
-    // Apply the direct adjustment first
-    useTaskStore.setState((state) => {
-      const parentIds = applyDateAdjustments([directAdjustment], state.tasks);
-      if (parentIds.size > 0) {
-        recalculateSummaryAncestors(state.tasks, parentIds);
-      }
-    });
-
-    // Then cascade forward from the successor (if it has its own successors)
-    const cascadeAdjustments = propagateDateChanges(
-      useTaskStore.getState().tasks,
-      useDependencyStore.getState().dependencies,
-      [successor.id]
-    );
-    if (cascadeAdjustments.length > 0) {
-      dateAdjustments.push(...cascadeAdjustments);
-      useTaskStore.setState((state) => {
-        const parentIds = applyDateAdjustments(cascadeAdjustments, state.tasks);
-        if (parentIds.size > 0) {
-          recalculateSummaryAncestors(state.tasks, parentIds);
-        }
-      });
-    }
-
-    toast(`Adjusted ${dateAdjustments.length} task(s)`);
-  }
-
-  return dateAdjustments;
+  });
+  toast(`Adjusted ${adjustments.length} task(s)`);
 }
 
 /**
@@ -303,20 +215,10 @@ export const useDependencyStore = create<DependencyStore>()(
         dateAdjustments = propagateDateChanges(
           taskStore.tasks,
           get().dependencies,
-          [fromTaskId]
+          [fromTaskId],
+          { workingDays: getWorkingDaysContext() }
         );
-        if (dateAdjustments.length > 0) {
-          useTaskStore.setState((state) => {
-            const parentIds = applyDateAdjustments(
-              dateAdjustments,
-              state.tasks
-            );
-            if (parentIds.size > 0) {
-              recalculateSummaryAncestors(state.tasks, parentIds);
-            }
-          });
-          toast(`Auto-scheduled ${dateAdjustments.length} task(s)`);
-        }
+        commitDateAdjustments(dateAdjustments);
       }
 
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
@@ -399,27 +301,27 @@ export const useDependencyStore = create<DependencyStore>()(
       });
 
       // Panel edits (lag/type changes) ALWAYS enforce constraints — the user
-      // explicitly changed the relationship, so the successor must move to match.
-      // This is bidirectional: reducing lag can move a successor earlier.
+      // explicitly changed the relationship, so the successor must move to
+      // match. We propagate bidirectionally from the predecessor so the
+      // successor (and its downstream chain) snap to the new constraint.
+      // The previous `enforceDepConstraint` post-processor is gone — all
+      // working-days-aware math now lives in propagateDateChanges via the
+      // workingDays context (#82 stage 3).
       let dateAdjustments: DateAdjustment[] = [];
       if (!historyStore.isUndoing && !historyStore.isRedoing) {
         const taskStore = useTaskStore.getState();
         const updatedDep = get().dependencies.find((d) => d.id === id);
         if (updatedDep) {
-          const predecessor = taskStore.tasks.find(
-            (t) => t.id === updatedDep.fromTaskId
+          dateAdjustments = propagateDateChanges(
+            taskStore.tasks,
+            get().dependencies,
+            [updatedDep.fromTaskId],
+            {
+              bidirectional: true,
+              workingDays: getWorkingDaysContext(),
+            }
           );
-          const successor = taskStore.tasks.find(
-            (t) => t.id === updatedDep.toTaskId
-          );
-
-          if (predecessor && successor) {
-            dateAdjustments = enforceDepConstraint(
-              updatedDep,
-              predecessor,
-              successor
-            );
-          }
+          commitDateAdjustments(dateAdjustments);
         }
       }
 

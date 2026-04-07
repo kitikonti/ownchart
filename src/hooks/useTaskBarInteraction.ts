@@ -7,7 +7,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { addDays } from "@/utils/dateUtils";
+import { addDays, calculateDuration } from "@/utils/dateUtils";
 import { getEffectiveTasksToMove } from "@/utils/hierarchy";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
@@ -17,6 +17,7 @@ import {
   calculateInitialLag,
   calculateConstrainedDates,
 } from "@/utils/graph/dateAdjustment";
+import { calculateWorkingDays } from "@/utils/workingDaysCalculator";
 import toast from "react-hot-toast";
 import {
   detectInteractionZone,
@@ -81,12 +82,20 @@ interface DragDependencyContext {
   taskMap: Map<TaskId, Task>;
   movedSet: Set<TaskId>;
   /**
-   * Calendar-day durations captured BEFORE the drag update was applied.
-   * Used by snapSuccessorToConstraint to restore the correct duration when
-   * working-days mode is on (the drag may have shortened the calendar span
-   * to match the working-day count).
+   * Pre-drag task durations in the unit dictated by the working-days context.
+   * In calendar mode this is `task.duration`; in WD mode it is the
+   * working-day count of the original calendar span. Used by
+   * snapSuccessorToConstraint to restore the correct span when the drag
+   * shortened the calendar range.
    */
   preDragDurations: Map<TaskId, number>;
+  /**
+   * Working-days context active at the time the drag committed. Threaded
+   * through every dependency-related call so the per-frame ctx and the
+   * commit-time ctx never disagree (the user can flip working-days mode
+   * mid-drag — the commit must use what the drag started with).
+   */
+  wdCtx: WorkingDaysContext;
 }
 
 /**
@@ -94,25 +103,75 @@ interface DragDependencyContext {
  * snapSuccessorToConstraint.
  *
  * @param movedTaskIds - IDs of tasks being dragged
- * @param preDragDurations - Calendar-day durations before the drag update.
- *   When not provided, current durations from the store are used (which is
- *   correct for autoUpdateLag but incorrect for snap-back in working-days mode).
+ * @param preDragDurations - Durations captured BEFORE the drag update was
+ *   applied. The unit must match `wdCtx`: working days when WD mode is on,
+ *   calendar days otherwise. When omitted, durations are derived from the
+ *   current task state in the right unit (correct for autoUpdateLag, but
+ *   the snap-back path should always pass an explicit pre-drag map so
+ *   tasks aren't silently shortened).
+ * @param wdCtx - Working-days context active at the moment of commit.
  */
 function buildDragDependencyContext(
   movedTaskIds: TaskId[],
+  wdCtx: WorkingDaysContext,
   preDragDurations?: Map<TaskId, number>
 ): DragDependencyContext {
   const { tasks } = useTaskStore.getState();
   const { dependencies } = useDependencyStore.getState();
   const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const fallbackDurations = wdCtx.enabled
+    ? new Map(
+        tasks.map((t) => [
+          t.id,
+          Math.max(
+            1,
+            calculateWorkingDays(
+              t.startDate,
+              t.endDate,
+              wdCtx.config,
+              wdCtx.holidayRegion
+            )
+          ),
+        ])
+      )
+    : new Map(tasks.map((t) => [t.id, t.duration ?? 1]));
   return {
     tasks,
     dependencies,
     taskMap,
     movedSet: new Set(movedTaskIds),
-    preDragDurations:
-      preDragDurations ?? new Map(tasks.map((t) => [t.id, t.duration ?? 1])),
+    preDragDurations: preDragDurations ?? fallbackDurations,
+    wdCtx,
   };
+}
+
+/**
+ * Capture the per-task duration map needed by `snapSuccessorToConstraint`,
+ * in the unit dictated by the active working-days context. Called BEFORE
+ * the drag update is committed so the original span is preserved even when
+ * WD mode would shorten the calendar range.
+ */
+function capturePreDragDurations(
+  tasks: Task[],
+  wdCtx: WorkingDaysContext
+): Map<TaskId, number> {
+  if (!wdCtx.enabled) {
+    return new Map(tasks.map((t) => [t.id, t.duration ?? 1]));
+  }
+  return new Map(
+    tasks.map((t) => [
+      t.id,
+      Math.max(
+        1,
+        calculateWorkingDays(
+          t.startDate,
+          t.endDate,
+          wdCtx.config,
+          wdCtx.holidayRegion
+        )
+      ),
+    ])
+  );
 }
 
 /**
@@ -137,7 +196,8 @@ function autoUpdateLag(ctx: DragDependencyContext): void {
     const newLag = calculateInitialLag(
       { startDate: predecessor.startDate, endDate: predecessor.endDate },
       { startDate: successor.startDate, endDate: successor.endDate },
-      dep.type
+      dep.type,
+      ctx.wdCtx
     );
     if (newLag !== (dep.lag ?? 0)) {
       // Update lag directly in store without triggering the panel-edit
@@ -165,24 +225,26 @@ function snapSuccessorToConstraint(ctx: DragDependencyContext): void {
     const successor = ctx.taskMap.get(dep.toTaskId);
     if (!predecessor || !successor) continue;
 
-    // Use the pre-drag calendar duration so that working-days mode doesn't
-    // silently shrink tasks. The drag may have shortened the calendar span
-    // to match the working-day count (e.g., Mon-Sun 7d → Mon-Fri 5d), but
-    // the constraint should place the task back with its original span.
+    // Use the pre-drag duration in the unit dictated by ctx.wdCtx so that
+    // working-days mode doesn't silently shrink tasks. The drag may have
+    // shortened the calendar span to match the working-day count
+    // (e.g. Mon-Sun 7d → Mon-Fri 5d), but the constraint should place the
+    // task back with its original working-day span.
     const preDragDuration = ctx.preDragDurations.get(dep.toTaskId) ?? 1;
     const duration = preDragDuration > 0 ? preDragDuration : 1;
     const constrained = calculateConstrainedDates(
       { startDate: predecessor.startDate, endDate: predecessor.endDate },
       duration,
       dep.type,
-      dep.lag ?? 0
+      dep.lag ?? 0,
+      ctx.wdCtx
     );
 
     // Snap back if the task moved away from its constraint position.
     // Use forceAutoSchedule so the snap-back cascades to the task's own
     // successors (e.g., A→B→C: dragging B snaps B back AND updates C).
-    // Include duration so it's restored to the pre-drag calendar span —
-    // otherwise a stale duration value causes the same bug on the next drag.
+    // Task.duration is the *calendar*-day field — derive it from the
+    // constrained range so it stays in sync regardless of WD mode.
     if (
       constrained.startDate !== successor.startDate ||
       constrained.endDate !== successor.endDate
@@ -192,7 +254,10 @@ function snapSuccessorToConstraint(ctx: DragDependencyContext): void {
         {
           startDate: constrained.startDate,
           endDate: constrained.endDate,
-          duration,
+          duration: calculateDuration(
+            constrained.startDate,
+            constrained.endDate
+          ),
         },
         { forceAutoSchedule: true }
       );
@@ -228,12 +293,11 @@ function executeDragMoveCommit(
   const updates = buildMoveUpdates(effectiveTaskIds, taskMap, deltaDays, ctx);
 
   if (updates.length > 0) {
-    // Capture calendar-day durations BEFORE the update is applied.
-    // The drag may shorten the calendar span (working-days preservation),
-    // but snap-back needs the original span to avoid shrinking tasks.
-    const preDragDurations = new Map<TaskId, number>(
-      tasks.map((t) => [t.id, t.duration ?? 1])
-    );
+    // Capture pre-drag durations in the unit dictated by the active WD ctx.
+    // The drag may shorten the calendar span when WD mode preserves the
+    // working-day count, so snap-back needs the original span in the
+    // matching unit to avoid shrinking tasks.
+    const preDragDurations = capturePreDragDurations(tasks, ctx);
 
     const cascade = shouldCascade(altKey);
     if (cascade) {
@@ -244,13 +308,14 @@ function executeDragMoveCommit(
       // (propagateDateChanges only cascades forward from predecessors)
       const depCtx = buildDragDependencyContext(
         effectiveTaskIds,
+        ctx,
         preDragDurations
       );
       snapSuccessorToConstraint(depCtx);
     } else {
       // No cascade: move tasks without propagation, then update lag
       updateMultipleTasks(updates, { skipAutoSchedule: true });
-      const depCtx = buildDragDependencyContext(effectiveTaskIds);
+      const depCtx = buildDragDependencyContext(effectiveTaskIds, ctx);
       autoUpdateLag(depCtx);
     }
   }
@@ -271,15 +336,21 @@ function executeResizeCommit(
     current.currentPreviewEnd
   );
   if (resizeUpdate) {
+    const wdCtx = getWorkingDaysContext();
+    const preDragDurations = capturePreDragDurations(tasks, wdCtx);
     const cascade = shouldCascade(altKey);
     if (cascade) {
       updateTask(taskId, resizeUpdate, { forceAutoSchedule: true });
-      const ctx = buildDragDependencyContext([taskId]);
-      snapSuccessorToConstraint(ctx);
+      const depCtx = buildDragDependencyContext(
+        [taskId],
+        wdCtx,
+        preDragDurations
+      );
+      snapSuccessorToConstraint(depCtx);
     } else {
       updateTask(taskId, resizeUpdate, { skipAutoSchedule: true });
-      const ctx = buildDragDependencyContext([taskId]);
-      autoUpdateLag(ctx);
+      const depCtx = buildDragDependencyContext([taskId], wdCtx);
+      autoUpdateLag(depCtx);
     }
   }
 }

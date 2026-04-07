@@ -35,7 +35,26 @@ import {
   propagateDateChanges,
   applyDateAdjustments,
 } from "@/utils/graph/dateAdjustment";
+import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
 import { useChartStore } from "./chartSlice";
+
+/**
+ * Build the working-days context for scheduling calls. Inlined here so the
+ * propagation pass reads chart state once per call rather than threading a
+ * shared selector module. Same shape as the helpers in dependencySlice and
+ * useTaskBarInteraction.
+ */
+function getWorkingDaysContext(): WorkingDaysContext {
+  const { workingDaysMode, workingDaysConfig, holidayRegion } =
+    useChartStore.getState();
+  return {
+    enabled: workingDaysMode,
+    config: workingDaysConfig,
+    holidayRegion: workingDaysConfig.excludeHolidays
+      ? holidayRegion
+      : undefined,
+  };
+}
 import {
   UNKNOWN_TASK_NAME,
   captureHierarchySnapshot,
@@ -262,7 +281,7 @@ export const useTaskStore = create<TaskStore>()(
           get().tasks,
           useDependencyStore.getState().dependencies,
           [id],
-          { bidirectional: true }
+          { bidirectional: true, workingDays: getWorkingDaysContext() }
         );
         if (dateAdjustments.length > 0) {
           set((state) => {
@@ -372,7 +391,7 @@ export const useTaskStore = create<TaskStore>()(
             get().tasks,
             useDependencyStore.getState().dependencies,
             changedIds,
-            { bidirectional: true }
+            { bidirectional: true, workingDays: getWorkingDaysContext() }
           );
           if (dateAdjustments.length > 0) {
             set((state) => {
