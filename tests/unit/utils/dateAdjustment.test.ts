@@ -1252,6 +1252,37 @@ describe("calculateInitialLag — working days", () => {
   });
 });
 
+describe("propagateDateChanges — Thanksgiving golden fixture (#82 stage 6)", () => {
+  it("cascades the WD_THANKSGIVING fixture through the Thanksgiving holiday", async () => {
+    // Late-bind the fixture import so the test file's prelude doesn't get
+    // longer for tests that don't need it.
+    const { WD_THANKSGIVING, wdThanksgivingTuple } = await import(
+      "../../fixtures/wdThanksgiving"
+    );
+    const { tasks, dependencies } = wdThanksgivingTuple();
+    const wdCtxHolidays: WorkingDaysContext = {
+      enabled: true,
+      config: WD_THANKSGIVING.workingDaysConfig,
+      holidayRegion: WD_THANKSGIVING.holidayRegion,
+    };
+
+    const adjustments = propagateDateChanges(
+      tasks,
+      dependencies,
+      [WD_THANKSGIVING.predecessor.id],
+      { bidirectional: true, workingDays: wdCtxHolidays }
+    );
+
+    // Successor must be moved (its initial position is intentionally wrong).
+    expect(adjustments).toHaveLength(1);
+    const succ = adjustments[0];
+    // FS lag=0wd from pred ending Wed 2025-11-26:
+    //   dayAfterPred = Thu 2025-11-27 (Thanksgiving — holiday)
+    //   snap-forward → Fri 2025-11-28 (working day in date-holidays' US set)
+    expect(succ.newStartDate).toBe("2025-11-28");
+  });
+});
+
 describe("calculateConstrainedDates — holiday in the gap (#82 stage 6)", () => {
   // Uses the real holidayService with the US region. Christmas 2025-12-25
   // is a Thursday. With Sat+Sun excluded AND US holidays excluded:

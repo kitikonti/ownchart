@@ -15,7 +15,6 @@
 
 import { describe, it, expect } from "vitest";
 import { propagateDateChanges } from "@/utils/graph/dateAdjustment";
-import { addDays } from "@/utils/dateUtils";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
 import type { TaskId, HexColor } from "@/types/branded.types";
@@ -34,17 +33,19 @@ function buildLinearChain(length: number): {
 } {
   const tasks: Task[] = [];
   const dependencies: Dependency[] = [];
-  // 500 tasks spaced 1 calendar day apart starting Mon 2026-01-05.
-  // Use addDays so we don't open-code calendar arithmetic and accidentally
-  // produce invalid dates (e.g. month=20).
+  // CRUCIAL: every task starts on the SAME day. This forces the cascade
+  // to push every successor forward via the FS lag=0 constraint, which
+  // is the realistic worst-case load that the perf benchmark is meant to
+  // measure. The previous version of this fixture spaced tasks 1 day
+  // apart, which made them already-satisfied and turned the benchmark
+  // into a no-op measurement (caught in stage 6 review F029).
   const base = "2026-01-05";
   for (let i = 0; i < length; i++) {
-    const date = addDays(base, i);
     tasks.push({
       id: `task-${i}` as TaskId,
       name: `Task ${i}`,
-      startDate: date,
-      endDate: date,
+      startDate: base,
+      endDate: base,
       duration: 1,
       progress: 0,
       color: "#3b82f6" as HexColor,
@@ -80,12 +81,10 @@ describe("propagateDateChanges performance", () => {
     );
     const elapsed = performance.now() - start;
 
-    // Sanity check: the cascade should NOT be a no-op for a linear chain
-    // where the head task's start is "before" the constrained position
-    // due to the FS lag=0 contract. We don't assert exact count because
-    // the chain construction packs dates loosely; the perf assertion is
-    // the load-bearing one.
-    expect(adjustments.length).toBeGreaterThanOrEqual(0);
+    // Cascade must move every task except the head — N-1 adjustments.
+    // This is the load-bearing assertion that proves the benchmark is
+    // measuring real work, not the no-op path.
+    expect(adjustments.length).toBe(CHAIN_LENGTH - 1);
     expect(elapsed).toBeLessThan(PERF_THRESHOLD_MS);
   });
 
@@ -110,7 +109,8 @@ describe("propagateDateChanges performance", () => {
     );
     const elapsed = performance.now() - start;
 
-    expect(adjustments.length).toBeGreaterThanOrEqual(0);
+    // Same N-1 cascade load as the calendar case.
+    expect(adjustments.length).toBe(CHAIN_LENGTH - 1);
     // WD mode is allowed to be slower than calendar mode due to the
     // per-step working-day check, but it must still scale linearly. The
     // generous shared threshold catches O(n²) regressions.

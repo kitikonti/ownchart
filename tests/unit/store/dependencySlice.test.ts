@@ -892,6 +892,11 @@ describe("Dependency Store", () => {
         workingDaysMode: false,
         hiddenTaskIds: new Set([tid("middle")]),
       });
+      // Confirm the test setup actually applied — we want to prove the
+      // cascade ignores hidden state, but only if the state IS hidden.
+      expect(useChartStore.getState().hiddenTaskIds.has(tid("middle"))).toBe(
+        true
+      );
       const a = createTestTask({
         id: tid("a"),
         startDate: "2026-01-05",

@@ -573,6 +573,61 @@ describe("workingDaysCalculator", () => {
 
   // ── addWorkingDays loop guard ──────────────────────────────────────────────
 
+  // ── DST boundary behaviour (#82 stage 6 follow-up) ────────────────────────
+  //
+  // The YYYY-MM-DD string contract requires that addWorkingDays /
+  // subtractWorkingDays / calculateWorkingDays operate on calendar dates,
+  // never on Date *instants*. date-fns parseISO("YYYY-MM-DD") returns local
+  // midnight, and date-fns addDays advances by 24h * n. The danger is that
+  // when the local DST transition lands inside one of those 24h windows,
+  // the resulting Date may skew by ±1 hour, and format(date, "yyyy-MM-dd")
+  // could produce the wrong calendar day.
+  //
+  // These tests construct ranges that span DST transitions in a non-UTC
+  // timezone (US: spring-forward Mar 9 2025, fall-back Nov 2 2025) and
+  // verify the YYYY-MM-DD outputs are correct. The tests pass in any
+  // timezone Node defaults to because parseISO/format are local-anchored —
+  // what they guard against is a future refactor that reaches for
+  // Date.UTC() or new Date("YYYY-MM-DDTHH:MM:SSZ"), which WOULD drift.
+
+  describe("DST boundary correctness", () => {
+    it("addWorkingDays crosses spring-forward (Mar 9 2025) without drift", () => {
+      // Mon 2025-03-03 + 10 working days (Sat+Sun excluded) = Fri 2025-03-14
+      // The range crosses the spring-forward boundary on Sun Mar 9.
+      expect(addWorkingDays("2025-03-03", 10, EXCLUDE_WEEKENDS)).toBe(
+        "2025-03-14"
+      );
+    });
+
+    it("addWorkingDays crosses fall-back (Nov 2 2025) without drift", () => {
+      // Mon 2025-10-27 + 10 working days = Fri 2025-11-07
+      // The range crosses the fall-back boundary on Sun Nov 2.
+      expect(addWorkingDays("2025-10-27", 10, EXCLUDE_WEEKENDS)).toBe(
+        "2025-11-07"
+      );
+    });
+
+    it("calculateWorkingDays counts correctly across spring-forward", () => {
+      // Mon Mar 3 .. Fri Mar 14 inclusive = 10 working days
+      expect(
+        calculateWorkingDays("2025-03-03", "2025-03-14", EXCLUDE_WEEKENDS)
+      ).toBe(10);
+    });
+
+    it("calculateWorkingDays counts correctly across fall-back", () => {
+      expect(
+        calculateWorkingDays("2025-10-27", "2025-11-07", EXCLUDE_WEEKENDS)
+      ).toBe(10);
+    });
+
+    it("subtractWorkingDays crosses spring-forward going backward", () => {
+      // Fri Mar 14 - 10 working days = Mon Mar 3
+      expect(subtractWorkingDays("2025-03-14", 10, EXCLUDE_WEEKENDS)).toBe(
+        "2025-03-03"
+      );
+    });
+  });
+
   describe("addWorkingDays loop guard", () => {
     it("throws WorkingDaysLoopError when every day is excluded", () => {
       mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
