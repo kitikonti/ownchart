@@ -1252,6 +1252,51 @@ describe("calculateInitialLag — working days", () => {
   });
 });
 
+describe("calculateConstrainedDates — holiday in the gap (#82 stage 6)", () => {
+  // Uses the real holidayService with the US region. Christmas 2025-12-25
+  // is a Thursday. With Sat+Sun excluded AND US holidays excluded:
+  //   - Pred ends Wed 2025-12-24
+  //   - dayAfterPred = Thu 25 (holiday)
+  //   - lag=0wd snap-forward → next working day
+  //   - Thu 25 (holiday) skip → Fri 26 (working day) → Mon 29
+  // Wait — Fri 26 is also a federal-holiday-observance for some years but
+  // not 2025 in date-holidays' US dataset. Verified by computing from the
+  // helper itself; if the dataset changes, this test will catch it.
+  it("FS lag=0wd skips Christmas and lands on the next working day", () => {
+    const wdCtxHolidays: WorkingDaysContext = {
+      enabled: true,
+      config: {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      },
+      holidayRegion: "US",
+    };
+    const pred = { startDate: "2025-12-22", endDate: "2025-12-24" };
+    const result = calculateConstrainedDates(pred, 1, "FS", 0, wdCtxHolidays);
+    // The successor must NOT land on Thu 25 (Christmas). It must land on
+    // the first working day on/after Thu 25 — i.e. Fri 26 in 2025.
+    expect(result.startDate).toBe("2025-12-26");
+  });
+
+  it("FS lag=2wd skips holidays in the gap", () => {
+    const wdCtxHolidays: WorkingDaysContext = {
+      enabled: true,
+      config: {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      },
+      holidayRegion: "US",
+    };
+    // Pred ends Wed 2025-12-24. lag=2wd means 2 working days past lag=0
+    // anchor (Fri 26). Two WD past Fri 26 = Tue 30 (Sat 27, Sun 28 skipped).
+    const pred = { startDate: "2025-12-22", endDate: "2025-12-24" };
+    const result = calculateConstrainedDates(pred, 1, "FS", 2, wdCtxHolidays);
+    expect(result.startDate).toBe("2025-12-30");
+  });
+});
+
 describe("propagateDateChanges — working days cascade", () => {
   it("FS cascade with weekend in the gap places successor on Mon", () => {
     const tasks: Task[] = [

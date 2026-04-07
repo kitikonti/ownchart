@@ -882,6 +882,67 @@ describe("Dependency Store", () => {
       expect(newC?.startDate).toBe("2026-01-15");
     });
 
+    it("hidden tasks still participate in scheduling propagation (#82 stage 6)", () => {
+      // hiddenTaskIds removes a row from the rendered table but the task
+      // must still cascade through propagateDateChanges — the propagation
+      // pass operates on the full task list, not the visible/flattened one.
+      // Regression test for the explicit decision in #79 + #82 stage 6 plan.
+      useChartStore.setState({
+        autoScheduling: true,
+        workingDaysMode: false,
+        hiddenTaskIds: new Set([tid("middle")]),
+      });
+      const a = createTestTask({
+        id: tid("a"),
+        startDate: "2026-01-05",
+        endDate: "2026-01-09",
+        duration: 5,
+      });
+      const middle = createTestTask({
+        id: tid("middle"),
+        startDate: "2026-01-12",
+        endDate: "2026-01-14",
+        duration: 3,
+      });
+      const c = createTestTask({
+        id: tid("c"),
+        startDate: "2026-01-15",
+        endDate: "2026-01-16",
+        duration: 2,
+      });
+      useTaskStore.setState({ tasks: [a, middle, c] });
+
+      const ab = createTestDependency({
+        id: "dep-a-mid",
+        fromTaskId: tid("a"),
+        toTaskId: tid("middle"),
+        type: "FS",
+        lag: 0,
+      });
+      const bc = createTestDependency({
+        id: "dep-mid-c",
+        fromTaskId: tid("middle"),
+        toTaskId: tid("c"),
+        type: "FS",
+        lag: 0,
+      });
+      useDependencyStore.setState({ dependencies: [ab, bc] });
+
+      // Update the visible-but-hidden middle task should NOT be required —
+      // the test exercises the cascade *through* a hidden task. We trigger
+      // the cascade by tightening the A→middle lag via panel edit and
+      // verify the hidden middle task is moved AND the cascade reaches C.
+      useDependencyStore.getState().updateDependency("dep-a-mid", { lag: 1 });
+
+      const tasks = useTaskStore.getState().tasks;
+      const newMiddle = tasks.find((t) => t.id === tid("middle"));
+      const newC = tasks.find((t) => t.id === tid("c"));
+      // Middle is hidden but its dates were updated by the cascade.
+      expect(newMiddle?.startDate).toBe("2026-01-11");
+      // Cascade reached C through the hidden middle task.
+      expect(newC?.startDate).toBe("2026-01-14");
+    });
+
     it("falls back to calendar arithmetic when workingDaysMode is off", () => {
       useChartStore.setState({ workingDaysMode: false });
       const pred = createTestTask({
