@@ -140,6 +140,22 @@ interface ChartState {
     sourceTaskId: TaskId;
   } | null;
 
+  /**
+   * Live lag-delta indicator state (#82 stage 4). Set during a drag/resize
+   * gesture in auto-update-lag mode (auto-scheduling OFF, no Alt) to drive
+   * the floating "Xd → Yd" pill that appears near the affected dependency
+   * arrow's successor end. Cleared on mouseup, on cascade-mode drags, and
+   * when the would-be lag equals the stored lag (no visible delta).
+   *
+   * Only ever holds the single "winning" dependency (the first one whose
+   * lag would change) — sibling deps stay static per the #82 spec.
+   */
+  lagDelta: {
+    depId: string;
+    oldLag: number;
+    newLag: number;
+  } | null;
+
   // File load signal (for scroll positioning on file open)
   fileLoadCounter: number;
 
@@ -252,6 +268,9 @@ interface ChartActions {
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: TaskId) => void;
   clearDragState: () => void;
+  setLagDelta: (
+    delta: { depId: string; oldLag: number; newLag: number } | null
+  ) => void;
 
   // File load signal (for scroll positioning)
   signalFileLoaded: () => void;
@@ -342,6 +361,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     viewportScrollTop: 0,
     viewportWidth: 0,
     dragState: null,
+    lagDelta: null,
     fileLoadCounter: 0,
     scrollTargetDate: null,
     pendingScrollTop: null,
@@ -1096,6 +1116,34 @@ export const useChartStore = create<ChartState & ChartActions>()(
     clearDragState: (): void => {
       set((state) => {
         state.dragState = null;
+        // Lag delta is also a transient drag overlay — clear it together so
+        // a stale pill never lingers after the gesture ends.
+        state.lagDelta = null;
+      });
+    },
+
+    // Set or clear the live lag-delta indicator (pass null to clear).
+    // Called from useTaskBarInteraction's mousemove handler in auto-update-lag
+    // mode. The setter is a no-op when the new value is structurally equal
+    // to the current value to avoid React re-renders on every drag frame.
+    setLagDelta: (
+      delta: { depId: string; oldLag: number; newLag: number } | null
+    ): void => {
+      set((state) => {
+        const current = state.lagDelta;
+        if (delta === null) {
+          if (current !== null) state.lagDelta = null;
+          return;
+        }
+        if (
+          current !== null &&
+          current.depId === delta.depId &&
+          current.oldLag === delta.oldLag &&
+          current.newLag === delta.newLag
+        ) {
+          return;
+        }
+        state.lagDelta = delta;
       });
     },
 

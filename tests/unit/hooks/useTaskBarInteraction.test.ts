@@ -107,17 +107,20 @@ let updateTaskSpy: ReturnType<typeof vi.fn>;
 let updateMultipleTasksSpy: ReturnType<typeof vi.fn>;
 let setDragStateSpy: ReturnType<typeof vi.fn>;
 let clearDragStateSpy: ReturnType<typeof vi.fn>;
+let setLagDeltaSpy: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   updateTaskSpy = vi.fn();
   updateMultipleTasksSpy = vi.fn();
   setDragStateSpy = vi.fn();
   clearDragStateSpy = vi.fn();
+  setLagDeltaSpy = vi.fn();
 
   vi.spyOn(useTaskStore.getState(), 'updateTask').mockImplementation(updateTaskSpy);
   vi.spyOn(useTaskStore.getState(), 'updateMultipleTasks').mockImplementation(updateMultipleTasksSpy);
   vi.spyOn(useChartStore.getState(), 'setDragState').mockImplementation(setDragStateSpy);
   vi.spyOn(useChartStore.getState(), 'clearDragState').mockImplementation(clearDragStateSpy);
+  vi.spyOn(useChartStore.getState(), 'setLagDelta').mockImplementation(setLagDeltaSpy);
 
   // Default chart store state
   const chartState = useChartStore.getState();

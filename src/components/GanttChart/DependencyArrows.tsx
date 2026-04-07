@@ -19,8 +19,10 @@ import {
   DEFAULT_DENSITY_GEOMETRY,
 } from "@/utils/timelineUtils";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
+import { LagDeltaIndicator } from "./LagDeltaIndicator";
 
 interface DependencyArrowsProps {
   tasks: Task[];
@@ -47,6 +49,9 @@ export function DependencyArrows({
   }, [rowHeight]);
   // Get dependencies and selection from store
   const dependencies = useDependencyStore((state) => state.dependencies);
+  // Live lag-delta indicator (#82 stage 4) — set during a drag/resize gesture
+  // in auto-update-lag mode (auto-scheduling OFF). Cleared on mouseup.
+  const lagDelta = useChartStore((state) => state.lagDelta);
   const selectedDependencyId = useDependencyStore(
     (state) => state.selectedDependencyId
   );
@@ -159,6 +164,16 @@ export function DependencyArrows({
           startY={dragStartPosition.y}
           endX={dragState.currentPosition.x}
           endY={dragState.currentPosition.y}
+          rowHeight={rowHeight}
+        />
+      )}
+
+      {/* Live lag-delta pill — rendered last so it sits above the arrows. */}
+      {lagDelta && (
+        <LagDeltaIndicator
+          delta={lagDelta}
+          dependencies={dependencies}
+          taskPositions={taskPositions}
           rowHeight={rowHeight}
         />
       )}
