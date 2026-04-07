@@ -277,6 +277,11 @@ export function calculateWorkingDays(
  * @param config - Working days configuration
  * @param holidayRegion - Holiday region code
  * @returns End date string (YYYY-MM-DD)
+ * @throws {WorkingDaysLoopError} when the iteration cap is exceeded — i.e. the
+ *   active config excludes every calendar day (degenerate combination of
+ *   weekday flags + holiday region). Callers at the store/UI boundary
+ *   (drag commit, dependency cascade, cell edit) must catch this and surface
+ *   a toast rather than letting a partial cascade leak through.
  */
 export function addWorkingDays(
   startDate: string,

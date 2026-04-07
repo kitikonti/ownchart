@@ -23,6 +23,8 @@ import {
   addWorkingDays,
   getHolidaysInRange,
   getWorkingDaysSummary,
+  snapForwardToWorkingDay,
+  WorkingDaysLoopError,
 } from "@/utils/workingDaysCalculator";
 import { holidayService, type HolidayInfo } from "@/services/holidayService";
 import type { WorkingDaysConfig } from "@/types/preferences.types";
@@ -426,6 +428,90 @@ describe("workingDaysCalculator", () => {
       expect(summary.totalDays).toBe(1);
       expect(summary.workingDays).toBe(0);
       expect(summary.weekendDays).toBe(1);
+    });
+  });
+
+  // ── snapForwardToWorkingDay ────────────────────────────────────────────────
+
+  describe("snapForwardToWorkingDay", () => {
+    // Reference week: Mon 2025-01-06 … Sun 2025-01-12
+
+    it("returns the input unchanged when already a working day", () => {
+      expect(snapForwardToWorkingDay("2025-01-06", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-06"
+      );
+    });
+
+    it("snaps Saturday forward to Monday", () => {
+      expect(snapForwardToWorkingDay("2025-01-11", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-13"
+      );
+    });
+
+    it("snaps Sunday forward to Monday", () => {
+      expect(snapForwardToWorkingDay("2025-01-12", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-13"
+      );
+    });
+
+    it("skips a holiday that falls on a working day", () => {
+      // Mon 2025-01-13 is a holiday → Tue 2025-01-14
+      mockGetHolidayForDateString.mockImplementation((d: string) =>
+        d === "2025-01-13" ? makeHoliday("2025-01-13") : null
+      );
+      expect(
+        snapForwardToWorkingDay("2025-01-13", EXCLUDE_ALL, "US")
+      ).toBe("2025-01-14");
+    });
+
+    it("chains across weekend + holiday: Sat → Mon-holiday → Tue", () => {
+      mockGetHolidayForDateString.mockImplementation((d: string) =>
+        d === "2025-01-13" ? makeHoliday("2025-01-13") : null
+      );
+      expect(
+        snapForwardToWorkingDay("2025-01-11", EXCLUDE_ALL, "US")
+      ).toBe("2025-01-14");
+    });
+
+    it("is a no-op fast path when no exclusions are configured", () => {
+      expect(snapForwardToWorkingDay("2025-01-11", NO_EXCLUSIONS)).toBe(
+        "2025-01-11"
+      );
+    });
+
+    it("calls setRegion idempotently when holiday exclusion is on", () => {
+      mockSetRegion.mockClear();
+      snapForwardToWorkingDay("2025-01-06", EXCLUDE_ALL, "DE");
+      expect(mockSetRegion).toHaveBeenCalledWith("DE");
+    });
+
+    it("throws WorkingDaysLoopError on a degenerate every-day-excluded config", () => {
+      // Force every day to be a holiday → snap can never resolve.
+      mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
+      expect(() =>
+        snapForwardToWorkingDay("2025-01-06", EXCLUDE_ALL, "XX")
+      ).toThrow(WorkingDaysLoopError);
+    });
+  });
+
+  // ── addWorkingDays loop guard ──────────────────────────────────────────────
+
+  describe("addWorkingDays loop guard", () => {
+    it("throws WorkingDaysLoopError when every day is excluded", () => {
+      mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
+      expect(() =>
+        addWorkingDays("2025-01-06", 5, EXCLUDE_ALL, "XX")
+      ).toThrow(WorkingDaysLoopError);
+    });
+
+    it("error has the correct name for instanceof checks at boundaries", () => {
+      mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
+      try {
+        addWorkingDays("2025-01-06", 5, EXCLUDE_ALL, "XX");
+      } catch (e) {
+        expect(e).toBeInstanceOf(WorkingDaysLoopError);
+        expect((e as Error).name).toBe("WorkingDaysLoopError");
+      }
     });
   });
 });
