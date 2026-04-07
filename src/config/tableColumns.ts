@@ -100,14 +100,27 @@ function stringValidator(
   };
 }
 
-/** Wrap a number validator with a typeof + NaN guard. */
+/**
+ * Wrap a number validator with a coercing guard.
+ *
+ * Accepts either a `number` or a numeric string (because the cell-edit input
+ * always emits strings). Empty strings, non-numeric strings, and NaN are
+ * rejected. All other inputs (null, undefined, objects, …) are also rejected.
+ */
 function numberValidator(
   validate: (v: number) => ValidationResult
 ): (value: unknown) => ValidationResult {
   return (value) => {
-    if (typeof value !== "number" || Number.isNaN(value))
+    let num: number;
+    if (typeof value === "number") {
+      num = value;
+    } else if (typeof value === "string" && value.trim() !== "") {
+      num = Number(value);
+    } else {
       return { valid: false, error: "Expected number" };
-    return validate(value);
+    }
+    if (Number.isNaN(num)) return { valid: false, error: "Expected number" };
+    return validate(num);
   };
 }
 

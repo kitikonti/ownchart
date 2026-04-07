@@ -87,6 +87,6 @@ test.describe('Task Inline Editing', () => {
     await activateAndEdit(page, 'Original Task', 'progress', '50', '%');
 
     const row = getGrid(page).getByRole('row').filter({ hasText: 'Original Task' });
-    await expect(row).toContainText('50');
+    await expect(row).toContainText('50%');
   });
 });

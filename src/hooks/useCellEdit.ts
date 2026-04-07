@@ -255,16 +255,18 @@ export function useCellEdit({
     }
   }, [isEditing, currentValue, workingDays]);
 
-  /** Update cell value in store with type conversion. */
+  /**
+   * Update cell value in store with type conversion driven by the column
+   * renderer (single source of truth — adding a new numeric column requires
+   * no changes here).
+   */
   const updateCellValue = useCallback(
     (value: string): void => {
-      let typedValue: string | number = value;
-      if (field === "duration" || field === "progress") {
-        typedValue = Number(value);
-      }
+      const typedValue: string | number =
+        column.renderer === "number" ? Number(value) : value;
       updateTask(taskId, { [field]: typedValue });
     },
-    [field, taskId, updateTask]
+    [column.renderer, field, taskId, updateTask]
   );
 
   /** Validate and save the cell value. Returns true on success, false on validation failure. */
@@ -275,11 +277,9 @@ export function useCellEdit({
       return true;
     }
 
-    const valueForValidation: string | number =
-      field === "duration" || field === "progress"
-        ? Number(localValue)
-        : localValue;
-    const validation = column.validator(valueForValidation);
+    // numberValidator coerces string→number internally, so we can pass the
+    // raw localValue regardless of the column renderer.
+    const validation = column.validator(localValue);
     if (!validation.valid) {
       setError(validation.error || "Invalid value");
       return false;
