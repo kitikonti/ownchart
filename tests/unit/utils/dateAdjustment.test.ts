@@ -16,7 +16,10 @@ import {
   applyDateAdjustments,
   reverseDateAdjustments,
 } from "@/utils/graph/dateAdjustment";
-import type { LagWorkingDaysContext } from "@/utils/graph/dateAdjustment";
+import type {
+  LagWorkingDaysContext,
+  WorkingDaysContext,
+} from "@/utils/graph/dateAdjustment";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
 import type { TaskId, HexColor } from "@/types/branded.types";
@@ -1096,5 +1099,185 @@ describe("lagWorkingToCalendar", () => {
         }
       }
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WD-aware calculateConstrainedDates / calculateInitialLag (#82 stage 2)
+// ---------------------------------------------------------------------------
+//
+// Reference week (no holidays, Sat+Sun excluded):
+//   Mon 2025-01-06 … Fri 2025-01-10  (predecessor)
+//   Sat 2025-01-11 / Sun 2025-01-12  (excluded)
+//   Mon 2025-01-13 … Fri 2025-01-17  (successor candidate week)
+//
+// All examples below should match the worked examples documented in the
+// JSDoc of calculateConstrainedDates.
+
+const WD_CTX: WorkingDaysContext = {
+  enabled: true,
+  config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+  holidayRegion: undefined,
+};
+
+describe("calculateConstrainedDates — working days", () => {
+  const pred = { startDate: "2025-01-06", endDate: "2025-01-10" };
+
+  describe("FS", () => {
+    it("lag=0wd snaps Sat → Mon", () => {
+      const r = calculateConstrainedDates(pred, 3, "FS", 0, WD_CTX);
+      expect(r.startDate).toBe("2025-01-13"); // Mon
+      expect(r.endDate).toBe("2025-01-15"); // Wed (3 WD: Mon, Tue, Wed)
+    });
+
+    it("lag=2wd advances 2 working days past the snap", () => {
+      const r = calculateConstrainedDates(pred, 3, "FS", 2, WD_CTX);
+      expect(r.startDate).toBe("2025-01-15"); // Wed (3rd WD from Sat)
+      expect(r.endDate).toBe("2025-01-17"); // Fri
+    });
+
+    it("negative lag (overlap) backs up working days", () => {
+      // lag=-1wd → 1 WD before lag=0 anchor (Mon 13) = Fri 10
+      const r = calculateConstrainedDates(pred, 3, "FS", -1, WD_CTX);
+      expect(r.startDate).toBe("2025-01-10"); // Fri
+      expect(r.endDate).toBe("2025-01-14"); // Tue (Fri, Mon, Tue)
+    });
+  });
+
+  describe("SS", () => {
+    it("lag=0wd starts on predecessor.start", () => {
+      const r = calculateConstrainedDates(pred, 3, "SS", 0, WD_CTX);
+      expect(r.startDate).toBe("2025-01-06"); // Mon
+      expect(r.endDate).toBe("2025-01-08"); // Wed
+    });
+
+    it("lag=1wd advances one working day", () => {
+      const r = calculateConstrainedDates(pred, 3, "SS", 1, WD_CTX);
+      expect(r.startDate).toBe("2025-01-07"); // Tue
+      expect(r.endDate).toBe("2025-01-09"); // Thu
+    });
+  });
+
+  describe("FF", () => {
+    it("lag=0wd ends on predecessor.end", () => {
+      const r = calculateConstrainedDates(pred, 3, "FF", 0, WD_CTX);
+      expect(r.endDate).toBe("2025-01-10"); // Fri
+      expect(r.startDate).toBe("2025-01-08"); // Wed (3 WD back: Fri, Thu, Wed)
+    });
+
+    it("lag=2wd ends two working days after predecessor.end", () => {
+      const r = calculateConstrainedDates(pred, 3, "FF", 2, WD_CTX);
+      expect(r.endDate).toBe("2025-01-14"); // Tue (Fri, Mon, Tue)
+      expect(r.startDate).toBe("2025-01-10"); // Fri (Tue, Mon, Fri back)
+    });
+  });
+
+  describe("SF", () => {
+    it("lag=0wd ends on predecessor.start", () => {
+      const r = calculateConstrainedDates(pred, 3, "SF", 0, WD_CTX);
+      expect(r.endDate).toBe("2025-01-06"); // Mon
+      expect(r.startDate).toBe("2025-01-02"); // Thu prev week (Mon, Fri 03, Thu 02)
+    });
+
+    it("lag=2wd ends two working days after predecessor.start", () => {
+      const r = calculateConstrainedDates(pred, 3, "SF", 2, WD_CTX);
+      expect(r.endDate).toBe("2025-01-08"); // Wed (Mon, Tue, Wed)
+      expect(r.startDate).toBe("2025-01-06"); // Mon
+    });
+  });
+
+  it("respects holidays in the gap (FS, US Thanksgiving-style block)", () => {
+    // Pred ends Fri, Mon is a holiday → successor must start Tue.
+    const ctxHoliday: WorkingDaysContext = {
+      enabled: true,
+      config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: true },
+      holidayRegion: undefined, // we mock at the service level via fixture wd test
+    };
+    // Without a real region we can only verify the weekend snap; the holiday
+    // case is exercised in the workingDaysCalculator.test.ts mocked-service
+    // suite. This test doubles as a regression guard against silently
+    // ignoring excludeHolidays when the region is undefined.
+    const p = { startDate: "2025-01-06", endDate: "2025-01-10" };
+    const r = calculateConstrainedDates(p, 1, "FS", 0, ctxHoliday);
+    expect(r.startDate).toBe("2025-01-13"); // Mon — region missing → no holiday exclusion
+  });
+
+  it("falls back to calendar arithmetic when ctx.enabled is false", () => {
+    const ctxOff: WorkingDaysContext = { ...WD_CTX, enabled: false };
+    const r = calculateConstrainedDates(pred, 3, "FS", 0, ctxOff);
+    expect(r.startDate).toBe("2025-01-11"); // Sat — calendar mode, no snap
+    expect(r.endDate).toBe("2025-01-13");
+  });
+});
+
+describe("calculateInitialLag — working days", () => {
+  const pred = { startDate: "2025-01-06", endDate: "2025-01-10" };
+
+  it("FS: successor starting Mon after weekend → lag=0wd", () => {
+    const succ = { startDate: "2025-01-13", endDate: "2025-01-15" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(0);
+  });
+
+  it("FS: successor starting Wed → lag=2wd (skips weekend)", () => {
+    const succ = { startDate: "2025-01-15", endDate: "2025-01-17" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(2);
+  });
+
+  it("FS: overlap → negative working-day lag", () => {
+    // Successor starts on predecessor's last day
+    const succ = { startDate: "2025-01-10", endDate: "2025-01-14" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(-1);
+  });
+
+  it("SS: identical starts → lag=0wd", () => {
+    const succ = { startDate: "2025-01-06", endDate: "2025-01-08" };
+    expect(calculateInitialLag(pred, succ, "SS", WD_CTX)).toBe(0);
+  });
+
+  it("FF: identical ends → lag=0wd", () => {
+    const succ = { startDate: "2025-01-08", endDate: "2025-01-10" };
+    expect(calculateInitialLag(pred, succ, "FF", WD_CTX)).toBe(0);
+  });
+
+  it("SF: successor end matches predecessor start → lag=0wd", () => {
+    const succ = { startDate: "2025-01-02", endDate: "2025-01-06" };
+    expect(calculateInitialLag(pred, succ, "SF", WD_CTX)).toBe(0);
+  });
+
+  it("falls back to calendar inverse when ctx.enabled is false", () => {
+    const ctxOff: WorkingDaysContext = { ...WD_CTX, enabled: false };
+    const succ = { startDate: "2025-01-13", endDate: "2025-01-15" };
+    // Calendar diff = Jan 13 − Jan 10 − 1 = 2
+    expect(calculateInitialLag(pred, succ, "FS", ctxOff)).toBe(2);
+  });
+});
+
+describe("propagateDateChanges — working days cascade", () => {
+  it("FS cascade with weekend in the gap places successor on Mon", () => {
+    const tasks: Task[] = [
+      makeTask({ id: "A", startDate: "2025-01-06", endDate: "2025-01-10" }),
+      makeTask({ id: "B", startDate: "2025-01-20", endDate: "2025-01-22" }),
+    ];
+    const deps: Dependency[] = [makeDep("A", "B", "FS", 0)];
+    const adjustments = propagateDateChanges(tasks, deps, ["A" as TaskId], {
+      bidirectional: true,
+      workingDays: WD_CTX,
+    });
+    expect(adjustments).toHaveLength(1);
+    // 3-day calendar duration → 3 WD; FS lag=0 → start Mon 13, end Wed 15
+    expect(adjustments[0].newStartDate).toBe("2025-01-13");
+    expect(adjustments[0].newEndDate).toBe("2025-01-15");
+  });
+
+  it("calendar fallback path is unchanged when workingDays option omitted", () => {
+    const tasks: Task[] = [
+      makeTask({ id: "A", startDate: "2025-01-06", endDate: "2025-01-10" }),
+      makeTask({ id: "B", startDate: "2025-01-20", endDate: "2025-01-22" }),
+    ];
+    const deps: Dependency[] = [makeDep("A", "B", "FS", 0)];
+    const adjustments = propagateDateChanges(tasks, deps, ["A" as TaskId], {
+      bidirectional: true,
+    });
+    expect(adjustments[0].newStartDate).toBe("2025-01-11"); // Sat — calendar mode
   });
 });

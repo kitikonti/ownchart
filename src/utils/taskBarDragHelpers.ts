@@ -52,6 +52,7 @@ export interface DragState {
 // WorkingDaysContext now lives in workingDaysCalculator.ts (single source of
 // truth for the type — re-exported below for back-compat with existing
 // imports from this module).
+/** @deprecated Import from `@/utils/workingDaysCalculator` instead. */
 export type { WorkingDaysContext };
 
 /**

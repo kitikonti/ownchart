@@ -108,15 +108,28 @@ export function calculateConstrainedDates(
   lag: number = 0,
   ctx?: WorkingDaysContext
 ): ConstrainedDates {
-  if (ctx?.enabled) {
-    return calculateConstrainedDatesWD(
-      predecessor,
-      successorDuration,
-      type,
-      lag,
-      ctx
-    );
-  }
+  return ctx?.enabled
+    ? calculateConstrainedDatesWD(
+        predecessor,
+        successorDuration,
+        type,
+        lag,
+        ctx
+      )
+    : calculateConstrainedDatesCal(predecessor, successorDuration, type, lag);
+}
+
+/**
+ * Calendar-day variant of {@link calculateConstrainedDates}. Pure date
+ * arithmetic — no working-days knowledge. Symmetric counterpart to
+ * {@link calculateConstrainedDatesWD}.
+ */
+function calculateConstrainedDatesCal(
+  predecessor: PredecessorDates,
+  successorDuration: number,
+  type: DependencyType,
+  lag: number
+): ConstrainedDates {
   switch (type) {
     case "FS": {
       // successor.start >= predecessor.end + 1 + lag
@@ -175,42 +188,54 @@ function calculateConstrainedDatesWD(
   // zero/negative ranges from corrupted state.
   const dur = Math.max(1, successorDurationWD);
 
-  // `advance(anchor, n)` returns the (|n|+1)-th working day from `anchor`,
-  // forward when n ≥ 0 and backward when n < 0. Both directions treat the
-  // anchor itself as day 1 if it is a working day, which is what makes
-  // lag = 0 idempotent (Friday + 0wd → Friday, Saturday + 0wd → Monday).
-  const advance = (anchor: string, n: number): string =>
-    n >= 0
-      ? addWorkingDays(anchor, n + 1, config, holidayRegion)
-      : subtractWorkingDays(anchor, -n + 1, config, holidayRegion);
+  // `kthWorkingDayFrom(rawAnchor, lag)` returns the working day that
+  // corresponds to a given lag value, with these invariants:
+  //
+  //   lag = 0  → first working day on/after `rawAnchor` (snap-forward)
+  //   lag = +N → N working days after the lag=0 anchor
+  //   lag = −N → N working days before the lag=0 anchor
+  //
+  // The two-step shape (snap-forward, then walk N WDs in either direction)
+  // makes the formula symmetric across all four dependency types regardless
+  // of whether `rawAnchor` is itself a working day. Without the snap step,
+  // the negative-lag branch would silently mis-anchor when `rawAnchor` falls
+  // on a non-working day (e.g. FS dayAfterPred = Sat).
+  const kthWorkingDayFrom = (rawAnchor: string, lag: number): string => {
+    const lagZero = addWorkingDays(rawAnchor, 1, config, holidayRegion);
+    if (lag === 0) return lagZero;
+    if (lag > 0) {
+      return addWorkingDays(lagZero, lag + 1, config, holidayRegion);
+    }
+    return subtractWorkingDays(lagZero, -lag + 1, config, holidayRegion);
+  };
 
   switch (type) {
     case "FS": {
       // Anchor: day after predecessor.end. Successor starts on the (lag+1)th
       // working day from there. Lag=0 → first working day on/after dayAfter.
       const dayAfterPred = addDays(predecessor.endDate, 1);
-      const start = advance(dayAfterPred, lagWD);
+      const start = kthWorkingDayFrom(dayAfterPred, lagWD);
       const end = addWorkingDays(start, dur, config, holidayRegion);
       return { startDate: start, endDate: end };
     }
     case "SS": {
       // Anchor: predecessor.start. Successor starts on the (lag+1)th working
       // day from there. Lag=0 → same start as predecessor (when working day).
-      const start = advance(predecessor.startDate, lagWD);
+      const start = kthWorkingDayFrom(predecessor.startDate, lagWD);
       const end = addWorkingDays(start, dur, config, holidayRegion);
       return { startDate: start, endDate: end };
     }
     case "FF": {
       // Anchor: predecessor.end. Successor ends on the (lag+1)th working day
       // from there. Lag=0 → same end as predecessor.
-      const end = advance(predecessor.endDate, lagWD);
+      const end = kthWorkingDayFrom(predecessor.endDate, lagWD);
       const start = subtractWorkingDays(end, dur, config, holidayRegion);
       return { startDate: start, endDate: end };
     }
     case "SF": {
       // Anchor: predecessor.start, but the constraint is on successor.end.
       // Successor ends on the (lag+1)th working day from pred.start.
-      const end = advance(predecessor.startDate, lagWD);
+      const end = kthWorkingDayFrom(predecessor.startDate, lagWD);
       const start = subtractWorkingDays(end, dur, config, holidayRegion);
       return { startDate: start, endDate: end };
     }
@@ -243,9 +268,19 @@ export function calculateInitialLag(
   type: DependencyType,
   ctx?: WorkingDaysContext
 ): number {
-  if (ctx?.enabled) {
-    return calculateInitialLagWD(predecessor, successor, type, ctx);
-  }
+  return ctx?.enabled
+    ? calculateInitialLagWD(predecessor, successor, type, ctx)
+    : calculateInitialLagCal(predecessor, successor, type);
+}
+
+/**
+ * Calendar-day inverse — symmetric counterpart to {@link calculateInitialLagWD}.
+ */
+function calculateInitialLagCal(
+  predecessor: PredecessorDates,
+  successor: PredecessorDates,
+  type: DependencyType
+): number {
   switch (type) {
     case "FS":
       // Inverse of: successor.start = predecessor.end + 1 + lag
@@ -291,30 +326,37 @@ function calculateInitialLagWD(
 ): number {
   const { config, holidayRegion } = ctx;
 
-  // Count working days strictly between [from, to] inclusive, returning a
-  // signed value: positive when from ≤ to (gap), negative when from > to
-  // (overlap). The "−1" matches the +1 day-1 convention in addWorkingDays.
-  const signedWorkingGap = (from: string, to: string): number => {
-    if (from === to) return 0;
-    if (from < to) {
-      return calculateWorkingDays(from, to, config, holidayRegion) - 1;
+  // Inverse of {@link calculateConstrainedDatesWD}'s `kthWorkingDayFrom`:
+  // given the same `rawAnchor` and the actual successor anchor `target`,
+  // recover the lag. We snap `rawAnchor` forward to its lag=0 position and
+  // then count working-day steps to `target`. Steps forward yield positive
+  // lag, steps backward yield negative lag.
+  //
+  // Rounding rule (#82): when the count endpoints land on a non-working day,
+  // we round **toward the predecessor** — `calculateWorkingDays` is inclusive
+  // and weekend slack on the successor side is naturally excluded by the
+  // `−1` (the start day counts as 1 in the forward arithmetic).
+  const lagFromAnchor = (rawAnchor: string, target: string): number => {
+    const lagZero = addWorkingDays(rawAnchor, 1, config, holidayRegion);
+    if (target === lagZero) return 0;
+    if (target > lagZero) {
+      return calculateWorkingDays(lagZero, target, config, holidayRegion) - 1;
     }
-    return -(calculateWorkingDays(to, from, config, holidayRegion) - 1);
+    return -(calculateWorkingDays(target, lagZero, config, holidayRegion) - 1);
   };
 
   switch (type) {
-    case "FS": {
-      // Anchor: day after predecessor.end. Lag is the working-day count from
-      // that anchor to successor.start (inclusive, minus the start-day-1).
-      const dayAfterPred = addDays(predecessor.endDate, 1);
-      return signedWorkingGap(dayAfterPred, successor.startDate);
-    }
+    case "FS":
+      return lagFromAnchor(
+        addDays(predecessor.endDate, 1),
+        successor.startDate
+      );
     case "SS":
-      return signedWorkingGap(predecessor.startDate, successor.startDate);
+      return lagFromAnchor(predecessor.startDate, successor.startDate);
     case "FF":
-      return signedWorkingGap(predecessor.endDate, successor.endDate);
+      return lagFromAnchor(predecessor.endDate, successor.endDate);
     case "SF":
-      return signedWorkingGap(predecessor.startDate, successor.endDate);
+      return lagFromAnchor(predecessor.startDate, successor.endDate);
   }
 }
 

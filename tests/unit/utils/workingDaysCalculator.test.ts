@@ -24,6 +24,7 @@ import {
   getHolidaysInRange,
   getWorkingDaysSummary,
   snapForwardToWorkingDay,
+  subtractWorkingDays,
   WorkingDaysLoopError,
 } from "@/utils/workingDaysCalculator";
 import { holidayService, type HolidayInfo } from "@/services/holidayService";
@@ -490,6 +491,82 @@ describe("workingDaysCalculator", () => {
       mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
       expect(() =>
         snapForwardToWorkingDay("2025-01-06", EXCLUDE_ALL, "XX")
+      ).toThrow(WorkingDaysLoopError);
+    });
+  });
+
+  // ── subtractWorkingDays ───────────────────────────────────────────────────
+
+  describe("subtractWorkingDays", () => {
+    // Reference week: Mon 2025-01-06 … Sun 2025-01-12
+
+    it("returns end date unchanged when days <= 0", () => {
+      expect(subtractWorkingDays("2025-01-10", 0, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10"
+      );
+      expect(subtractWorkingDays("2025-01-10", -3, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10"
+      );
+    });
+
+    it("counts the end date as day 1 when it is a working day", () => {
+      // Fri Jan 10, subtract 1 → Fri itself is day 1 → returns Fri.
+      expect(subtractWorkingDays("2025-01-10", 1, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10"
+      );
+    });
+
+    it("subtracts across the weekend", () => {
+      // Mon Jan 13, subtract 2 → Mon is day 1, Fri 10 is day 2.
+      expect(subtractWorkingDays("2025-01-13", 2, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10"
+      );
+    });
+
+    it("subtracts a full working week", () => {
+      // Fri Jan 10, subtract 5 → Mon Jan 06.
+      expect(subtractWorkingDays("2025-01-10", 5, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-06"
+      );
+    });
+
+    it("end date on a weekend skips backward to a working day", () => {
+      // Sat Jan 11, subtract 1 → Sat not a working day, so step back to Fri.
+      expect(subtractWorkingDays("2025-01-11", 1, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10"
+      );
+    });
+
+    it("fast path returns simple calendar arithmetic with no exclusions", () => {
+      // No exclusions → result is endDate − (days − 1)
+      expect(subtractWorkingDays("2025-01-10", 3, NO_EXCLUSIONS)).toBe(
+        "2025-01-08"
+      );
+    });
+
+    it("is the symmetric inverse of addWorkingDays for working anchors", () => {
+      // Mon Jan 06 + 5 WD = Fri Jan 10. Fri Jan 10 − 5 WD = Mon Jan 06.
+      const forward = addWorkingDays("2025-01-06", 5, EXCLUDE_WEEKENDS);
+      expect(forward).toBe("2025-01-10");
+      expect(subtractWorkingDays(forward, 5, EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-06"
+      );
+    });
+
+    it("skips holidays going backward", () => {
+      // Make Wed Jan 08 a holiday → Fri Jan 10 − 3 WD = Fri (1), Thu (2), Tue (3).
+      mockGetHolidayForDateString.mockImplementation((d: string) =>
+        d === "2025-01-08" ? makeHoliday("2025-01-08") : null
+      );
+      expect(subtractWorkingDays("2025-01-10", 3, EXCLUDE_ALL, "US")).toBe(
+        "2025-01-07"
+      );
+    });
+
+    it("throws WorkingDaysLoopError on degenerate every-day-excluded config", () => {
+      mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
+      expect(() =>
+        subtractWorkingDays("2025-01-10", 5, EXCLUDE_ALL, "XX")
       ).toThrow(WorkingDaysLoopError);
     });
   });
