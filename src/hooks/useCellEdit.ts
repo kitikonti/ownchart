@@ -275,7 +275,11 @@ export function useCellEdit({
       return true;
     }
 
-    const validation = column.validator(localValue);
+    const valueForValidation: string | number =
+      field === "duration" || field === "progress"
+        ? Number(localValue)
+        : localValue;
+    const validation = column.validator(valueForValidation);
     if (!validation.valid) {
       setError(validation.error || "Invalid value");
       return false;
