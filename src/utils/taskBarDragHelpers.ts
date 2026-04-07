@@ -12,10 +12,13 @@
 import type { Task, TaskType } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import type { TaskBarGeometry } from "./timelineUtils";
-import type { WorkingDaysConfig } from "@/types/preferences.types";
 
 import { addDays, calculateDuration } from "./dateUtils";
-import { calculateWorkingDays, addWorkingDays } from "./workingDaysCalculator";
+import {
+  calculateWorkingDays,
+  addWorkingDays,
+  type WorkingDaysContext,
+} from "./workingDaysCalculator";
 import { validateDragOperation } from "./dragValidation";
 import { MS_PER_DAY } from "./timeConstants";
 
@@ -46,12 +49,10 @@ export interface DragState {
   currentPreviewEnd?: string;
 }
 
-/** Context for working-days-aware date calculations. */
-export interface WorkingDaysContext {
-  enabled: boolean;
-  config: WorkingDaysConfig;
-  holidayRegion: string | undefined;
-}
+// WorkingDaysContext now lives in workingDaysCalculator.ts (single source of
+// truth for the type — re-exported below for back-compat with existing
+// imports from this module).
+export type { WorkingDaysContext };
 
 /**
  * Detect which zone of the task bar the mouse is in.

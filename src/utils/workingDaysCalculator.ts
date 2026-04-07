@@ -36,6 +36,21 @@ export interface WorkingDaysSummary {
   holidays: HolidayInfo[];
 }
 
+// ─── Shared types ─────────────────────────────────────────────────────────────
+
+/**
+ * Working-days context passed through scheduling and drag/resize code paths.
+ *
+ * Single source of truth for "is working-days mode on, and if so, with what
+ * configuration". Re-exported from `taskBarDragHelpers.ts` for back-compat
+ * with the drag helpers introduced before this module owned the type.
+ */
+export interface WorkingDaysContext {
+  enabled: boolean;
+  config: WorkingDaysConfig;
+  holidayRegion: string | undefined;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /**
@@ -321,6 +336,69 @@ export function addWorkingDays(
   if (remainingDays === 0) return startDate;
 
   return advanceByWorkingDays(startDate, remainingDays, config, holidayRegion);
+}
+
+/**
+ * Subtract a number of working days from an end date — the symmetric inverse
+ * of {@link addWorkingDays}.
+ *
+ * The end date counts as day 1 if it is itself a working day. For example,
+ * `subtractWorkingDays("2025-01-10" /* Friday *\/, 1, EXCLUDE_WEEKENDS)`
+ * returns `"2025-01-10"`, and `subtractWorkingDays("2025-01-10", 5, ...)`
+ * returns `"2025-01-06"` (Mon).
+ *
+ * Returns `endDate` unchanged for `days <= 0`. Used by FF/SF dependency
+ * arithmetic in `dateAdjustment.ts` to derive a successor's start date from
+ * its constrained end date without resorting to a calendar-day buffer scan.
+ *
+ * @throws {WorkingDaysLoopError} when the iteration cap is exceeded — same
+ *   degenerate-config contract as {@link addWorkingDays}.
+ */
+export function subtractWorkingDays(
+  endDate: string,
+  days: number,
+  config: WorkingDaysConfig,
+  holidayRegion?: string
+): string {
+  if (days <= 0) return endDate;
+
+  // Fast path: no exclusions → simple date arithmetic.
+  if (
+    !config.excludeSaturday &&
+    !config.excludeSunday &&
+    !config.excludeHolidays
+  ) {
+    return addDays(endDate, -(days - 1));
+  }
+
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
+  }
+
+  let remaining = days;
+  let current = endDate;
+  if (isWorkingDay(current, config, holidayRegion)) {
+    remaining--;
+  }
+  if (remaining === 0) return current;
+
+  // Symmetric to advanceByWorkingDays — same iteration cap formula.
+  const maxIterations = remaining * 7 + WORKING_DAYS_LOOP_BUFFER;
+  let iterations = 0;
+  while (remaining > 0) {
+    if (iterations++ >= maxIterations) {
+      throw new WorkingDaysLoopError(
+        "subtractWorkingDays iteration guard fired — the working-days " +
+          "configuration may exclude every day. Check excludeSaturday/Sunday/" +
+          "Holidays and the active holiday region."
+      );
+    }
+    current = addDays(current, -1);
+    if (isWorkingDay(current, config, holidayRegion)) {
+      remaining--;
+    }
+  }
+  return current;
 }
 
 /**
