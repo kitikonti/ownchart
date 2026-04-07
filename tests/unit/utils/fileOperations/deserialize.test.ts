@@ -5,6 +5,10 @@
 
 import { describe, it, expect } from 'vitest';
 import { deserializeGanttFile } from '@/utils/fileOperations/deserialize';
+import { serializeToGanttFile } from '@/utils/fileOperations/serialize';
+import type { Task } from '@/types/chart.types';
+import type { Dependency } from '@/types/dependency.types';
+import type { TaskId, HexColor } from '@/types/branded.types';
 
 describe('File Operations - Deserialization', () => {
   const createValidFileContent = (): Record<string, unknown> => ({
@@ -728,6 +732,166 @@ describe('File Operations - Deserialization', () => {
       expect(result.success).toBe(true);
       const dep = result.data!.dependencies[0];
       expect(dep.__unknownFields).toBeUndefined();
+    });
+  });
+
+  // ─── Working-days file format (#82 stage 5) ────────────────────────────
+  //
+  // Stage 5 documented two contracts in JSDoc only. These tests pin them
+  // so a future refactor can't silently flip them:
+  //   1. The file's view settings (workingDaysMode, workingDaysConfig,
+  //      holidayRegion) win on import — there is no merge with caller state.
+  //   2. Lag round-trips through the file format with its numeric value
+  //      preserved, regardless of whether WD mode is on or off (the unit
+  //      is implied by the global flag, not stored per-dep).
+
+  describe('Working-days file format', () => {
+    it('file working-days settings win over any caller state (#82 stage 5)', () => {
+      const file = createValidFileContent();
+      /* eslint-disable @typescript-eslint/no-explicit-any */
+      (file.chart as any).viewSettings = {
+        ...(file.chart as any).viewSettings,
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: true,
+        },
+        holidayRegion: 'DE',
+      };
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+
+      const result = deserializeGanttFile(
+        JSON.stringify(file),
+        'test.ownchart'
+      );
+
+      expect(result.success).toBe(true);
+      const vs = result.data!.viewSettings;
+      // The deserializer is pure — it returns whatever the file says, and
+      // the loader hook (useFileOperations) is what writes that into the
+      // store. No merge, no prompt: file wins.
+      expect(vs.workingDaysMode).toBe(true);
+      expect(vs.workingDaysConfig).toEqual({
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      });
+      expect(vs.holidayRegion).toBe('DE');
+    });
+
+    it('lag value round-trips through serialize → deserialize with WD mode on', () => {
+      const tasks: Task[] = [
+        {
+          id: '11111111-1111-1111-1111-111111111111' as TaskId,
+          name: 'Pred',
+          startDate: '2026-01-05',
+          endDate: '2026-01-09',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6' as HexColor,
+          order: 0,
+          metadata: {},
+        },
+        {
+          id: '22222222-2222-2222-2222-222222222222' as TaskId,
+          name: 'Succ',
+          startDate: '2026-01-15',
+          endDate: '2026-01-17',
+          duration: 3,
+          progress: 0,
+          color: '#3b82f6' as HexColor,
+          order: 1,
+          metadata: {},
+        },
+      ];
+      const dependencies: Dependency[] = [
+        {
+          id: '33333333-3333-3333-3333-333333333333',
+          fromTaskId: '11111111-1111-1111-1111-111111111111' as TaskId,
+          toTaskId: '22222222-2222-2222-2222-222222222222' as TaskId,
+          type: 'FS',
+          // 2 working days when WD mode is on; the value is just an integer
+          // at the file boundary — the unit is implied by workingDaysMode.
+          lag: 2,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+      const viewSettings = {
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: false,
+        },
+        holidayRegion: 'US',
+      };
+
+      const json = serializeToGanttFile(
+        tasks,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        viewSettings as any,
+        { dependencies }
+      );
+      const result = deserializeGanttFile(json, 'roundtrip.ownchart');
+
+      expect(result.success).toBe(true);
+      const dep = result.data!.dependencies[0];
+      // Numeric lag preserved exactly.
+      expect(dep.lag).toBe(2);
+      // Mode flag preserved so the lag will be interpreted correctly on
+      // the next render.
+      expect(result.data!.viewSettings.workingDaysMode).toBe(true);
+      expect(result.data!.viewSettings.holidayRegion).toBe('US');
+    });
+
+    it('lag round-trips with WD mode off (calendar-day semantics)', () => {
+      const tasks: Task[] = [
+        {
+          id: '11111111-1111-1111-1111-111111111111' as TaskId,
+          name: 'Pred',
+          startDate: '2026-01-05',
+          endDate: '2026-01-09',
+          duration: 5,
+          progress: 0,
+          color: '#3b82f6' as HexColor,
+          order: 0,
+          metadata: {},
+        },
+        {
+          id: '22222222-2222-2222-2222-222222222222' as TaskId,
+          name: 'Succ',
+          startDate: '2026-01-12',
+          endDate: '2026-01-14',
+          duration: 3,
+          progress: 0,
+          color: '#3b82f6' as HexColor,
+          order: 1,
+          metadata: {},
+        },
+      ];
+      const dependencies: Dependency[] = [
+        {
+          id: '33333333-3333-3333-3333-333333333333',
+          fromTaskId: '11111111-1111-1111-1111-111111111111' as TaskId,
+          toTaskId: '22222222-2222-2222-2222-222222222222' as TaskId,
+          type: 'FS',
+          // Negative lag (overlap) survives the trip too.
+          lag: -1,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        },
+      ];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const viewSettings = { workingDaysMode: false } as any;
+
+      const json = serializeToGanttFile(tasks, viewSettings, {
+        dependencies,
+      });
+      const result = deserializeGanttFile(json, 'roundtrip.ownchart');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.dependencies[0].lag).toBe(-1);
+      expect(result.data!.viewSettings.workingDaysMode).toBe(false);
     });
   });
 
