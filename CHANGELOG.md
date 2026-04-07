@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.6.1](https://github.com/kitikonti/ownchart/compare/v1.6.0...v1.6.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* convert numeric cell values before validation ([#80](https://github.com/kitikonti/ownchart/issues/80)) ([c05e53c](https://github.com/kitikonti/ownchart/commit/c05e53c9bf0c8667a6fa06a56b24a7b4a0fb121e))
+
+
+### Code Refactoring
+
+* derive numeric cell coercion from column renderer ([cf265e9](https://github.com/kitikonti/ownchart/commit/cf265e9feea1cd4e55b8b9eda45eef490bacb903))
+
 ## [1.6.0](https://github.com/kitikonti/ownchart/compare/v1.5.0...v1.6.0) (2026-04-06)
 
 
