@@ -44,15 +44,19 @@ export function useTableDimensions(): UseTableDimensionsResult {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   const totalColumnWidth = useMemo(() => {
     return getVisibleColumns(hiddenColumns).reduce((sum, col) => {
       const customWidth = columnWidths[col.id];
       const width =
-        customWidth ?? parseWidth(getDensityAwareWidth(col.id, densityConfig));
+        customWidth ??
+        parseWidth(
+          getDensityAwareWidth(col.id, densityConfig, workingDaysMode)
+        );
       return sum + width;
     }, 0);
-  }, [columnWidths, densityConfig, hiddenColumns]);
+  }, [columnWidths, densityConfig, hiddenColumns, workingDaysMode]);
 
   return { totalColumnWidth };
 }

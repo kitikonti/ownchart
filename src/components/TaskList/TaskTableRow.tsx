@@ -16,6 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import type { ColumnDefinition } from "@/config/tableColumns";
 import type {
   ClipboardPosition,
@@ -77,6 +78,12 @@ export const TaskTableRow = memo(function TaskTableRow({
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
 
+  // Working-days display context — when WD mode is on, duration in the table
+  // is rendered as working days (computed at render time, not stored). See #81.
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
+
   const computedColor = useComputedTaskColor(task);
   const { handleSelectRow } = useRowSelectionHandler({ visibleTaskIds });
 
@@ -86,8 +93,13 @@ export const TaskTableRow = memo(function TaskTableRow({
 
   // Calculate summary dates if needed, and recalculate duration for all tasks
   const displayTask = useMemo(
-    () => computeDisplayTask(task, tasks),
-    [task, tasks]
+    () =>
+      computeDisplayTask(task, tasks, {
+        mode: workingDaysMode,
+        config: workingDaysConfig,
+        region: holidayRegion,
+      }),
+    [task, tasks, workingDaysMode, workingDaysConfig, holidayRegion]
   );
 
   const isExpanded = task.open ?? true;

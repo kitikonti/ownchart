@@ -14,6 +14,7 @@ import type {
   FlattenedTask,
 } from "./types";
 import { HEADER_LABELS, getColumnDisplayValue } from "./columns";
+import { useChartStore } from "@/store/slices/chartSlice";
 import { getDefaultColumnWidth } from "./calculations";
 import {
   HEADER_HEIGHT,
@@ -508,7 +509,16 @@ function renderHeaderCell(
 ): void {
   const { colX, colWidth } = layout;
   const { y, cellPaddingX } = ctx;
-  const label = HEADER_LABELS[key] ?? "";
+  // Working-days display: when WD mode is on, the duration column header is
+  // suffixed with "(wd)" so the unit is unambiguous in PNG/PDF/SVG exports.
+  // Read straight from the store rather than threading the flag through every
+  // export option type — this is a leaf-most, sync read at render time.
+  const baseLabel = HEADER_LABELS[key] ?? "";
+  const workingDaysMode = useChartStore.getState().workingDaysMode;
+  const label =
+    key === "duration" && workingDaysMode && baseLabel
+      ? `${baseLabel} (wd)`
+      : baseLabel;
 
   // Column header text — matches app: text-xs font-semibold uppercase tracking-wider
   if (label) {

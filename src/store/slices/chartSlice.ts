@@ -827,7 +827,8 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const colWidth = getColumnPixelWidth(
           columnId,
           taskState.columnWidths,
-          densityConfig
+          densityConfig,
+          get().workingDaysMode
         );
         const newWidth = isCurrentlyHidden
           ? taskState.taskTableWidth + colWidth // showing: expand
@@ -850,19 +851,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const nowShown = oldHidden.filter((id) => !columns.includes(id));
         const nowHidden = columns.filter((id) => !oldHidden.includes(id));
 
+        const wdMode = get().workingDaysMode;
         let delta = 0;
         for (const id of nowShown) {
           delta += getColumnPixelWidth(
             id,
             taskState.columnWidths,
-            densityConfig
+            densityConfig,
+            wdMode
           );
         }
         for (const id of nowHidden) {
           delta -= getColumnPixelWidth(
             id,
             taskState.columnWidths,
-            densityConfig
+            densityConfig,
+            wdMode
           );
         }
 

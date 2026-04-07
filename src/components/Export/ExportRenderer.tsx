@@ -67,10 +67,12 @@ function ExportTaskTableHeader({
   selectedColumns,
   columnWidths,
   width,
+  workingDaysMode,
 }: {
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
+  workingDaysMode: boolean;
 }): JSX.Element {
   return (
     <div
@@ -80,6 +82,10 @@ function ExportTaskTableHeader({
       {selectedColumns.map((key) => {
         const col = EXPORT_COLUMNS.find((c) => c.key === key);
         if (!col) return null;
+        const label =
+          col.key === "duration" && workingDaysMode
+            ? `${col.label} (wd)`
+            : col.label;
         return (
           <div
             key={col.key}
@@ -89,7 +95,7 @@ function ExportTaskTableHeader({
               height: HEADER_HEIGHT,
             }}
           >
-            {col.label}
+            {label}
           </div>
         );
       })}
@@ -256,6 +262,8 @@ export function ExportRenderer({
 
   // Get holiday region from chart settings (for holiday highlighting)
   const holidayRegion = useChartStore((state) => state.holidayRegion);
+  // Working-days mode controls duration column header label suffix
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   // Build flattened task list (show all tasks, none collapsed for export)
   const flattenedTasks = useMemo(() => {
@@ -413,6 +421,7 @@ export function ExportRenderer({
               selectedColumns={selectedColumns}
               columnWidths={effectiveColumnWidths}
               width={taskTableWidth}
+              workingDaysMode={workingDaysMode}
             />
           )}
           {/* Timeline header */}

@@ -76,6 +76,7 @@ export function TaskTable(): JSX.Element {
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
   const hiddenTaskCount = useChartStore((state) => state.hiddenTaskIds.length);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   // Get visible columns based on settings
   const visibleColumns = useMemo(
@@ -128,8 +129,14 @@ export function TaskTable(): JSX.Element {
   );
 
   const gridTemplateColumns = useMemo(
-    () => buildGridTemplateColumns(visibleColumns, columnWidths, densityConfig),
-    [columnWidths, densityConfig, visibleColumns]
+    () =>
+      buildGridTemplateColumns(
+        visibleColumns,
+        columnWidths,
+        densityConfig,
+        workingDaysMode
+      ),
+    [columnWidths, densityConfig, visibleColumns, workingDaysMode]
   );
 
   return (

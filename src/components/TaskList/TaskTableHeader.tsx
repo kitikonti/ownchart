@@ -73,6 +73,8 @@ interface HeaderCellProps {
   onContextMenu: (e: React.MouseEvent, columnId: ColumnId) => void;
   setColumnWidth: (id: string, width: number) => void;
   autoFitColumn: (id: string) => void;
+  /** When true, the duration column header is suffixed with "(wd)". */
+  workingDaysMode: boolean;
 }
 
 // Stable noop used as default for onSelectAll when the cell is not rowNumber.
@@ -82,7 +84,8 @@ const noop = (): void => {};
 function renderHeaderCellContent(
   column: ColumnDefinition,
   allSelected: boolean,
-  onSelectAll: () => void
+  onSelectAll: () => void,
+  workingDaysMode: boolean
 ): JSX.Element | string | null {
   if (column.headerVariant === "select-all") {
     return (
@@ -91,6 +94,19 @@ function renderHeaderCellContent(
   }
   if (column.headerVariant === "empty") {
     return null;
+  }
+  if (column.id === "duration" && workingDaysMode) {
+    // Append a compact, non-tracked, normal-case "wd" badge so the unit fits
+    // alongside "DURATION" within the existing column width without overlapping
+    // the next column.
+    return (
+      <>
+        {column.label}
+        <span className="ml-1 normal-case tracking-normal text-[10px] font-medium text-slate-500">
+          wd
+        </span>
+      </>
+    );
   }
   return column.label;
 }
@@ -105,6 +121,7 @@ const HeaderCell = memo(function HeaderCell({
   onContextMenu,
   setColumnWidth,
   autoFitColumn,
+  workingDaysMode,
 }: HeaderCellProps): JSX.Element {
   return (
     <div
@@ -131,14 +148,20 @@ const HeaderCell = memo(function HeaderCell({
       aria-label={column.headerAriaLabel}
       onContextMenu={(e) => onContextMenu(e, column.id)}
     >
-      {renderHeaderCellContent(column, allSelected, onSelectAll)}
+      {renderHeaderCellContent(
+        column,
+        allSelected,
+        onSelectAll,
+        workingDaysMode
+      )}
       {column.resizable && (
         <ColumnResizer
           columnId={column.id}
           currentWidth={getColumnPixelWidth(
             column.id,
             columnWidths,
-            densityConfig
+            densityConfig,
+            workingDaysMode
           )}
           onResize={setColumnWidth}
           onAutoResize={autoFitColumn}
@@ -163,6 +186,7 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
   } = useTaskTableHeaderStore();
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   // Context menu for column headers (Zone 2)
   const {
@@ -192,8 +216,14 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
    * Uses density-aware widths when no custom width is set.
    */
   const gridTemplateColumns = useMemo(
-    () => buildGridTemplateColumns(visibleColumns, columnWidths, densityConfig),
-    [columnWidths, densityConfig, visibleColumns]
+    () =>
+      buildGridTemplateColumns(
+        visibleColumns,
+        columnWidths,
+        densityConfig,
+        workingDaysMode
+      ),
+    [columnWidths, densityConfig, visibleColumns, workingDaysMode]
   );
 
   const handleSelectAllClick = useCallback((): void => {
@@ -225,6 +255,7 @@ export const TaskTableHeader = memo(function TaskTableHeader(): JSX.Element {
             onContextMenu={handleHeaderContextMenu}
             setColumnWidth={setColumnWidth}
             autoFitColumn={autoFitColumn}
+            workingDaysMode={workingDaysMode}
             // allSelected / onSelectAll only consumed by the 'select-all' variant;
             // omitting them for all other columns keeps their props stable so
             // React.memo can skip re-renders when selection changes.

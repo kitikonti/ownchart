@@ -7,6 +7,7 @@ import { useCallback, useMemo, useEffect } from "react";
 import type { Task } from "@/types/chart.types";
 import type { TimelineScale } from "@/utils/timelineUtils";
 import { prepareExportTasks } from "@/utils/export/prepareExportTasks";
+import { calculateWorkingDays } from "@/utils/workingDaysCalculator";
 import type {
   ExportFormat,
   ExportOptions,
@@ -221,6 +222,9 @@ export function useExportDialog(): UseExportDialogResult {
   const viewportScrollLeft = useChartStore((state) => state.viewportScrollLeft);
   const viewportWidth = useChartStore((state) => state.viewportWidth);
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
 
   const fileName = useFileStore((state) => state.fileName);
   const dateFormat = useUserPreferencesStore(
@@ -236,10 +240,28 @@ export function useExportDialog(): UseExportDialogResult {
     [projectTitle, fileName]
   );
 
-  const exportTasks = useMemo(
-    () => prepareExportTasks(tasks, hiddenTaskIds),
-    [tasks, hiddenTaskIds]
-  );
+  const exportTasks = useMemo(() => {
+    const filtered = prepareExportTasks(tasks, hiddenTaskIds);
+    // When working-days mode is on, override each task's stored (calendar)
+    // duration with the working-day count of its calendar span. This keeps
+    // exported PNG/PDF/SVG aligned with the table view (#81). Storage is not
+    // mutated — only the in-memory copy passed to the export pipeline.
+    if (!workingDaysMode) return filtered;
+    return filtered.map((task) => {
+      if (task.type === "milestone" || !task.startDate || !task.endDate) {
+        return task;
+      }
+      return {
+        ...task,
+        duration: calculateWorkingDays(
+          task.startDate,
+          task.endDate,
+          workingDaysConfig,
+          holidayRegion
+        ),
+      };
+    });
+  }, [tasks, hiddenTaskIds, workingDaysMode, workingDaysConfig, holidayRegion]);
   const hiddenTaskCount = useMemo(
     () => tasks.length - exportTasks.length,
     [tasks.length, exportTasks.length]

@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { computeDisplayTask } from "@/utils/taskDisplayUtils";
 import type { Task } from "@/types/chart.types";
+import type { WorkingDaysConfig } from "@/types/preferences.types";
 import { tid } from "../../helpers/branded";
 import { hex } from "../../helpers/branded";
 
@@ -128,6 +129,83 @@ describe("computeDisplayTask", () => {
       const result = computeDisplayTask(summary, null);
 
       expect(result).toBe(summary);
+    });
+  });
+
+  describe("working-days display context (#81)", () => {
+    const wdConfig: WorkingDaysConfig = {
+      excludeSaturday: true,
+      excludeSunday: true,
+      excludeHolidays: false,
+    };
+
+    it("reports duration as working days for a task spanning a weekend", () => {
+      // 2025-01-06 (Mon) → 2025-01-12 (Sun) = 7 calendar days, 5 working days
+      const task = makeTask({
+        startDate: "2025-01-06",
+        endDate: "2025-01-12",
+        duration: 999,
+      });
+
+      const result = computeDisplayTask(task, null, {
+        mode: true,
+        config: wdConfig,
+      });
+
+      expect(result.duration).toBe(5);
+    });
+
+    it("falls back to calendar duration when mode is false", () => {
+      const task = makeTask({
+        startDate: "2025-01-06",
+        endDate: "2025-01-12",
+      });
+
+      const result = computeDisplayTask(task, null, {
+        mode: false,
+        config: wdConfig,
+      });
+
+      expect(result.duration).toBe(7);
+    });
+
+    it("computes parent WD duration over the parent's calendar span (D5), not sum of child WDs", () => {
+      // Parent span: 2025-01-06 (Mon) → 2025-01-19 (Sun) = 14 calendar days
+      // Working days in that span (Mon-Fri only): weeks of Jan 6 and Jan 13 → 10 WD
+      // Sum of child WDs would be 5 + 5 = 10 here as well, so use a configuration
+      // that distinguishes them: child gaps. Two children with a weekend gap show
+      // the same WD as the parent calendar span (10), proving the rollup walks
+      // the parent's span, not the children's individual WDs.
+      const summary = makeTask({
+        id: tid("summary-1"),
+        type: "summary",
+        startDate: "",
+        endDate: "",
+        duration: 0,
+      });
+      const child1 = makeTask({
+        id: tid("child-1"),
+        parent: tid("summary-1"),
+        startDate: "2025-01-06", // Mon
+        endDate: "2025-01-10", // Fri (5 WD)
+      });
+      const child2 = makeTask({
+        id: tid("child-2"),
+        parent: tid("summary-1"),
+        startDate: "2025-01-13", // Mon
+        endDate: "2025-01-19", // Sun (5 WD: Mon–Fri)
+      });
+
+      const result = computeDisplayTask(
+        summary,
+        [summary, child1, child2],
+        { mode: true, config: wdConfig }
+      );
+
+      expect(result.startDate).toBe("2025-01-06");
+      expect(result.endDate).toBe("2025-01-19");
+      // Parent calendar span Mon Jan 6 → Sun Jan 19 = 10 working days
+      expect(result.duration).toBe(10);
     });
   });
 });

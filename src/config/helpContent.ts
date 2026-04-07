@@ -585,7 +585,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-task-duration",
         title: "Duration",
         description:
-          "Duration is calculated from start and end dates. Edit it directly to adjust the end date. In working days mode, weekends and holidays are excluded from the count.",
+          'Duration is calculated from start and end dates. Edit it directly to adjust the end date. In working days mode, weekends and holidays are excluded from the count and the column header shows "Duration (wd)".',
         keywords: ["duration", "length", "days"],
       },
       {
