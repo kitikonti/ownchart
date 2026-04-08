@@ -65,6 +65,22 @@ function shouldCascade(altKey: boolean): boolean {
 }
 
 /**
+ * Arguments to {@link updateLagDeltaIndicator}. Bundled into an object so
+ * adding a future axis (e.g. shift-modifier handling) doesn't grow the
+ * positional parameter list past comprehensibility.
+ */
+interface LagDeltaIndicatorUpdate {
+  draggedTaskId: TaskId;
+  previewStart: string;
+  previewEnd: string;
+  wdCtx: WorkingDaysContext;
+  altKey: boolean;
+  setLagDelta: (
+    delta: { depId: string; oldLag: number; newLag: number } | null
+  ) => void;
+}
+
+/**
  * Boundary helper: read store state, gate on the EFFECTIVE drag mode
  * (which honours the Alt-key inversion), and push the computed lag-delta
  * into chartSlice. Lives next to the per-frame mousemove handler so the
@@ -80,16 +96,14 @@ function shouldCascade(altKey: boolean): boolean {
  * cascade vs. lag-update decision. Now we use `shouldCascade(altKey)` so
  * the pill follows the same effective mode the commit handler will use.
  */
-function updateLagDeltaIndicator(
-  draggedTaskId: TaskId,
-  previewStart: string,
-  previewEnd: string,
-  wdCtx: WorkingDaysContext,
-  altKey: boolean,
-  setLagDelta: (
-    delta: { depId: string; oldLag: number; newLag: number } | null
-  ) => void
-): void {
+function updateLagDeltaIndicator({
+  draggedTaskId,
+  previewStart,
+  previewEnd,
+  wdCtx,
+  altKey,
+  setLagDelta,
+}: LagDeltaIndicatorUpdate): void {
   if (shouldCascade(altKey)) {
     setLagDelta(null);
     return;
@@ -375,6 +389,10 @@ export function useTaskBarInteraction(
   // ensuring removeEventListener always matches addEventListener.
   const mouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
   const mouseUpRef = useRef<(e: MouseEvent) => void>(() => {});
+  // Key listeners are bound during the gesture so the lag-delta pill
+  // refreshes the moment Alt is pressed or released, even if the user
+  // doesn't move the mouse afterwards (#82 F044/F045).
+  const keyChangeRef = useRef<(e: KeyboardEvent) => void>(() => {});
 
   const stableMouseMove = useCallback(
     (e: MouseEvent): void => mouseMoveRef.current(e),
@@ -382,6 +400,10 @@ export function useTaskBarInteraction(
   );
   const stableMouseUp = useCallback(
     (e: MouseEvent): void => mouseUpRef.current(e),
+    []
+  );
+  const stableKeyChange = useCallback(
+    (e: KeyboardEvent): void => keyChangeRef.current(e),
     []
   );
 
@@ -414,14 +436,14 @@ export function useTaskBarInteraction(
           currentPreviewEnd: newEnd,
         });
         setSharedDragState(deltaDays, task.id);
-        updateLagDeltaIndicator(
-          task.id,
-          newStart,
-          newEnd,
-          ctx,
-          e.altKey,
-          setLagDelta
-        );
+        updateLagDeltaIndicator({
+          draggedTaskId: task.id,
+          previewStart: newStart,
+          previewEnd: newEnd,
+          wdCtx: ctx,
+          altKey: e.altKey,
+          setLagDelta,
+        });
       } else {
         const preview = computeResizePreview(current, deltaDays);
         if (!preview) return;
@@ -432,15 +454,39 @@ export function useTaskBarInteraction(
           currentPreviewEnd: preview.previewEnd,
         });
         const ctx = getWorkingDaysContext();
-        updateLagDeltaIndicator(
-          task.id,
-          preview.previewStart,
-          preview.previewEnd,
-          ctx,
-          e.altKey,
-          setLagDelta
-        );
+        updateLagDeltaIndicator({
+          draggedTaskId: task.id,
+          previewStart: preview.previewStart,
+          previewEnd: preview.previewEnd,
+          wdCtx: ctx,
+          altKey: e.altKey,
+          setLagDelta,
+        });
       }
+    });
+  };
+
+  // Refresh the lag-delta pill the moment Alt is pressed or released, even
+  // if the user doesn't move the mouse afterwards. The handler reads the
+  // current preview position from dragStateRef so it doesn't need a fresh
+  // mousemove to compute the would-be lag (#82 F044/F045).
+  keyChangeRef.current = (e: KeyboardEvent): void => {
+    if (e.key !== "Alt") return;
+    const current = dragStateRef.current;
+    if (
+      !current ||
+      current.currentPreviewStart === undefined ||
+      current.currentPreviewEnd === undefined
+    ) {
+      return;
+    }
+    updateLagDeltaIndicator({
+      draggedTaskId: task.id,
+      previewStart: current.currentPreviewStart,
+      previewEnd: current.currentPreviewEnd,
+      wdCtx: getWorkingDaysContext(),
+      altKey: e.type === "keydown",
+      setLagDelta,
     });
   };
 
@@ -461,6 +507,8 @@ export function useTaskBarInteraction(
 
     document.removeEventListener("mousemove", stableMouseMove);
     document.removeEventListener("mouseup", stableMouseUp);
+    document.removeEventListener("keydown", stableKeyChange);
+    document.removeEventListener("keyup", stableKeyChange);
     syncDragState(null);
     setCursor("pointer");
     svgRef.current = null;
@@ -494,12 +542,15 @@ export function useTaskBarInteraction(
 
       document.addEventListener("mousemove", stableMouseMove);
       document.addEventListener("mouseup", stableMouseUp);
+      document.addEventListener("keydown", stableKeyChange);
+      document.addEventListener("keyup", stableKeyChange);
       e.preventDefault();
       e.stopPropagation();
     },
     // Only the task fields actually read inside this callback.
     // task.id and the full task object are captured by the render-phase ref
-    // assignments (mouseMoveRef / mouseUpRef) which always run fresh.
+    // assignments (mouseMoveRef / mouseUpRef / keyChangeRef) which always
+    // run fresh.
     [
       task.type,
       task.startDate,
@@ -508,6 +559,7 @@ export function useTaskBarInteraction(
       syncDragState,
       stableMouseMove,
       stableMouseUp,
+      stableKeyChange,
     ]
   );
 
@@ -541,12 +593,14 @@ export function useTaskBarInteraction(
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       document.removeEventListener("mousemove", stableMouseMove);
       document.removeEventListener("mouseup", stableMouseUp);
+      document.removeEventListener("keydown", stableKeyChange);
+      document.removeEventListener("keyup", stableKeyChange);
       if (dragStateRef.current) {
         dragStateRef.current = null;
         clearSharedDragState();
       }
     };
-  }, [stableMouseMove, stableMouseUp, clearSharedDragState]);
+  }, [stableMouseMove, stableMouseUp, stableKeyChange, clearSharedDragState]);
 
   const activeCursor = dragState?.mode === "dragging" ? "grabbing" : cursor;
 

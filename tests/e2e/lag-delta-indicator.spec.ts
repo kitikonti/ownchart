@@ -234,6 +234,54 @@ test.describe("Lag-delta indicator pill", () => {
     await page.keyboard.up("Alt");
   });
 
+  test("pill appears the moment Alt is pressed mid-drag (no mouse movement needed)", async ({
+    page,
+  }) => {
+    // Regression for F044: pressing Alt during a drag must refresh the pill
+    // immediately, without waiting for the next mousemove. The previous
+    // version of the indicator only updated inside the RAF tick driven by
+    // mousemove, so a stationary user would see stale visibility until
+    // they jiggled the mouse.
+    const opts = buildOptions();
+    await injectAndNavigate(page, {
+      ...opts,
+      chartState: { ...opts.chartState, autoScheduling: true },
+    });
+
+    const taskB = page
+      .locator(".task-bar")
+      .filter({ has: page.locator('text:has-text("Task B")') })
+      .first();
+    const box = await taskB.boundingBox();
+    expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    // Start a drag with auto-sched ON and no Alt → no pill yet.
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 100, cy, { steps: 10 });
+    await expect(
+      page.locator('[data-testid="lag-delta-indicator"]')
+    ).toHaveCount(0);
+
+    // Press Alt without moving the mouse — pill MUST appear within the
+    // keydown listener, not on a future mousemove.
+    await page.keyboard.down("Alt");
+    await expect(
+      page.locator('[data-testid="lag-delta-indicator"]')
+    ).toBeVisible({ timeout: 1_000 });
+
+    // Release Alt without moving — pill MUST disappear immediately.
+    await page.keyboard.up("Alt");
+    await expect(
+      page.locator('[data-testid="lag-delta-indicator"]')
+    ).toHaveCount(0, { timeout: 1_000 });
+
+    await page.mouse.up();
+  });
+
   test("Alt+drag with auto-scheduling OFF hides the pill (cascade is forced)", async ({
     page,
   }) => {
