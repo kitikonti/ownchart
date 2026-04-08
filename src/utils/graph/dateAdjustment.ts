@@ -274,10 +274,25 @@ function calculateConstrainedDatesWD(
  * that would produce those exact positions under the given dependency type.
  *
  * **Unit semantics**: returns a working-day count when `ctx?.enabled`, else a
- * calendar-day count. Working-day rounding rule: when the gap endpoints land
- * on a non-working day, the count rounds **toward the predecessor** — i.e. the
- * non-working slack on the successor side is excluded, matching the
- * snap-forward anchor rule used by {@link calculateConstrainedDates}.
+ * calendar-day count. Working-day rounding rule: when the successor anchor
+ * lands on a non-working day, the inverse normalises it via snap-forward
+ * (matching the snap-forward anchor rule in {@link calculateConstrainedDates}).
+ * This makes the inverse a true inverse for working-day inputs but means
+ * **round-trip is intentionally NOT stable for non-working-day inputs**:
+ *
+ *     calculateConstrainedDates(
+ *       calculateInitialLag(pred, succ-on-saturday, ...),
+ *       ...
+ *     ) ≠ succ-on-saturday  // returns succ-on-monday instead
+ *
+ * In other words, calling the inverse on a corrupt or imported successor
+ * whose start happens to be a weekend day will silently shift it to the
+ * following Monday on the next forward pass. No call site triggers this
+ * implicitly today (file load preserves stored lag values without
+ * recomputing), but any future code that round-trips through these helpers
+ * must be aware that the normalisation is by design — see
+ * `tests/e2e/lag-delta-indicator.spec.ts` for the user-facing scenario
+ * that forced the asymmetry.
  *
  * @param predecessor - Start/end dates of the predecessor task
  * @param successor - Start/end dates of the successor task

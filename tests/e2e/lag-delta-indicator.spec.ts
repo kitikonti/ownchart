@@ -89,7 +89,9 @@ function buildOptions(): StoragePayloadOptions {
 
 async function injectAndNavigate(
   page: Page,
-  options: StoragePayloadOptions
+  options: StoragePayloadOptions,
+  /** Visible task name used as the load-complete signal. */
+  waitForTaskName: string = "Task A"
 ): Promise<void> {
   const payload = buildStoragePayload(options);
   await page.addInitScript(
@@ -104,7 +106,7 @@ async function injectAndNavigate(
   await page.goto("/");
   await expect(page.locator("#root")).toBeVisible();
   await expect(
-    page.getByLabel("Task spreadsheet").getByText("Task A")
+    page.getByLabel("Task spreadsheet").getByText(waitForTaskName)
   ).toBeVisible({ timeout: 10_000 });
   // Fit timeline so the dep arrow has predictable coordinates.
   await page.keyboard.press("f");
@@ -310,5 +312,157 @@ test.describe("Lag-delta indicator pill", () => {
 
     await page.mouse.up();
     await page.keyboard.up("Alt");
+  });
+});
+
+// ─── Non-working-day target regression ─────────────────────────────────────
+//
+// Reproduces the test04.ownchart bug: dragging a successor onto a non-
+// working day (Saturday) used to leave the pill hidden because the
+// inverse counter rounded the WD count down to the previous Friday's
+// value. The fix snaps the target forward in lagFromAnchor so the
+// inverse stays symmetric with kthWorkingDayFrom.
+//
+// May 2026 calendar (US holidays):
+//   Mon 11 Tue 12 Wed 13 Thu 14 Fri 15  ← alpha
+//   Sat 16 Sun 17                        ← weekend
+//   Mon 18 Tue 19 Wed 20 Thu 21 Fri 22  ← bravo starts here
+//   Sat 23 Sun 24                        ← weekend
+//   Mon 25 (Memorial Day — US holiday)
+//   Tue 26 Wed 27 Thu 28 Fri 29          ← bravo ends Fri 29
+
+const TASK_ALPHA_MAY = {
+  id: "wd-bug-alpha",
+  name: "alpha",
+  startDate: "2026-05-11",
+  endDate: "2026-05-15",
+  duration: 5,
+  progress: 0,
+  color: "#0F6CBD",
+  order: 0,
+  type: "task",
+  metadata: {},
+};
+
+const TASK_BRAVO_MAY = {
+  id: "wd-bug-bravo",
+  name: "bravo",
+  startDate: "2026-05-22",
+  endDate: "2026-05-29",
+  duration: 8,
+  progress: 0,
+  color: "#0F6CBD",
+  order: 1,
+  type: "task",
+  metadata: {},
+};
+
+const DEP_ALPHA_BRAVO_MAY = {
+  id: "wd-bug-dep",
+  fromTaskId: "wd-bug-alpha",
+  toTaskId: "wd-bug-bravo",
+  type: "FS",
+  // 4 working days: Mon 18 (1), Tue 19 (2), Wed 20 (3), Thu 21 (4) →
+  // bravo anchored on the 5th wd from dayAfter alpha = Fri 22.
+  lag: 4,
+  createdAt: "2026-04-08T18:33:19.634Z",
+};
+
+function buildMayOptions(): StoragePayloadOptions {
+  return {
+    // Suffix must match TAB_ID_REGEX = /^tab-\d+-[a-z0-9]+$/ — no dashes
+    // allowed in the trailing slug, otherwise getTabId() rejects the
+    // injected sessionStorage value and the chart loads empty.
+    tabId: "tab-0000000001-wdpillmay",
+    tasks: [TASK_ALPHA_MAY, TASK_BRAVO_MAY],
+    dependencies: [DEP_ALPHA_BRAVO_MAY],
+    chartState: {
+      zoom: 1, // 25 px/day so 1-day drag = 25 px
+      panOffset: { x: 0, y: 0 },
+      showWeekends: true,
+      showTodayMarker: false,
+      showHolidays: false,
+      showDependencies: true,
+      showProgress: true,
+      taskLabelPosition: "after",
+      autoScheduling: false,
+      workingDaysMode: true,
+      workingDaysConfig: {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      },
+      holidayRegion: "US",
+    },
+    fileState: {
+      fileName: "test04",
+      chartId: "test04-chart-001",
+      lastSaved: "2026-04-08T19:42:42.758Z",
+      isDirty: false,
+    },
+  };
+}
+
+test.describe("Lag-delta pill on non-working-day target", () => {
+  test("dragging bravo from Fri to Sat refreshes the pill (4d → 5d)", async ({
+    page,
+  }) => {
+    await injectAndNavigate(page, buildMayOptions(), "alpha");
+
+    const bravo = page
+      .locator(".task-bar")
+      .filter({ has: page.locator('text:has-text("bravo")') })
+      .first();
+    const box = await bravo.boundingBox();
+    expect(box, "bravo bar must be visible").not.toBeNull();
+    const { x, y, width, height } = box!;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    // 30px right at zoom=1 (25 px/day) → 1-day visual movement.
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 30, cy, { steps: 5 });
+
+    // Pill MUST be visible because the working-day lag has changed:
+    // bravo's effective position is now Sat 23 → snaps forward to Tue 26
+    // (Mon 25 is Memorial Day) → 5 working days from dayAfter alpha
+    // → lag = 5 (was 4).
+    const pill = page.locator('[data-testid="lag-delta-indicator"]');
+    await expect(pill).toBeVisible({ timeout: 2_000 });
+
+    const text = await pill.locator("text").textContent();
+    expect(text).toMatch(/^4d → \d+d$/u);
+
+    await page.mouse.up();
+  });
+
+  test("dragging bravo from Fri to Thu also refreshes the pill (4d → 3d, baseline)", async ({
+    page,
+  }) => {
+    // Sanity check that the LEFT direction works — proves the test
+    // infrastructure can detect a working-day → working-day delta.
+    await injectAndNavigate(page, buildMayOptions(), "alpha");
+
+    const bravo = page
+      .locator(".task-bar")
+      .filter({ has: page.locator('text:has-text("bravo")') })
+      .first();
+    const box = await bravo.boundingBox();
+    expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx - 30, cy, { steps: 5 });
+
+    const pill = page.locator('[data-testid="lag-delta-indicator"]');
+    await expect(pill).toBeVisible({ timeout: 2_000 });
+    const text = await pill.locator("text").textContent();
+    expect(text).toBe("4d → 3d");
+
+    await page.mouse.up();
   });
 });

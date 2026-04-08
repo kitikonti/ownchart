@@ -1004,6 +1004,55 @@ describe("calculateInitialLag — working days", () => {
     // Calendar diff = Jan 13 − Jan 10 − 1 = 2
     expect(calculateInitialLag(pred, succ, "FS", ctxOff)).toBe(2);
   });
+
+  // ── Snap-forward of non-working-day targets (#82 wd-pill bug) ────────
+  //
+  // Pins the snap-forward inverse contract: when the successor's anchor
+  // lands on a non-working day, the inverse must treat it as the next
+  // working day to stay symmetric with kthWorkingDayFrom in the forward
+  // direction. Without this snap, dragging a successor from Friday to
+  // Saturday produced the SAME WD count as the previous Friday position,
+  // the lag-delta indicator pill saw a delta of 0, and the pill stayed
+  // hidden — see tests/e2e/lag-delta-indicator.spec.ts for the E2E
+  // regression test that catches this end-to-end.
+
+  it("FS: successor starting on Saturday snaps to Monday (lag=0wd)", () => {
+    // Pred ends Fri 2025-01-10. dayAfter = Sat 11. lagZero = Mon 13.
+    // Successor starts Sat 11 → snap-forward → Mon 13 → lag = 0.
+    const succ = { startDate: "2025-01-11", endDate: "2025-01-13" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(0);
+  });
+
+  it("FS: successor starting on Sunday snaps to Monday (lag=0wd)", () => {
+    // Sun 12 → snap-forward → Mon 13 → lag = 0.
+    const succ = { startDate: "2025-01-12", endDate: "2025-01-14" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(0);
+  });
+
+  it("FS: successor starting Tue is unaffected by the snap (lag=1wd)", () => {
+    // Sanity: working-day target is left unchanged. Tue 14 is 1 wd past
+    // the lag=0 anchor (Mon 13).
+    const succ = { startDate: "2025-01-14", endDate: "2025-01-16" };
+    expect(calculateInitialLag(pred, succ, "FS", WD_CTX)).toBe(1);
+  });
+
+  it("FS: dragging Sat→Sat at the same week gives the same lag (snap idempotent)", () => {
+    // Two distinct non-working-day positions that snap to the same lagZero
+    // both yield 0. Proves the snap-forward is idempotent.
+    const sat = calculateInitialLag(
+      pred,
+      { startDate: "2025-01-11", endDate: "2025-01-13" },
+      "FS",
+      WD_CTX
+    );
+    const sun = calculateInitialLag(
+      pred,
+      { startDate: "2025-01-12", endDate: "2025-01-14" },
+      "FS",
+      WD_CTX
+    );
+    expect(sat).toBe(sun);
+  });
 });
 
 describe("propagateDateChanges — Thanksgiving golden fixture (#82 stage 6)", () => {
