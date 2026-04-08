@@ -36,7 +36,6 @@ import type {
 import { addDays, calculateDuration } from "@/utils/dateUtils";
 import { differenceInDays, parseISO } from "date-fns";
 import { topologicalSort, getSuccessors } from "./topologicalSort";
-import type { WorkingDaysConfig } from "@/types/preferences.types";
 import {
   calculateWorkingDays,
   addWorkingDays,
@@ -360,146 +359,11 @@ function calculateInitialLagWD(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Lag ↔ working-days conversion
-// ---------------------------------------------------------------------------
-
-/** Working-days context for lag conversion. */
-export interface LagWorkingDaysContext {
-  config: WorkingDaysConfig;
-  holidayRegion?: string;
-}
-
-/**
- * Get the reference date from which lag is measured for a given dependency type.
- * - FS: predecessor end date (lag counts from day after end)
- * - SS: predecessor start date (lag counts from start)
- * - FF: predecessor end date (lag counts from end)
- * - SF: predecessor start date (lag counts from start)
- */
-function getLagReferenceDate(
-  predecessor: PredecessorDates,
-  type: DependencyType
-): string {
-  switch (type) {
-    case "FS":
-    case "FF":
-      return predecessor.endDate;
-    case "SS":
-    case "SF":
-      return predecessor.startDate;
-  }
-}
-
-/**
- * Convert a calendar-day lag to a working-day lag for display.
- *
- * The conversion is context-dependent: it uses the predecessor's reference
- * date to determine which specific calendar days fall in the gap, then
- * counts how many of those are working days.
- *
- * @param calendarLag - Lag in calendar days (stored value)
- * @param predecessor - Predecessor task dates
- * @param type - Dependency type
- * @param ctx - Working days configuration
- * @returns Lag expressed in working days
- */
-export function lagCalendarToWorking(
-  calendarLag: number,
-  predecessor: PredecessorDates,
-  type: DependencyType,
-  ctx: LagWorkingDaysContext
-): number {
-  if (calendarLag === 0) return 0;
-
-  const ref = getLagReferenceDate(predecessor, type);
-  // For FS, lag is measured from ref+1. For SS/FF/SF, from ref itself.
-  const offset = type === "FS" ? 1 : 0;
-
-  if (calendarLag > 0) {
-    const gapStart = addDays(ref, offset);
-    const gapEnd = addDays(ref, offset + calendarLag - 1);
-    return calculateWorkingDays(
-      gapStart,
-      gapEnd,
-      ctx.config,
-      ctx.holidayRegion
-    );
-  } else {
-    // Negative lag (overlap): count working days in the overlap range
-    const overlapStart = addDays(ref, offset + calendarLag);
-    const overlapEnd = addDays(ref, offset - 1);
-    return -calculateWorkingDays(
-      overlapStart,
-      overlapEnd,
-      ctx.config,
-      ctx.holidayRegion
-    );
-  }
-}
-
-/**
- * Convert a working-day lag (user input) to a calendar-day lag for storage.
- *
- * Given a desired working-day gap, compute how many calendar days are needed
- * from the predecessor's reference date to span that many working days.
- *
- * @param workingLag - Lag in working days (user input)
- * @param predecessor - Predecessor task dates
- * @param type - Dependency type
- * @param ctx - Working days configuration
- * @returns Lag expressed in calendar days (for storage)
- */
-export function lagWorkingToCalendar(
-  workingLag: number,
-  predecessor: PredecessorDates,
-  type: DependencyType,
-  ctx: LagWorkingDaysContext
-): number {
-  if (workingLag === 0) return 0;
-
-  const ref = getLagReferenceDate(predecessor, type);
-  const offset = type === "FS" ? 1 : 0;
-
-  if (workingLag > 0) {
-    // Compute the successor's start/end date directly using working-day math.
-    // The (workingLag + 1)-th working day from the day-after-anchor is the
-    // successor's anchored endpoint. Derive the calendar lag from there.
-    const dayAfterRef = addDays(ref, offset);
-    const successorAnchor = addWorkingDays(
-      dayAfterRef,
-      workingLag + 1,
-      ctx.config,
-      ctx.holidayRegion
-    );
-    return (
-      differenceInDays(parseISO(successorAnchor), parseISO(ref)) - offset
-    );
-  } else {
-    // Negative working-day lag: walk |workingLag| working days backward from
-    // `dayAfterRef`. The asymmetry vs the positive branch (no `+1`) is
-    // deliberate — `addWorkingDays(dayAfterRef, lag+1)` encodes the
-    // snap-forward of lag=0 to the first WD *on/after* `dayAfterRef`, whereas
-    // `subtractWorkingDays(dayAfterRef, |lag|)` returns the |lag|-th WD
-    // *strictly before* `dayAfterRef` because `dayAfterRef` itself is not
-    // counted when it falls on a non-working day. This makes lag=−1 land
-    // exactly one working day before the lag=0 anchor.
-    //
-    // subtractWorkingDays owns its iteration guard, so the previous
-    // BACKWARD_SCAN_SAFETY_MARGIN constant is gone.
-    const absWorking = -workingLag;
-    const dayAfterRef = addDays(ref, offset);
-    const successorAnchor = subtractWorkingDays(
-      dayAfterRef,
-      absWorking,
-      ctx.config,
-      ctx.holidayRegion
-    );
-    return (
-      differenceInDays(parseISO(successorAnchor), parseISO(ref)) - offset
-    );
-  }
-}
+// Removed in #82 stage 7: lagCalendarToWorking, lagWorkingToCalendar, and
+// LagWorkingDaysContext. They predated #82 and assumed `Dependency.lag` was
+// always stored in calendar days. After D1 (lag stored in the unit dictated
+// by `workingDaysMode`), they would have been a double-conversion bug —
+// see tests/e2e/wd-lag-panel-edit-bug.spec.ts for the regression.
 
 // ---------------------------------------------------------------------------
 // Date propagation

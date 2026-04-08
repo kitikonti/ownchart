@@ -38,10 +38,6 @@ import { SelectionHighlight } from "./SelectionHighlight";
 import { DependencyPropertiesPanel } from "./DependencyPropertiesPanel";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import type { DependencyType } from "@/types/dependency.types";
-import {
-  lagCalendarToWorking,
-  lagWorkingToCalendar,
-} from "@/utils/graph/dateAdjustment";
 
 // ---------------------------------------------------------------------------
 // DependencyPanelBridge — renders the dependency properties panel OUTSIDE the
@@ -97,41 +93,21 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
     [selectedDep, updateDependency]
   );
 
-  // Working days context for lag conversion
+  // Working days mode is global; the unit of `Dependency.lag` follows it
+  // (working days when on, calendar days when off — D1 in epic #79). The
+  // panel input therefore stores its value AS-IS into `dep.lag` without any
+  // unit conversion. The previous lagWorkingToCalendar / lagCalendarToWorking
+  // bridge predated #82 and assumed the stored value was always calendar
+  // days; combining it with the cascade's WD interpretation produced a
+  // double-conversion bug (regression caught by tests/e2e/wd-lag-panel-edit-bug.spec.ts).
   const workingDaysMode = useChartStore((s) => s.workingDaysMode);
-  const workingDaysConfig = useChartStore((s) => s.workingDaysConfig);
-  const holidayRegion = useChartStore((s) => s.holidayRegion);
 
   const handleUpdateLag = useCallback(
     (displayLag: number): void => {
-      if (!selectedDep || !selectedFromTask) return;
-      // Convert from display units (working days if mode ON) to calendar days
-      const calendarLag = workingDaysMode
-        ? lagWorkingToCalendar(
-            displayLag,
-            {
-              startDate: selectedFromTask.startDate,
-              endDate: selectedFromTask.endDate,
-            },
-            selectedDep.type,
-            {
-              config: workingDaysConfig,
-              holidayRegion: workingDaysConfig.excludeHolidays
-                ? holidayRegion
-                : undefined,
-            }
-          )
-        : displayLag;
-      updateDependency(selectedDep.id, { lag: calendarLag });
+      if (!selectedDep) return;
+      updateDependency(selectedDep.id, { lag: displayLag });
     },
-    [
-      selectedDep,
-      selectedFromTask,
-      updateDependency,
-      workingDaysMode,
-      workingDaysConfig,
-      holidayRegion,
-    ]
+    [selectedDep, updateDependency]
   );
 
   const handleDelete = useCallback((): void => {
@@ -146,23 +122,9 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
     return null;
   }
 
-  // Convert stored calendar-day lag to display units
-  const displayLag = workingDaysMode
-    ? lagCalendarToWorking(
-        selectedDep.lag ?? 0,
-        {
-          startDate: selectedFromTask.startDate,
-          endDate: selectedFromTask.endDate,
-        },
-        selectedDep.type,
-        {
-          config: workingDaysConfig,
-          holidayRegion: workingDaysConfig.excludeHolidays
-            ? holidayRegion
-            : undefined,
-        }
-      )
-    : (selectedDep.lag ?? 0);
+  // The stored lag is already in the unit dictated by `workingDaysMode`,
+  // so display = stored. No conversion (see handleUpdateLag comment above).
+  const displayLag = selectedDep.lag ?? 0;
 
   return (
     <DependencyPropertiesPanel
