@@ -9,6 +9,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useDependencyDrag } from "@/hooks/useDependencyDrag";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import { toTaskId } from "@/types/branded.types";
@@ -605,6 +606,105 @@ describe("useDependencyDrag", () => {
   // -------------------------------------------------------------------------
   // Global mouse event cleanup
   // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // Working-days context plumbing (#82 follow-up — F036 regression)
+  // -------------------------------------------------------------------------
+  //
+  // Regression guard for the second double-conversion bug found while
+  // reviewing the panel-edit fix: useDependencyDrag was calling
+  // calculateInitialLag without the WD ctx, so creating a dependency by
+  // dragging in WD mode produced a calendar-day lag value that the
+  // cascade then re-interpreted as working days. Same bug class as the
+  // ChartCanvas.tsx panel-bridge issue but via a different entry point.
+
+  describe("working-days mode", () => {
+    beforeEach(() => {
+      useChartStore.setState({
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: false,
+        },
+        holidayRegion: "US",
+      });
+    });
+
+    it("auto-calculates lag in WORKING DAYS when WD mode is on (FS)", () => {
+      // Pred: Mon 2025-01-06 → Fri 2025-01-10 (5 working days)
+      // Succ: Mon 2025-01-13 → Wed 2025-01-15 (3 working days)
+      // Calendar gap from Fri 10 → Mon 13 = 2 days, but only 0 working
+      // days are in the gap (Sat + Sun). The WD-aware calculateInitialLag
+      // should return 0, not 2. Pre-fix this returned 2 (calendar) and
+      // the cascade then misinterpreted it as 2 working days.
+      const PRED = makeTask("pred", {
+        startDate: "2025-01-06",
+        endDate: "2025-01-10",
+        duration: 5,
+      });
+      const SUCC = makeTask("succ", {
+        startDate: "2025-01-13",
+        endDate: "2025-01-15",
+        duration: 3,
+      });
+      useTaskStore.getState().setTasks([PRED, SUCC]);
+
+      const addDepSpy = vi.spyOn(
+        useDependencyStore.getState(),
+        "addDependency"
+      );
+
+      const { result } = renderHook(() =>
+        useDependencyDrag({ tasks: [PRED, SUCC] })
+      );
+
+      act(() => {
+        result.current.startDrag(PRED.id, "end", makeMouseEvent());
+      });
+      act(() => {
+        result.current.endDrag(SUCC.id, "start");
+      });
+
+      // Working-day arithmetic: Pred end Fri → lag=0 anchor Mon 13 →
+      // succ.start Mon 13 → 0 working days of offset → lag = 0.
+      expect(addDepSpy).toHaveBeenCalledWith(PRED.id, SUCC.id, "FS", 0);
+    });
+
+    it("falls back to calendar-day lag when WD mode is OFF", () => {
+      useChartStore.setState({ workingDaysMode: false });
+      const PRED = makeTask("pred", {
+        startDate: "2025-01-06",
+        endDate: "2025-01-10",
+        duration: 5,
+      });
+      const SUCC = makeTask("succ", {
+        startDate: "2025-01-13",
+        endDate: "2025-01-15",
+        duration: 3,
+      });
+      useTaskStore.getState().setTasks([PRED, SUCC]);
+
+      const addDepSpy = vi.spyOn(
+        useDependencyStore.getState(),
+        "addDependency"
+      );
+
+      const { result } = renderHook(() =>
+        useDependencyDrag({ tasks: [PRED, SUCC] })
+      );
+
+      act(() => {
+        result.current.startDrag(PRED.id, "end", makeMouseEvent());
+      });
+      act(() => {
+        result.current.endDrag(SUCC.id, "start");
+      });
+
+      // Calendar arithmetic: Jan 13 - Jan 10 - 1 = 2.
+      expect(addDepSpy).toHaveBeenCalledWith(PRED.id, SUCC.id, "FS", 2);
+    });
+  });
 
   it("removes global listeners on unmount during an active drag", () => {
     const removeSpy = vi.spyOn(document, "removeEventListener");

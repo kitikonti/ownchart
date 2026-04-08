@@ -14,6 +14,7 @@ import type {
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { clientToSvgCoords } from "@/utils/svgCoords";
 import { calculateInitialLag } from "@/utils/graph/dateAdjustment";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import toast from "react-hot-toast";
 
 /** Adds a dependency of the given type; returns success/failure with an optional message. */
@@ -168,7 +169,11 @@ function attemptCreateDependency({
       targetSide
     );
 
-    // Auto-calculate lag from current task positions so tasks don't move
+    // Auto-calculate lag from current task positions so tasks don't move.
+    // The WD context MUST be threaded here so the resulting lag value is in
+    // the same unit the cascade and the panel will use to interpret it
+    // (#82 fix follow-up — same double-conversion bug class as the panel
+    // bridge in ChartCanvas.tsx).
     const fromTask = tasks.find((t) => t.id === fromId);
     const toTask = tasks.find((t) => t.id === toId);
     const lag =
@@ -179,7 +184,8 @@ function attemptCreateDependency({
         ? calculateInitialLag(
             { startDate: fromTask.startDate, endDate: fromTask.endDate },
             { startDate: toTask.startDate, endDate: toTask.endDate },
-            type
+            type,
+            getWorkingDaysContext()
           )
         : 0;
 

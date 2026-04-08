@@ -103,9 +103,9 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
   const workingDaysMode = useChartStore((s) => s.workingDaysMode);
 
   const handleUpdateLag = useCallback(
-    (displayLag: number): void => {
+    (lagValue: number): void => {
       if (!selectedDep) return;
-      updateDependency(selectedDep.id, { lag: displayLag });
+      updateDependency(selectedDep.id, { lag: lagValue });
     },
     [selectedDep, updateDependency]
   );
