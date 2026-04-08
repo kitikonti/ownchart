@@ -13,8 +13,12 @@ import {
   propagateDateChanges,
   applyDateAdjustments,
   reverseDateAdjustments,
+  DISABLED_WD_CONTEXT,
 } from "@/utils/graph/dateAdjustment";
 import type { WorkingDaysContext } from "@/utils/graph/dateAdjustment";
+
+// Shorthand for the calendar-mode tests below.
+const CAL = DISABLED_WD_CONTEXT;
 import {
   WD_THANKSGIVING,
   wdThanksgivingTuple,
@@ -70,47 +74,47 @@ describe("calculateConstrainedDates", () => {
 
   describe("FS (Finish-to-Start)", () => {
     it("returns day after predecessor end with lag=0", () => {
-      const result = calculateConstrainedDates(pred, 3, "FS", 0);
+      const result = calculateConstrainedDates(pred, 3, "FS", 0, CAL);
       // successor starts Jan 11 (day after Jan 10), duration 3 → Jan 11-13
       expect(result.startDate).toBe("2025-01-11");
       expect(result.endDate).toBe("2025-01-13");
     });
 
     it("applies positive lag (gap)", () => {
-      const result = calculateConstrainedDates(pred, 3, "FS", 2);
+      const result = calculateConstrainedDates(pred, 3, "FS", 2, CAL);
       // Jan 10 + 1 + 2 = Jan 13 start, +2 days = Jan 15 end
       expect(result.startDate).toBe("2025-01-13");
       expect(result.endDate).toBe("2025-01-15");
     });
 
     it("applies negative lag (overlap/lead)", () => {
-      const result = calculateConstrainedDates(pred, 3, "FS", -2);
+      const result = calculateConstrainedDates(pred, 3, "FS", -2, CAL);
       // Jan 10 + 1 - 2 = Jan 9 start, +2 days = Jan 11 end
       expect(result.startDate).toBe("2025-01-09");
       expect(result.endDate).toBe("2025-01-11");
     });
 
     it("defaults lag to 0 when omitted", () => {
-      const result = calculateConstrainedDates(pred, 3, "FS");
+      const result = calculateConstrainedDates(pred, 3, "FS", 0, CAL);
       expect(result.startDate).toBe("2025-01-11");
     });
   });
 
   describe("SS (Start-to-Start)", () => {
     it("returns predecessor start date with lag=0", () => {
-      const result = calculateConstrainedDates(pred, 3, "SS", 0);
+      const result = calculateConstrainedDates(pred, 3, "SS", 0, CAL);
       expect(result.startDate).toBe("2025-01-06");
       expect(result.endDate).toBe("2025-01-08");
     });
 
     it("applies positive lag", () => {
-      const result = calculateConstrainedDates(pred, 3, "SS", 2);
+      const result = calculateConstrainedDates(pred, 3, "SS", 2, CAL);
       expect(result.startDate).toBe("2025-01-08");
       expect(result.endDate).toBe("2025-01-10");
     });
 
     it("applies negative lag", () => {
-      const result = calculateConstrainedDates(pred, 3, "SS", -1);
+      const result = calculateConstrainedDates(pred, 3, "SS", -1, CAL);
       expect(result.startDate).toBe("2025-01-05");
       expect(result.endDate).toBe("2025-01-07");
     });
@@ -118,20 +122,20 @@ describe("calculateConstrainedDates", () => {
 
   describe("FF (Finish-to-Finish)", () => {
     it("derives start from end and duration with lag=0", () => {
-      const result = calculateConstrainedDates(pred, 3, "FF", 0);
+      const result = calculateConstrainedDates(pred, 3, "FF", 0, CAL);
       // successor end = Jan 10, duration 3 → start = Jan 8
       expect(result.endDate).toBe("2025-01-10");
       expect(result.startDate).toBe("2025-01-08");
     });
 
     it("applies positive lag", () => {
-      const result = calculateConstrainedDates(pred, 3, "FF", 2);
+      const result = calculateConstrainedDates(pred, 3, "FF", 2, CAL);
       expect(result.endDate).toBe("2025-01-12");
       expect(result.startDate).toBe("2025-01-10");
     });
 
     it("applies negative lag", () => {
-      const result = calculateConstrainedDates(pred, 3, "FF", -1);
+      const result = calculateConstrainedDates(pred, 3, "FF", -1, CAL);
       expect(result.endDate).toBe("2025-01-09");
       expect(result.startDate).toBe("2025-01-07");
     });
@@ -139,14 +143,14 @@ describe("calculateConstrainedDates", () => {
 
   describe("SF (Start-to-Finish)", () => {
     it("derives start from predecessor start with lag=0", () => {
-      const result = calculateConstrainedDates(pred, 3, "SF", 0);
+      const result = calculateConstrainedDates(pred, 3, "SF", 0, CAL);
       // successor end = Jan 6, duration 3 → start = Jan 4
       expect(result.endDate).toBe("2025-01-06");
       expect(result.startDate).toBe("2025-01-04");
     });
 
     it("applies positive lag", () => {
-      const result = calculateConstrainedDates(pred, 3, "SF", 2);
+      const result = calculateConstrainedDates(pred, 3, "SF", 2, CAL);
       expect(result.endDate).toBe("2025-01-08");
       expect(result.startDate).toBe("2025-01-06");
     });
@@ -154,14 +158,14 @@ describe("calculateConstrainedDates", () => {
 
   describe("duration edge cases", () => {
     it("handles duration=1 (milestone-like)", () => {
-      const result = calculateConstrainedDates(pred, 1, "FS", 0);
+      const result = calculateConstrainedDates(pred, 1, "FS", 0, CAL);
       expect(result.startDate).toBe("2025-01-11");
       expect(result.endDate).toBe("2025-01-11");
     });
 
     it("handles same-day predecessor (milestone predecessor)", () => {
       const milestone = { startDate: "2025-01-10", endDate: "2025-01-10" };
-      const result = calculateConstrainedDates(milestone, 3, "FS", 0);
+      const result = calculateConstrainedDates(milestone, 3, "FS", 0, CAL);
       expect(result.startDate).toBe("2025-01-11");
       expect(result.endDate).toBe("2025-01-13");
     });
@@ -754,97 +758,97 @@ describe("calculateInitialLag", () => {
   describe("FS (Finish-to-Start)", () => {
     it("returns 0 when successor starts immediately after predecessor", () => {
       const succ = { startDate: "2025-01-11", endDate: "2025-01-13" };
-      expect(calculateInitialLag(pred, succ, "FS")).toBe(0);
+      expect(calculateInitialLag(pred, succ, "FS", CAL)).toBe(0);
     });
 
     it("returns positive lag for a gap", () => {
       const succ = { startDate: "2025-01-13", endDate: "2025-01-15" };
       // gap of 2 days between Jan 10 end and Jan 13 start
-      expect(calculateInitialLag(pred, succ, "FS")).toBe(2);
+      expect(calculateInitialLag(pred, succ, "FS", CAL)).toBe(2);
     });
 
     it("returns negative lag for overlap", () => {
       const succ = { startDate: "2025-01-09", endDate: "2025-01-11" };
       // successor starts before predecessor ends
-      expect(calculateInitialLag(pred, succ, "FS")).toBe(-2);
+      expect(calculateInitialLag(pred, succ, "FS", CAL)).toBe(-2);
     });
   });
 
   describe("SS (Start-to-Start)", () => {
     it("returns 0 when tasks start on the same day", () => {
       const succ = { startDate: "2025-01-06", endDate: "2025-01-08" };
-      expect(calculateInitialLag(pred, succ, "SS")).toBe(0);
+      expect(calculateInitialLag(pred, succ, "SS", CAL)).toBe(0);
     });
 
     it("returns positive lag for offset start", () => {
       const succ = { startDate: "2025-01-08", endDate: "2025-01-10" };
-      expect(calculateInitialLag(pred, succ, "SS")).toBe(2);
+      expect(calculateInitialLag(pred, succ, "SS", CAL)).toBe(2);
     });
 
     it("returns negative lag when successor starts before predecessor", () => {
       const succ = { startDate: "2025-01-05", endDate: "2025-01-07" };
-      expect(calculateInitialLag(pred, succ, "SS")).toBe(-1);
+      expect(calculateInitialLag(pred, succ, "SS", CAL)).toBe(-1);
     });
   });
 
   describe("FF (Finish-to-Finish)", () => {
     it("returns 0 when tasks end on the same day", () => {
       const succ = { startDate: "2025-01-08", endDate: "2025-01-10" };
-      expect(calculateInitialLag(pred, succ, "FF")).toBe(0);
+      expect(calculateInitialLag(pred, succ, "FF", CAL)).toBe(0);
     });
 
     it("returns positive lag for offset end", () => {
       const succ = { startDate: "2025-01-10", endDate: "2025-01-12" };
-      expect(calculateInitialLag(pred, succ, "FF")).toBe(2);
+      expect(calculateInitialLag(pred, succ, "FF", CAL)).toBe(2);
     });
 
     it("returns negative lag when successor ends before predecessor", () => {
       const succ = { startDate: "2025-01-07", endDate: "2025-01-09" };
-      expect(calculateInitialLag(pred, succ, "FF")).toBe(-1);
+      expect(calculateInitialLag(pred, succ, "FF", CAL)).toBe(-1);
     });
   });
 
   describe("SF (Start-to-Finish)", () => {
     it("returns 0 when successor ends on predecessor start", () => {
       const succ = { startDate: "2025-01-04", endDate: "2025-01-06" };
-      expect(calculateInitialLag(pred, succ, "SF")).toBe(0);
+      expect(calculateInitialLag(pred, succ, "SF", CAL)).toBe(0);
     });
 
     it("returns positive lag for offset", () => {
       const succ = { startDate: "2025-01-06", endDate: "2025-01-08" };
-      expect(calculateInitialLag(pred, succ, "SF")).toBe(2);
+      expect(calculateInitialLag(pred, succ, "SF", CAL)).toBe(2);
     });
   });
 
   describe("inverse relationship with calculateConstrainedDates", () => {
     it("FS: calculated lag reproduces original positions", () => {
       const succ = { startDate: "2025-01-15", endDate: "2025-01-17" };
-      const lag = calculateInitialLag(pred, succ, "FS");
-      const constrained = calculateConstrainedDates(pred, 3, "FS", lag);
+      const lag = calculateInitialLag(pred, succ, "FS", CAL);
+      const constrained = calculateConstrainedDates(pred, 3, "FS", lag, CAL);
       expect(constrained.startDate).toBe(succ.startDate);
       expect(constrained.endDate).toBe(succ.endDate);
     });
 
     it("SS: calculated lag reproduces original positions", () => {
       const succ = { startDate: "2025-01-09", endDate: "2025-01-11" };
-      const lag = calculateInitialLag(pred, succ, "SS");
-      const constrained = calculateConstrainedDates(pred, 3, "SS", lag);
+      const lag = calculateInitialLag(pred, succ, "SS", CAL);
+      const constrained = calculateConstrainedDates(pred, 3, "SS", lag, CAL);
       expect(constrained.startDate).toBe(succ.startDate);
       expect(constrained.endDate).toBe(succ.endDate);
     });
 
     it("FF: calculated lag reproduces original positions", () => {
       const succ = { startDate: "2025-01-12", endDate: "2025-01-14" };
-      const lag = calculateInitialLag(pred, succ, "FF");
-      const constrained = calculateConstrainedDates(pred, 3, "FF", lag);
+      const lag = calculateInitialLag(pred, succ, "FF", CAL);
+      const constrained = calculateConstrainedDates(pred, 3, "FF", lag, CAL);
       expect(constrained.startDate).toBe(succ.startDate);
       expect(constrained.endDate).toBe(succ.endDate);
     });
 
     it("SF: calculated lag reproduces original positions", () => {
       const succ = { startDate: "2025-01-08", endDate: "2025-01-10" };
-      const lag = calculateInitialLag(pred, succ, "SF");
-      const constrained = calculateConstrainedDates(pred, 3, "SF", lag);
+      const lag = calculateInitialLag(pred, succ, "SF", CAL);
+      const constrained = calculateConstrainedDates(pred, 3, "SF", lag, CAL);
       expect(constrained.startDate).toBe(succ.startDate);
       expect(constrained.endDate).toBe(succ.endDate);
     });

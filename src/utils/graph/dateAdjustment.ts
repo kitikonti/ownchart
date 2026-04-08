@@ -45,6 +45,26 @@ import {
 
 export type { WorkingDaysContext };
 
+/**
+ * Sentinel "calendar mode" working-days context. Used by code paths that
+ * need to call the now-required-ctx versions of calculateInitialLag /
+ * calculateConstrainedDates without consulting the store (e.g. unit tests
+ * or pure helpers in calendar-only contexts).
+ *
+ * Holding this as a frozen module constant — rather than constructing a
+ * fresh object on each call — guarantees referential stability for any
+ * future React.memo / useMemo dependency that compares it.
+ */
+export const DISABLED_WD_CONTEXT: WorkingDaysContext = Object.freeze({
+  enabled: false,
+  config: Object.freeze({
+    excludeSaturday: false,
+    excludeSunday: false,
+    excludeHolidays: false,
+  }),
+  holidayRegion: undefined,
+}) as WorkingDaysContext;
+
 // ---------------------------------------------------------------------------
 // Constraint calculation
 // ---------------------------------------------------------------------------
@@ -96,18 +116,22 @@ interface ConstrainedDates {
  * @param type - Dependency type (FS, SS, FF, SF)
  * @param lag - Offset (positive = gap, negative = overlap). Same unit as
  *   `successorDuration`. Defaults to 0.
- * @param ctx - Working-days context. When omitted or `enabled === false`,
- *   the original calendar-day arithmetic is used.
+ * @param ctx - Working-days context. **Required** to prevent the
+ *   double-conversion bug class (#82 F036): callers must always pass the
+ *   active WD context so the unit of `lag` and `successorDuration` is
+ *   unambiguous. Pass `{ enabled: false, ... }` for calendar-mode behaviour;
+ *   use `getWorkingDaysContext()` from the selector module for the
+ *   store-bound case.
  * @returns The earliest allowed `{ startDate, endDate }` for the successor
  */
 export function calculateConstrainedDates(
   predecessor: PredecessorDates,
   successorDuration: number,
   type: DependencyType,
-  lag: number = 0,
-  ctx?: WorkingDaysContext
+  lag: number,
+  ctx: WorkingDaysContext
 ): ConstrainedDates {
-  return ctx?.enabled
+  return ctx.enabled
     ? calculateConstrainedDatesWD(
         predecessor,
         successorDuration,
@@ -257,17 +281,21 @@ function calculateConstrainedDatesWD(
  * @param predecessor - Start/end dates of the predecessor task
  * @param successor - Start/end dates of the successor task
  * @param type - Dependency type (FS, SS, FF, SF)
- * @param ctx - Working-days context. When omitted/disabled the original
- *   calendar-day inverse is used.
+ * @param ctx - Working-days context. **Required** to prevent the
+ *   double-conversion bug class (#82 F036): callers must always pass the
+ *   active WD context so the unit of the returned lag is unambiguous.
+ *   Pass `{ enabled: false, ... }` for calendar-mode behaviour; use
+ *   `getWorkingDaysContext()` from the selector module for the
+ *   store-bound case.
  * @returns The lag in days (positive = gap, negative = overlap)
  */
 export function calculateInitialLag(
   predecessor: PredecessorDates,
   successor: PredecessorDates,
   type: DependencyType,
-  ctx?: WorkingDaysContext
+  ctx: WorkingDaysContext
 ): number {
-  return ctx?.enabled
+  return ctx.enabled
     ? calculateInitialLagWD(predecessor, successor, type, ctx)
     : calculateInitialLagCal(predecessor, successor, type);
 }
@@ -414,12 +442,18 @@ export function propagateDateChanges(
 ): DateAdjustment[] {
   if (tasks.length === 0 || dependencies.length === 0) return [];
 
-  const wdCtx = options?.workingDays?.enabled ? options.workingDays : undefined;
+  // Normalise the working-days context: callers may pass an enabled ctx,
+  // a disabled ctx, or omit it entirely. Internally we always work with a
+  // concrete ctx so calculateConstrainedDates / calculateInitialLag (which
+  // require ctx after #82 F042) get a single, unambiguous value.
+  const wdCtx: WorkingDaysContext = options?.workingDays?.enabled
+    ? options.workingDays
+    : DISABLED_WD_CONTEXT;
 
   // Compute the duration of a task in the active unit (WD or calendar).
   // Encapsulated so the build-working-copy and apply-adjustment paths agree.
   const taskDuration = (start: string, end: string): number =>
-    wdCtx
+    wdCtx.enabled
       ? Math.max(
           1,
           calculateWorkingDays(start, end, wdCtx.config, wdCtx.holidayRegion)

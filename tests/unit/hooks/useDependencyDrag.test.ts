@@ -631,13 +631,36 @@ describe("useDependencyDrag", () => {
       });
     });
 
+    // Vitest reuses workers across files, so chart store state would leak
+    // into subsequent test files (or any test added after this block) and
+    // silently mask bugs that depend on the calendar-mode default. Reset
+    // here so the block is hermetic.
+    afterEach(() => {
+      useChartStore.setState({
+        workingDaysMode: false,
+        workingDaysConfig: {
+          excludeSaturday: false,
+          excludeSunday: false,
+          excludeHolidays: false,
+        },
+      });
+    });
+
     it("auto-calculates lag in WORKING DAYS when WD mode is on (FS)", () => {
+      // Mirrors the test03.ownchart fixture from the user-reported bug:
+      // alpha (Wed 2026-04-08 → Tue 2026-04-14) → bravo (Fri 2026-04-17 →
+      // Thu 2026-04-23). The calendar gap from Tue 14 → Fri 17 spans 2
+      // calendar days (Wed 15 + Thu 16) AND 2 working days, so this
+      // particular fixture happens to give the same value in either unit.
+      // Use a wider gap to make the bug observable.
+      //
       // Pred: Mon 2025-01-06 → Fri 2025-01-10 (5 working days)
       // Succ: Mon 2025-01-13 → Wed 2025-01-15 (3 working days)
-      // Calendar gap from Fri 10 → Mon 13 = 2 days, but only 0 working
-      // days are in the gap (Sat + Sun). The WD-aware calculateInitialLag
-      // should return 0, not 2. Pre-fix this returned 2 (calendar) and
-      // the cascade then misinterpreted it as 2 working days.
+      // Calendar gap Fri 10 → Mon 13 = 2 calendar days (Sat + Sun),
+      // 0 working days. The WD-aware calculateInitialLag must return 0,
+      // not 2. Pre-fix this returned 2 (calendar) and the cascade then
+      // misinterpreted it as 2 working days, pushing bravo by a full
+      // working week.
       const PRED = makeTask("pred", {
         startDate: "2025-01-06",
         endDate: "2025-01-10",
