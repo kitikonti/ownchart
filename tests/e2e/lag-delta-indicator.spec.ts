@@ -189,4 +189,78 @@ test.describe("Lag-delta indicator pill", () => {
 
     await page.mouse.up();
   });
+
+  // ─── Alt modifier inverts auto-scheduling for the gesture (#82 follow-up) ──
+  //
+  // The user expects Alt to be a *temporary inversion* of the auto-scheduling
+  // toggle for one drag. The pill must follow the EFFECTIVE mode of the
+  // gesture (which considers Alt), not the static store flag:
+  //
+  //   auto ON  + no Alt → cascade  → no pill
+  //   auto ON  + Alt    → lag      → pill ✓
+  //   auto OFF + no Alt → lag      → pill ✓
+  //   auto OFF + Alt    → cascade  → no pill
+
+  test("Alt+drag with auto-scheduling ON shows the pill (cascade is suppressed)", async ({
+    page,
+  }) => {
+    const opts = buildOptions();
+    await injectAndNavigate(page, {
+      ...opts,
+      chartState: { ...opts.chartState, autoScheduling: true },
+    });
+
+    const taskB = page
+      .locator(".task-bar")
+      .filter({ has: page.locator('text:has-text("Task B")') })
+      .first();
+    const box = await taskB.boundingBox();
+    expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    await page.keyboard.down("Alt");
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 100, cy, { steps: 10 });
+
+    // The gesture is in lag-update mode (Alt inverted ON to OFF), so the
+    // pill MUST appear.
+    const pill = page.locator('[data-testid="lag-delta-indicator"]');
+    await expect(pill).toBeVisible({ timeout: 2_000 });
+
+    await page.mouse.up();
+    await page.keyboard.up("Alt");
+  });
+
+  test("Alt+drag with auto-scheduling OFF hides the pill (cascade is forced)", async ({
+    page,
+  }) => {
+    // Default fixture has autoScheduling: false.
+    await injectAndNavigate(page, buildOptions());
+
+    const taskB = page
+      .locator(".task-bar")
+      .filter({ has: page.locator('text:has-text("Task B")') })
+      .first();
+    const box = await taskB.boundingBox();
+    expect(box).not.toBeNull();
+    const { x, y, width, height } = box!;
+    const cx = x + width / 2;
+    const cy = y + height / 2;
+
+    await page.keyboard.down("Alt");
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 100, cy, { steps: 10 });
+
+    // Alt inverts OFF → ON → cascade mode → pill must NOT show.
+    await expect(
+      page.locator('[data-testid="lag-delta-indicator"]')
+    ).toHaveCount(0);
+
+    await page.mouse.up();
+    await page.keyboard.up("Alt");
+  });
 });

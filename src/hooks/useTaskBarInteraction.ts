@@ -52,24 +52,45 @@ export interface UseTaskBarInteractionReturn {
 }
 
 /**
- * Boundary helper: read store state, gate on auto-scheduling, and push the
- * computed lag-delta into chartSlice. Lives next to the per-frame mousemove
- * handler so the gating + store coupling stays in one place.
+ * Determine whether this drag should cascade to successors.
+ * Alt key inverts the auto-scheduling toggle:
+ * - Auto-scheduling ON + no Alt  → cascade
+ * - Auto-scheduling ON + Alt     → no cascade (update lag instead)
+ * - Auto-scheduling OFF + no Alt → no cascade (update lag instead)
+ * - Auto-scheduling OFF + Alt    → cascade
+ */
+function shouldCascade(altKey: boolean): boolean {
+  const autoScheduling = useChartStore.getState().autoScheduling;
+  return altKey ? !autoScheduling : autoScheduling;
+}
+
+/**
+ * Boundary helper: read store state, gate on the EFFECTIVE drag mode
+ * (which honours the Alt-key inversion), and push the computed lag-delta
+ * into chartSlice. Lives next to the per-frame mousemove handler so the
+ * gating + store coupling stays in one place.
  *
- * Gates the pill to auto-scheduling-OFF mode because cascade-mode drags
- * commit constraint adjustments instead of lag updates — the pill would lie
- * about what's about to happen.
+ * Gates the pill to lag-update mode (the inverse of cascade) because
+ * cascade-mode drags commit constraint adjustments instead of lag updates
+ * — the pill would lie about what's about to happen.
+ *
+ * **Alt-key correctness (#82 follow-up)**: the previous version of this
+ * helper checked `useChartStore.getState().autoScheduling` directly,
+ * ignoring whether Alt was held. That made the pill out of sync with the
+ * cascade vs. lag-update decision. Now we use `shouldCascade(altKey)` so
+ * the pill follows the same effective mode the commit handler will use.
  */
 function updateLagDeltaIndicator(
   draggedTaskId: TaskId,
   previewStart: string,
   previewEnd: string,
   wdCtx: WorkingDaysContext,
+  altKey: boolean,
   setLagDelta: (
     delta: { depId: string; oldLag: number; newLag: number } | null
   ) => void
 ): void {
-  if (useChartStore.getState().autoScheduling) {
+  if (shouldCascade(altKey)) {
     setLagDelta(null);
     return;
   }
@@ -84,19 +105,6 @@ function updateLagDeltaIndicator(
     wdCtx
   );
   setLagDelta(delta);
-}
-
-/**
- * Determine whether this drag should cascade to successors.
- * Alt key inverts the auto-scheduling toggle:
- * - Auto-scheduling ON + no Alt  → cascade
- * - Auto-scheduling ON + Alt     → no cascade (update lag instead)
- * - Auto-scheduling OFF + no Alt → no cascade (update lag instead)
- * - Auto-scheduling OFF + Alt    → cascade
- */
-function shouldCascade(altKey: boolean): boolean {
-  const autoScheduling = useChartStore.getState().autoScheduling;
-  return altKey ? !autoScheduling : autoScheduling;
 }
 
 /** Shared context for post-drag dependency operations. */
@@ -406,7 +414,14 @@ export function useTaskBarInteraction(
           currentPreviewEnd: newEnd,
         });
         setSharedDragState(deltaDays, task.id);
-        updateLagDeltaIndicator(task.id, newStart, newEnd, ctx, setLagDelta);
+        updateLagDeltaIndicator(
+          task.id,
+          newStart,
+          newEnd,
+          ctx,
+          e.altKey,
+          setLagDelta
+        );
       } else {
         const preview = computeResizePreview(current, deltaDays);
         if (!preview) return;
@@ -422,6 +437,7 @@ export function useTaskBarInteraction(
           preview.previewStart,
           preview.previewEnd,
           ctx,
+          e.altKey,
           setLagDelta
         );
       }
