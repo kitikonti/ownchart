@@ -40,6 +40,7 @@ import {
   calculateWorkingDays,
   addWorkingDays,
   subtractWorkingDays,
+  snapForwardToWorkingDay,
   type WorkingDaysContext,
 } from "@/utils/workingDaysCalculator";
 
@@ -355,21 +356,36 @@ function calculateInitialLagWD(
 
   // Inverse of {@link calculateConstrainedDatesWD}'s `kthWorkingDayFrom`:
   // given the same `rawAnchor` and the actual successor anchor `target`,
-  // recover the lag. We snap `rawAnchor` forward to its lag=0 position and
-  // then count working-day steps to `target`. Steps forward yield positive
-  // lag, steps backward yield negative lag.
+  // recover the lag. We snap BOTH endpoints forward to their nearest
+  // working day, then count working-day steps between them. Steps forward
+  // yield positive lag, steps backward yield negative lag.
   //
-  // Rounding rule (#82): when the count endpoints land on a non-working day,
-  // we round **toward the predecessor** — `calculateWorkingDays` is inclusive
-  // and weekend slack on the successor side is naturally excluded by the
-  // `−1` (the start day counts as 1 in the forward arithmetic).
+  // **Why snap target forward** (#82 follow-up — wd-pill-non-working-target
+  // bug): the forward direction (`kthWorkingDayFrom`) treats lag as the
+  // (lag+1)-th working day from a snap-forward anchor. When the user drops
+  // the successor onto a non-working day (e.g. Saturday), the semantic
+  // position is the next working day after that drop — anything else makes
+  // the inverse a non-inverse and breaks the live lag-delta indicator.
+  // Without this snap, dragging a successor from Friday to Saturday produces
+  // the same WD count as the previous Friday position, the delta is 0,
+  // and the pill mistakenly stays hidden.
   const lagFromAnchor = (rawAnchor: string, target: string): number => {
     const lagZero = addWorkingDays(rawAnchor, 1, config, holidayRegion);
-    if (target === lagZero) return 0;
-    if (target > lagZero) {
-      return calculateWorkingDays(lagZero, target, config, holidayRegion) - 1;
+    const snappedTarget = snapForwardToWorkingDay(
+      target,
+      config,
+      holidayRegion
+    );
+    if (snappedTarget === lagZero) return 0;
+    if (snappedTarget > lagZero) {
+      return (
+        calculateWorkingDays(lagZero, snappedTarget, config, holidayRegion) -
+        1
+      );
     }
-    return -(calculateWorkingDays(target, lagZero, config, holidayRegion) - 1);
+    return -(
+      calculateWorkingDays(snappedTarget, lagZero, config, holidayRegion) - 1
+    );
   };
 
   switch (type) {
