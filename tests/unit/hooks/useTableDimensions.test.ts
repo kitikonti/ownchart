@@ -136,4 +136,62 @@ describe("useTableDimensions", () => {
     const expectedDelta = 200 - DENSITY_CONFIG.normal.columnWidths.duration;
     expect(result.current.totalColumnWidth).toBe(initialWidth + expectedDelta);
   });
+
+  // ── WD-mode duration column floor (#81 / #82) ──────────────────────────
+  //
+  // When workingDaysMode is on, the duration column header shows "DURATION wd"
+  // and getColumnPixelWidth applies a +28px floor (DURATION_WD_EXTRA_PX).
+  // useTableDimensions must reflect that floor so the split pane's maxLeftWidth
+  // doesn't clip the wider column.
+
+  it("should widen when workingDaysMode is enabled (duration +28px floor)", () => {
+    const { result } = renderHook(() => useTableDimensions());
+    const widthOff = result.current.totalColumnWidth;
+
+    act(() => {
+      useChartStore.setState({ workingDaysMode: true });
+    });
+
+    const widthOn = result.current.totalColumnWidth;
+    // The WD floor adds 28px to the duration column's default width.
+    // DURATION_WD_EXTRA_PX = 28 (from tableColumns.ts)
+    expect(widthOn).toBe(widthOff + 28);
+  });
+
+  it("should shrink back when workingDaysMode is disabled", () => {
+    act(() => {
+      useChartStore.setState({ workingDaysMode: true });
+    });
+    const { result } = renderHook(() => useTableDimensions());
+    const widthOn = result.current.totalColumnWidth;
+
+    act(() => {
+      useChartStore.setState({ workingDaysMode: false });
+    });
+
+    expect(result.current.totalColumnWidth).toBe(widthOn - 28);
+  });
+
+  it("should apply WD floor even when a narrower custom duration width is stored", () => {
+    // User previously set a narrow custom width for duration.
+    // With WD mode on, the floor must override it.
+    act(() => {
+      useTaskStore.setState({ columnWidths: { duration: 70 } });
+    });
+    const { result } = renderHook(() => useTableDimensions());
+    const widthWithNarrowDuration = result.current.totalColumnWidth;
+
+    act(() => {
+      useChartStore.setState({ workingDaysMode: true });
+    });
+
+    // The WD floor = base(90) + 28 = 118, which is > the custom 70.
+    // So totalColumnWidth must increase by (118 - 70) = 48.
+    const durationBase = DENSITY_CONFIG.normal.columnWidths.duration;
+    const wdFloor = durationBase + 28;
+    const expectedIncrease = wdFloor - 70;
+    expect(result.current.totalColumnWidth).toBe(
+      widthWithNarrowDuration + expectedIncrease
+    );
+  });
 });
