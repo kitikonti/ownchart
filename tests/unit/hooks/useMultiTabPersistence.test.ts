@@ -93,6 +93,12 @@ describe("useMultiTabPersistence", () => {
       hiddenColumns: [],
       isTaskTableCollapsed: false,
       hiddenTaskIds: [],
+      workingDaysMode: false,
+      workingDaysConfig: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
     });
 
     useUIStore.setState({ isHydrated: false });
@@ -547,6 +553,95 @@ describe("useMultiTabPersistence", () => {
       expect(restored.summaryOptions.useMilestoneAccent).toBe(false);
       expect(restored.taskTypeOptions.taskColor).toBe("#222222");
       expect(restored.hierarchyOptions.lightenPercentPerLevel).toBe(15);
+    });
+  });
+
+  describe("working-days settings persistence (#82 item 26)", () => {
+    it("should auto-derive workingDaysMode=true when config has exclusions", () => {
+      // The hook restores workingDaysConfig via setWorkingDaysConfig,
+      // which auto-derives workingDaysMode from the exclusion flags.
+      const config = {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: false,
+      };
+      seedTabStorage("tab-1111111111-wdmode", { workingDaysConfig: config });
+
+      renderHook(() => useMultiTabPersistence());
+
+      // Verify config was restored
+      const state = useChartStore.getState();
+      expect(state.workingDaysConfig.excludeSaturday).toBe(true);
+      expect(state.workingDaysConfig.excludeSunday).toBe(true);
+      // workingDaysMode is auto-derived from config exclusions
+      expect(state.workingDaysMode).toBe(true);
+    });
+
+    it("should restore workingDaysConfig from localStorage", () => {
+      const config = {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      };
+      seedTabStorage("tab-1111111111-wdcfg", { workingDaysConfig: config });
+
+      renderHook(() => useMultiTabPersistence());
+
+      expect(useChartStore.getState().workingDaysConfig).toEqual(config);
+    });
+
+    it("should restore holidayRegion from localStorage", () => {
+      seedTabStorage("tab-1111111111-wdregn", { holidayRegion: "US" });
+
+      renderHook(() => useMultiTabPersistence());
+
+      expect(useChartStore.getState().holidayRegion).toBe("US");
+    });
+
+    it("should keep default WD settings when not in saved data", () => {
+      seedTabStorage("tab-1111111111-nowd001");
+
+      renderHook(() => useMultiTabPersistence());
+
+      expect(useChartStore.getState().workingDaysMode).toBeFalsy();
+    });
+
+    it("should round-trip all WD settings through save and restore", () => {
+      const tabId = "tab-1111111111-wdround";
+      sessionStorage.setItem(TAB_ID_KEY, tabId);
+
+      const wdConfig = {
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      };
+
+      saveTabChart(tabId, {
+        tasks: [],
+        dependencies: [],
+        chartState: createChartState({
+          workingDaysConfig: wdConfig,
+          holidayRegion: "DE",
+        }),
+        fileState: {
+          fileName: null,
+          chartId: null,
+          lastSaved: null,
+          isDirty: false,
+        } as FileState,
+        tableState: {
+          columnWidths: {},
+          taskTableWidth: null,
+        } as TableState,
+      });
+
+      renderHook(() => useMultiTabPersistence());
+
+      const state = useChartStore.getState();
+      // workingDaysMode is auto-derived from config exclusions
+      expect(state.workingDaysMode).toBe(true);
+      expect(state.workingDaysConfig).toEqual(wdConfig);
+      expect(state.holidayRegion).toBe("DE");
     });
   });
 });

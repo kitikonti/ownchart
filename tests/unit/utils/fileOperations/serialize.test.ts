@@ -680,4 +680,64 @@ describe('File Operations - Serialization', () => {
       expect(parsed.chart.tasks[0].name).toBe('Task with émojis 🚀 and ümlauts');
     });
   });
+
+  describe('Working Days Settings Serialization (#82 item 24)', () => {
+    it('should serialize workingDaysMode, workingDaysConfig, and holidayRegion', () => {
+      const viewSettings: ViewSettings = {
+        ...createSampleViewSettings(),
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: true,
+        },
+        holidayRegion: 'US',
+      };
+
+      const json = serializeToGanttFile(createSampleTasks(), viewSettings);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.viewSettings.workingDaysMode).toBe(true);
+      expect(parsed.chart.viewSettings.workingDaysConfig).toEqual({
+        excludeSaturday: true,
+        excludeSunday: true,
+        excludeHolidays: true,
+      });
+      expect(parsed.chart.viewSettings.holidayRegion).toBe('US');
+    });
+
+    it('should omit workingDaysMode when not provided (calendar mode)', () => {
+      const viewSettings = createSampleViewSettings();
+
+      const json = serializeToGanttFile(createSampleTasks(), viewSettings);
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.viewSettings.workingDaysMode).toBeUndefined();
+      expect(parsed.chart.viewSettings.workingDaysConfig).toBeUndefined();
+    });
+
+    it('should preserve lag value as-is (unit semantics implied by workingDaysMode)', () => {
+      const viewSettings: ViewSettings = {
+        ...createSampleViewSettings(),
+        workingDaysMode: true,
+      };
+
+      const json = serializeToGanttFile(createSampleTasks(), viewSettings, {
+        dependencies: [
+          {
+            id: 'dep-1',
+            fromTaskId: createSampleTasks()[0].id,
+            toTaskId: createSampleTasks()[1].id,
+            type: 'FS',
+            lag: 3,
+            createdAt: '2025-01-06T10:00:00.000Z',
+          },
+        ],
+      });
+      const parsed = JSON.parse(json);
+
+      expect(parsed.chart.dependencies[0].lag).toBe(3);
+      expect(parsed.chart.viewSettings.workingDaysMode).toBe(true);
+    });
+  });
 });

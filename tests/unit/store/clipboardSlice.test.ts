@@ -10,6 +10,7 @@ import { useHistoryStore } from "@/store/slices/historySlice";
 import { useClipboardStore } from "@/store/slices/clipboardSlice";
 import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { useFileStore } from "@/store/slices/fileSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
 import { tid, hex } from "../../helpers/branded";
@@ -1054,6 +1055,63 @@ describe("clipboardSlice", () => {
       const child2 = tasks.find((t) => t.name === "Child 2");
       expect(child1).toBeDefined();
       expect(child2).toBeDefined();
+    });
+  });
+
+  describe("WD mode does not affect non-date cell paste (#82 item 44)", () => {
+    beforeEach(() => {
+      resetStores();
+      // Enable WD mode
+      useChartStore.setState({
+        workingDaysMode: true,
+        workingDaysConfig: {
+          excludeSaturday: true,
+          excludeSunday: true,
+          excludeHolidays: false,
+        },
+      });
+    });
+
+    it("should paste name cell unchanged when WD mode is on", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("src", "Source Name", 0),
+          createTask("tgt", "Target Name", 1),
+        ],
+        activeCell: { taskId: tid("tgt"), field: "name" },
+      });
+
+      useClipboardStore.getState().copyCell(tid("src"), "name");
+      const result = useClipboardStore
+        .getState()
+        .pasteCell(tid("tgt"), "name");
+
+      expect(result.success).toBe(true);
+      const target = useTaskStore
+        .getState()
+        .tasks.find((t) => t.id === tid("tgt"));
+      expect(target!.name).toBe("Source Name");
+    });
+
+    it("should paste progress cell unchanged when WD mode is on", () => {
+      useTaskStore.setState({
+        tasks: [
+          createTask("src", "Source", 0, { progress: 75 }),
+          createTask("tgt", "Target", 1, { progress: 0 }),
+        ],
+        activeCell: { taskId: tid("tgt"), field: "progress" },
+      });
+
+      useClipboardStore.getState().copyCell(tid("src"), "progress");
+      const result = useClipboardStore
+        .getState()
+        .pasteCell(tid("tgt"), "progress");
+
+      expect(result.success).toBe(true);
+      const target = useTaskStore
+        .getState()
+        .tasks.find((t) => t.id === tid("tgt"));
+      expect(target!.progress).toBe(75);
     });
   });
 });

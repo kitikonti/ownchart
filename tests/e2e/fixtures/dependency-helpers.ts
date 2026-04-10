@@ -153,6 +153,73 @@ export async function closeDependencyPanel(page: Page): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Date / working-day assertion helpers
+// ---------------------------------------------------------------------------
+
+/** Parse the table's display format ("MM/DD/YYYY") into a Date. */
+export function parseDisplayDate(displayDate: string): Date {
+  const [m, d, y] = displayDate.split("/").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/**
+ * Assert that a displayed date falls on a working day (Mon-Fri).
+ * @param displayDate - Date in "MM/DD/YYYY" format
+ * @param label - Human-readable label for error messages
+ */
+export function assertWorkingDay(displayDate: string, label: string): void {
+  const dow = parseDisplayDate(displayDate).getDay();
+  expect(
+    dow,
+    `${label} should be a working day (Mon-Fri) but landed on ${displayDate} (dow=${dow})`
+  ).toBeGreaterThanOrEqual(1);
+  expect(dow).toBeLessThanOrEqual(5);
+}
+
+// ---------------------------------------------------------------------------
+// Task bar resize
+// ---------------------------------------------------------------------------
+
+/**
+ * Resize a task bar by dragging its left or right edge.
+ *
+ * Uses the background rect (first visible rect inside the task-bar group)
+ * for edge detection instead of the group bounding box — this avoids the
+ * text label extending the measured width when taskLabelPosition is "after".
+ *
+ * @param direction - Which edge to drag: 'left' (start) or 'right' (end)
+ * @param pixelDelta - Positive = extend outward, negative = shrink
+ */
+export async function resizeTaskBar(
+  page: Page,
+  taskName: string,
+  direction: "left" | "right",
+  pixelDelta: number
+): Promise<void> {
+  const taskBar = page
+    .locator(".task-bar")
+    .filter({
+      has: page.locator(`text:has-text("${taskName}")`),
+    })
+    .first();
+
+  // Use the background rect (second rect — first is inside <defs> clipPath)
+  // to get the actual bar geometry, not the group + label bounding box.
+  const bgRect = taskBar.locator("rect").nth(1);
+  const box = await bgRect.boundingBox();
+  expect(box, `Background rect for "${taskName}" should be visible`).not.toBeNull();
+  const { x, y, width, height } = box!;
+
+  const edgeX = direction === "left" ? x + 3 : x + width - 3;
+  const centerY = y + height / 2;
+
+  await page.mouse.move(edgeX, centerY);
+  await page.mouse.down();
+  await page.mouse.move(edgeX + pixelDelta, centerY, { steps: 10 });
+  await page.mouse.up();
+}
+
+// ---------------------------------------------------------------------------
 // Task bar drag
 // ---------------------------------------------------------------------------
 
