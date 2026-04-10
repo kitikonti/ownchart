@@ -7,28 +7,7 @@ import { useMemo } from "react";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
-import { getDensityAwareWidth, getVisibleColumns } from "@/config/tableColumns";
-
-/**
- * Fallback column width in pixels when no px value can be parsed from the CSS string.
- * This path is not reachable with current getDensityAwareWidth output (which always
- * includes a px value), but is kept as a defensive last-resort default.
- */
-const FALLBACK_COLUMN_WIDTH_PX = 100;
-
-/**
- * Parse width from CSS grid syntax.
- * Extracts pixel value from various formats:
- * - 'minmax(200px, 1fr)' -> 200  (name column)
- * - '150px' -> 150               (all other columns)
- * - '1fr' -> FALLBACK_COLUMN_WIDTH_PX (defensive fallback — not reachable with
- *   current getDensityAwareWidth output, which always includes a px value)
- */
-function parseWidth(widthStr: string): number {
-  // Extract first pixel value from the CSS string
-  const match = widthStr.match(/(\d+)px/);
-  return match ? parseInt(match[1], 10) : FALLBACK_COLUMN_WIDTH_PX;
-}
+import { getColumnPixelWidth, getVisibleColumns } from "@/config/tableColumns";
 
 interface UseTableDimensionsResult {
   totalColumnWidth: number;
@@ -48,12 +27,16 @@ export function useTableDimensions(): UseTableDimensionsResult {
 
   const totalColumnWidth = useMemo(() => {
     return getVisibleColumns(hiddenColumns).reduce((sum, col) => {
-      const customWidth = columnWidths[col.id];
-      const width =
-        customWidth ??
-        parseWidth(
-          getDensityAwareWidth(col.id, densityConfig, workingDaysMode)
-        );
+      // Use getColumnPixelWidth — the same function buildGridTemplateColumns
+      // uses to render the actual grid. This ensures the split pane's max
+      // constraint matches the rendered table width, including the WD-mode
+      // duration column floor (DURATION_WD_EXTRA_PX).
+      const width = getColumnPixelWidth(
+        col.id,
+        columnWidths,
+        densityConfig,
+        workingDaysMode
+      );
       return sum + width;
     }, 0);
   }, [columnWidths, densityConfig, hiddenColumns, workingDaysMode]);
