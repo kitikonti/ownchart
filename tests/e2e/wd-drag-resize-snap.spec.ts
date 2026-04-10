@@ -22,7 +22,7 @@ import {
   closeDependencyPanel,
 } from "./fixtures/dependency-helpers";
 import { selectTasks } from "./fixtures/helpers";
-import type { StoragePayloadOptions } from "./fixtures/sample-data";
+import { WD_CHART_STATE, type StoragePayloadOptions } from "./fixtures/sample-data";
 
 test.describe("WD drag / resize snapping (#82)", () => {
   test.skip(
@@ -52,23 +52,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
           metadata: {},
         },
       ],
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
     };
 
     await injectAndNavigate(page, options, "Drag Me");
@@ -117,23 +101,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
           metadata: {},
         },
       ],
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
     };
 
     await injectAndNavigate(page, options, "Resize Me");
@@ -202,23 +170,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
           metadata: {},
         },
       ],
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
     };
 
     await injectAndNavigate(page, options, "Multi A");
@@ -281,23 +233,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
           metadata: {},
         },
       ],
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
     };
 
     await injectAndNavigate(page, options, "Source");
@@ -310,7 +246,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
     await page.waitForTimeout(500);
 
     // Use the background rect for accurate bounding box (not group + label)
-    const srcRect = srcBar.locator("rect").nth(1);
+    const srcRect = srcBar.locator('[data-testid="task-bar-bg"]');
     const srcBox = await srcRect.boundingBox();
     expect(srcBox).not.toBeNull();
 
@@ -332,7 +268,7 @@ test.describe("WD drag / resize snapping (#82)", () => {
       .locator(".task-bar")
       .filter({ has: page.locator('text:has-text("Target")') })
       .first();
-    const tgtRect = tgtBar.locator("rect").nth(1);
+    const tgtRect = tgtBar.locator('[data-testid="task-bar-bg"]');
     const tgtBox = await tgtRect.boundingBox();
     expect(tgtBox).not.toBeNull();
     const tgtCenterX = tgtBox!.x + tgtBox!.width / 2;

@@ -121,6 +121,21 @@ export const DEFAULT_CHART_STATE = {
   taskLabelPosition: 'after' as const,
 };
 
+/**
+ * Chart state with WD mode enabled (exclude Sat + Sun, no holidays).
+ * Used by all WD-specific E2E tests for consistent setup.
+ */
+export const WD_CHART_STATE = {
+  ...DEFAULT_CHART_STATE,
+  autoScheduling: true,
+  workingDaysMode: true,
+  workingDaysConfig: {
+    excludeSaturday: true,
+    excludeSunday: true,
+    excludeHolidays: false,
+  },
+};
+
 // ---------------------------------------------------------------------------
 // Storage payload builder
 // ---------------------------------------------------------------------------

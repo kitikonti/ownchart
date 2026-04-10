@@ -203,9 +203,9 @@ export async function resizeTaskBar(
     })
     .first();
 
-  // Use the background rect (second rect — first is inside <defs> clipPath)
-  // to get the actual bar geometry, not the group + label bounding box.
-  const bgRect = taskBar.locator("rect").nth(1);
+  // Use the background rect (data-testid="task-bar-bg") to get the actual bar
+  // geometry, not the group + label bounding box.
+  const bgRect = taskBar.locator('[data-testid="task-bar-bg"]');
   const box = await bgRect.boundingBox();
   expect(box, `Background rect for "${taskName}" should be visible`).not.toBeNull();
   const { x, y, width, height } = box!;
@@ -217,6 +217,39 @@ export async function resizeTaskBar(
   await page.mouse.down();
   await page.mouse.move(edgeX + pixelDelta, centerY, { steps: 10 });
   await page.mouse.up();
+}
+
+// ---------------------------------------------------------------------------
+// Cell clipboard helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Click a table cell and wait until the row selection is cleared.
+ *
+ * Cell.tsx calls `clearSelection()` + `setActiveCell()` on click, but the
+ * `useCallback` closure in `useClipboardOperations` still holds the stale
+ * `selectedTaskIds` until React re-renders. This helper waits for the row's
+ * `aria-selected` to disappear — a reliable DOM-observable signal that
+ * `selectedTaskIds` has been flushed — making clipboard operations
+ * deterministic without blind `waitForTimeout`.
+ */
+export async function clickCellForClipboard(
+  page: Page,
+  taskName: string,
+  column: string
+): Promise<void> {
+  const cell = getCell(page, taskName, column);
+  await cell.click();
+  await expect(cell).toHaveAttribute("aria-selected", "true");
+  // Wait for the ROW to lose aria-selected (proves selectedTaskIds is cleared
+  // and the useClipboardOperations closure has been refreshed).
+  const row = page
+    .getByRole("grid", { name: "Task spreadsheet" })
+    .getByRole("row")
+    .filter({ hasText: taskName });
+  await expect(row).not.toHaveAttribute("aria-selected", "true", {
+    timeout: 2_000,
+  });
 }
 
 // ---------------------------------------------------------------------------

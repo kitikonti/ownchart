@@ -15,7 +15,7 @@ import {
   parseDisplayDate,
 } from "./fixtures/dependency-helpers";
 import { createTask, insertTaskViaRowButton, getGrid } from "./fixtures/helpers";
-import type { StoragePayloadOptions } from "./fixtures/sample-data";
+import { WD_CHART_STATE, type StoragePayloadOptions } from "./fixtures/sample-data";
 
 // ─── Fixture ────────────────────────────────────────────────────────────────
 
@@ -35,23 +35,7 @@ const REF_TASK = {
 const options: StoragePayloadOptions = {
   tabId: "tab-1111111111-taskcrt",
   tasks: [REF_TASK],
-  chartState: {
-    zoom: 1,
-    panOffset: { x: 0, y: 0 },
-    showWeekends: true,
-    showTodayMarker: false,
-    showHolidays: false,
-    showDependencies: true,
-    showProgress: true,
-    taskLabelPosition: "after",
-    autoScheduling: true,
-    workingDaysMode: true,
-    workingDaysConfig: {
-      excludeSaturday: true,
-      excludeSunday: true,
-      excludeHolidays: false,
-    },
-  },
+  chartState: WD_CHART_STATE,
 };
 
 // ─── Tests ──────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@
 import { test, expect } from "@playwright/test";
 import { injectAndNavigate, getStartDate } from "./fixtures/dependency-helpers";
 import { activateAndEdit } from "./fixtures/helpers";
-import type { StoragePayloadOptions } from "./fixtures/sample-data";
+import { WD_CHART_STATE, type StoragePayloadOptions } from "./fixtures/sample-data";
 
 // ---------------------------------------------------------------------------
 // Shared test data
@@ -47,24 +47,6 @@ const DEP_AB = {
   type: "FS",
   lag: 0,
   createdAt: "2025-01-06T10:00:00.000Z",
-};
-
-const WD_CHART_STATE = {
-  zoom: 1,
-  panOffset: { x: 0, y: 0 },
-  showWeekends: true,
-  showTodayMarker: false,
-  showHolidays: false,
-  showDependencies: true,
-  showProgress: true,
-  taskLabelPosition: "after",
-  autoScheduling: true,
-  workingDaysMode: true,
-  workingDaysConfig: {
-    excludeSaturday: true,
-    excludeSunday: true,
-    excludeHolidays: false,
-  },
 };
 
 // ---------------------------------------------------------------------------

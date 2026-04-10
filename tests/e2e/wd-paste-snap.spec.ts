@@ -17,6 +17,7 @@ import {
   getStartDate,
   getDuration,
   assertWorkingDay,
+  clickCellForClipboard,
 } from "./fixtures/dependency-helpers";
 import {
   activateAndEdit,
@@ -24,7 +25,7 @@ import {
   selectTask,
   getGrid,
 } from "./fixtures/helpers";
-import type { StoragePayloadOptions } from "./fixtures/sample-data";
+import { WD_CHART_STATE, type StoragePayloadOptions } from "./fixtures/sample-data";
 
 test.describe("WD paste snapping & undo (#82)", () => {
   // Shared test data — tasks on weekdays and weekends for paste testing
@@ -75,23 +76,7 @@ test.describe("WD paste snapping & undo (#82)", () => {
     return {
       tabId,
       tasks,
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
     };
   }
 
@@ -204,24 +189,15 @@ test.describe("WD paste snapping & undo (#82)", () => {
     // Record original values of Task B
     const origStartB = await getStartDate(page, "Task B");
 
-    // Click the cell to activate it (Cell.tsx calls clearSelection + setActiveCell).
-    // Wait for React to re-render with cleared selectedTaskIds before Ctrl+C,
-    // otherwise the useCallback closure in useClipboardOperations still holds
-    // the old selectedTaskIds and Ctrl+C triggers row copy.
-    const cellA = getCell(page, "Task A", "startDate");
-    await cellA.click();
-    await expect(cellA).toHaveAttribute("aria-selected", "true");
-    await page.waitForTimeout(100);
+    // Activate cell and wait for row deselection before Ctrl+C
+    await clickCellForClipboard(page, "Task A", "startDate");
     await page.keyboard.press("Control+c");
 
-    // Click Task B's startDate cell and paste
-    const cellB = getCell(page, "Task B", "startDate");
-    await cellB.click();
-    await expect(cellB).toHaveAttribute("aria-selected", "true");
-    await page.waitForTimeout(100);
+    // Activate target cell and paste
+    await clickCellForClipboard(page, "Task B", "startDate");
     await page.keyboard.press("Control+v");
     // Wait for async paste to complete
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200);
 
     // The pasted date (01/06/2025 Mon) should apply to Task B
     const pastedStart = await getStartDate(page, "Task B");
@@ -253,24 +229,16 @@ test.describe("WD paste snapping & undo (#82)", () => {
       "Task A"
     );
 
-    // Click the name cell to activate it. Wait for React re-render.
-    const nameA = getCell(page, "Task A", "name");
-    await nameA.click();
-    await expect(nameA).toHaveAttribute("aria-selected", "true");
-    await page.waitForTimeout(100);
+    // Activate cell and wait for row deselection before Ctrl+X
+    await clickCellForClipboard(page, "Task A", "name");
     await page.keyboard.press("Control+x");
-    await page.waitForTimeout(200);
 
-    // Click target name cell and paste
-    const nameB = getCell(page, "Task B", "name");
-    await nameB.click();
-    await expect(nameB).toHaveAttribute("aria-selected", "true");
-    await page.waitForTimeout(100);
+    // Activate target cell and paste
+    await clickCellForClipboard(page, "Task B", "name");
     await page.keyboard.press("Control+v");
     // Wait for async paste + exit any edit mode
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(200);
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(100);
 
     // Re-read cell contents after paste
     const grid = getGrid(page);

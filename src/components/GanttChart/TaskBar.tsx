@@ -574,6 +574,7 @@ export const TaskBar = React.memo(function TaskBar({
 
       {/* Background bar (fades during drag/resize, full opacity when progress hidden) */}
       <rect
+        data-testid="task-bar-bg"
         x={geometry.x}
         y={geometry.y}
         width={geometry.width}

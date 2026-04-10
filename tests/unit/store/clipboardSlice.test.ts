@@ -1090,6 +1090,7 @@ describe("clipboardSlice", () => {
       const target = useTaskStore
         .getState()
         .tasks.find((t) => t.id === tid("tgt"));
+      expect(target).toBeDefined();
       expect(target!.name).toBe("Source Name");
     });
 
@@ -1111,6 +1112,7 @@ describe("clipboardSlice", () => {
       const target = useTaskStore
         .getState()
         .tasks.find((t) => t.id === tid("tgt"));
+      expect(target).toBeDefined();
       expect(target!.progress).toBe(75);
     });
   });

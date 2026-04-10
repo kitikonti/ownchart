@@ -19,7 +19,7 @@ import {
   closeDependencyPanel,
   assertWorkingDay,
 } from "./fixtures/dependency-helpers";
-import type { StoragePayloadOptions } from "./fixtures/sample-data";
+import { WD_CHART_STATE, type StoragePayloadOptions } from "./fixtures/sample-data";
 
 test.describe("WD dependency scheduling gaps (#82)", () => {
   // -------------------------------------------------------------------------
@@ -72,16 +72,8 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
       tasks: [PRED, SUCC],
       dependencies: [DEP],
       chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
+        ...WD_CHART_STATE,
         showHolidays: true,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
         workingDaysConfig: {
           excludeSaturday: true,
           excludeSunday: true,
@@ -163,23 +155,7 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
       tabId: "tab-1111111111-neglag",
       tasks: [PRED, SUCC],
       dependencies: [DEP],
-      chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
-      },
+      chartState: WD_CHART_STATE,
       fileState: {
         fileName: "Negative Lag Test",
         chartId: "neg-lag-chart-001",
@@ -278,21 +254,7 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
       tasks: [TASK_A, TASK_B, TASK_C],
       dependencies: [DEP_AB, DEP_BC],
       chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
-        workingDaysMode: true,
-        workingDaysConfig: {
-          excludeSaturday: true,
-          excludeSunday: true,
-          excludeHolidays: false,
-        },
+        ...WD_CHART_STATE,
         hiddenTaskIds: ["hide-b"],
       },
       fileState: {
@@ -310,18 +272,16 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
       page.getByLabel("Task spreadsheet").getByText("Task B")
     ).not.toBeVisible();
 
-    // Press 'f' to fit and wait for arrows
+    // Fit to view. Arrows may not render when the middle task (B) is hidden,
+    // so use manual fit + wait instead of fitAndWaitForArrows.
     await page.keyboard.press("f");
-    // Some arrows may be hidden with B hidden, but the dep A→B or B→C
-    // may still render; wait a moment for layout to settle.
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(700);
 
     // Capture Task C's start date before the drag
     const cStartBefore = await getStartDate(page, "Task C");
 
     // Drag Task A right by ~150px to shift it forward
     await dragTaskBar(page, "Task A", 150);
-    await page.waitForTimeout(500);
 
     // Task C's start should have changed — cascade went through hidden B
     const cStartAfter = await getStartDate(page, "Task C");
@@ -373,16 +333,13 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
       tasks: [PRED, SUCC],
       dependencies: [DEP],
       chartState: {
-        zoom: 1,
-        panOffset: { x: 0, y: 0 },
-        showWeekends: true,
-        showTodayMarker: false,
-        showHolidays: false,
-        showDependencies: true,
-        showProgress: true,
-        taskLabelPosition: "after",
-        autoScheduling: true,
+        ...WD_CHART_STATE,
         workingDaysMode: false,
+        workingDaysConfig: {
+          excludeSaturday: false,
+          excludeSunday: false,
+          excludeHolidays: false,
+        },
       },
       fileState: {
         fileName: "Calendar Mode Test",
