@@ -435,6 +435,13 @@ function undoPasteCell(params: PasteCellParams): void {
     [params.field]: params.previousValue,
   });
 
+  // Restore cross-field side effects (e.g., duration change from date snapping)
+  if (params.sideEffects) {
+    for (const fx of params.sideEffects) {
+      taskStore.updateTask(params.taskId, { [fx.field]: fx.previousValue });
+    }
+  }
+
   if (params.previousCutCell) {
     taskStore.updateTask(params.previousCutCell.taskId, {
       [params.previousCutCell.field]: params.previousCutCell.value,
@@ -744,6 +751,13 @@ function redoPasteCell(params: PasteCellParams): void {
   taskStore.updateTask(params.taskId, {
     [params.field]: params.newValue,
   });
+
+  // Re-apply cross-field side effects (e.g., duration change from date snapping)
+  if (params.sideEffects) {
+    for (const fx of params.sideEffects) {
+      taskStore.updateTask(params.taskId, { [fx.field]: fx.newValue });
+    }
+  }
 
   if (params.previousCutCell) {
     taskStore.updateTask(params.previousCutCell.taskId, {

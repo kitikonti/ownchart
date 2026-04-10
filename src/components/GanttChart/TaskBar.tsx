@@ -16,6 +16,11 @@ import { useTaskBarInteraction } from "@/hooks/useTaskBarInteraction";
 import { useProgressDrag } from "@/hooks/useProgressDrag";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { useTaskStore } from "@/store/slices/taskSlice";
+import {
+  snapForwardToWorkingDay,
+  type WorkingDaysContext,
+} from "@/utils/workingDaysCalculator";
+import { computeEndDateForDrag } from "@/utils/taskBarDragHelpers";
 import { useDensityConfig } from "@/store/slices/userPreferencesSlice";
 import { SVG_FONT_FAMILY } from "@/utils/export/constants";
 import { SUMMARY_BRACKET } from "@/utils/export/renderConstants";
@@ -320,6 +325,9 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Shared drag state for multi-task preview
   const sharedDragState = useChartStore((state) => state.dragState);
+  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
+  const holidayRegion = useChartStore((state) => state.holidayRegion);
   const showProgress = useChartStore((state) => state.showProgress);
   const selectedTaskIds = useTaskStore((state) => state.selectedTaskIds);
 
@@ -368,8 +376,27 @@ export const TaskBar = React.memo(function TaskBar({
     const deltaDays = sharedDragState.deltaDays;
     if (deltaDays === 0) return null;
 
-    const newStartDate = addDays(task.startDate, deltaDays);
-    const newEndDate = task.endDate ? addDays(task.endDate, deltaDays) : "";
+    const wdCtx: WorkingDaysContext = {
+      enabled: workingDaysMode,
+      config: workingDaysConfig,
+      holidayRegion: workingDaysConfig.excludeHolidays
+        ? holidayRegion
+        : undefined,
+    };
+    const rawStart = addDays(task.startDate, deltaDays);
+    const newStartDate = wdCtx.enabled
+      ? snapForwardToWorkingDay(rawStart, wdCtx.config, wdCtx.holidayRegion)
+      : rawStart;
+    const newEndDate = task.endDate
+      ? computeEndDateForDrag(
+          newStartDate,
+          task.startDate,
+          task.endDate,
+          deltaDays,
+          task.type,
+          wdCtx
+        )
+      : "";
 
     const x = dateToPixel(newStartDate, scale);
     const width = task.endDate
@@ -384,7 +411,16 @@ export const TaskBar = React.memo(function TaskBar({
       startDate: newStartDate,
       endDate: newEndDate,
     };
-  }, [sharedDragState, selectedTaskIds, task, scale, geometry]);
+  }, [
+    sharedDragState,
+    selectedTaskIds,
+    task,
+    scale,
+    geometry,
+    workingDaysMode,
+    workingDaysConfig,
+    holidayRegion,
+  ]);
 
   // Determine if this task should show as "being dragged" (faded)
   const isBeingDragged =

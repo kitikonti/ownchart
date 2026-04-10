@@ -407,9 +407,12 @@ export function subtractWorkingDays(
  *
  * This is the **single shared anchor-normalisation helper** referenced by D4
  * in epic #79: any operation that may land a task start/end on a non-working
- * day (drag, resize, paste, CSV import, dependency cascade landing on a
- * holiday/weekend) routes through this function so that all four code paths
- * agree on the rule.
+ * day (drag, resize, paste, dependency cascade landing on a holiday/weekend)
+ * routes through this function so that all code paths agree on the rule.
+ * CSV import is a planned future caller.
+ *
+ * See also {@link snapBackwardToWorkingDay} for the backward counterpart
+ * (used by insert-above).
  *
  * @throws {WorkingDaysLoopError} when the iteration cap is exceeded (degenerate
  *   config that excludes every calendar day).
@@ -442,6 +445,49 @@ export function snapForwardToWorkingDay(
       );
     }
     current = addDays(current, 1);
+  }
+  return current;
+}
+
+/**
+ * Snap a date backward to the previous working day (idempotent — returns
+ * the input unchanged if it is already a working day).
+ *
+ * Backward counterpart of {@link snapForwardToWorkingDay}. Used by
+ * insert-above to place new tasks before the reference task on a valid
+ * working day.
+ *
+ * @throws {WorkingDaysLoopError} when the iteration cap is exceeded (degenerate
+ *   config that excludes every calendar day).
+ */
+export function snapBackwardToWorkingDay(
+  dateString: string,
+  config: WorkingDaysConfig,
+  holidayRegion?: string
+): string {
+  // Fast path: nothing excluded → every day is a working day.
+  if (
+    !config.excludeSaturday &&
+    !config.excludeSunday &&
+    !config.excludeHolidays
+  ) {
+    return dateString;
+  }
+
+  if (config.excludeHolidays && holidayRegion) {
+    holidayService.setRegion(holidayRegion);
+  }
+
+  let current = dateString;
+  let iterations = 0;
+  while (!isWorkingDay(current, config, holidayRegion)) {
+    if (iterations++ >= SNAP_FORWARD_MAX_ITERATIONS) {
+      throw new WorkingDaysLoopError(
+        "snapBackwardToWorkingDay iteration guard fired — the working-days " +
+          "configuration may exclude every day."
+      );
+    }
+    current = addDays(current, -1);
   }
   return current;
 }

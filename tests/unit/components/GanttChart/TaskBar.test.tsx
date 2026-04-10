@@ -19,6 +19,9 @@ vi.mock("@/store/slices/chartSlice", () => ({
     selector({
       dragState: null,
       showProgress: true,
+      workingDaysMode: false,
+      workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
+      holidayRegion: undefined,
     })
   ),
 }));
@@ -129,7 +132,7 @@ describe("TaskBar", () => {
     // Reset to defaults
     vi.mocked(useChartStore).mockImplementation(
       (selector: (s: Record<string, unknown>) => unknown) =>
-        selector({ dragState: null, showProgress: true }) as never
+        selector({ dragState: null, showProgress: true, workingDaysMode: false, workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false }, holidayRegion: undefined }) as never
     );
     vi.mocked(useTaskStore).mockImplementation(
       (selector: (s: Record<string, unknown>) => unknown) =>
@@ -315,7 +318,7 @@ describe("TaskBar", () => {
     it("should not render progress bar when showProgress is off", () => {
       vi.mocked(useChartStore).mockImplementation(
         (selector: (s: Record<string, unknown>) => unknown) =>
-          selector({ dragState: null, showProgress: false }) as never
+          selector({ dragState: null, showProgress: false, workingDaysMode: false, workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false }, holidayRegion: undefined }) as never
       );
       const { container } = renderTaskBar({
         task: createTask({ progress: 75 }),
@@ -426,6 +429,9 @@ describe("TaskBar", () => {
               deltaDays: 5,
             },
             showProgress: true,
+            workingDaysMode: false,
+            workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
+            holidayRegion: undefined,
           }) as never
       );
       vi.mocked(useTaskStore).mockImplementation(
@@ -453,6 +459,9 @@ describe("TaskBar", () => {
               deltaDays: 5,
             },
             showProgress: true,
+            workingDaysMode: false,
+            workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
+            holidayRegion: undefined,
           }) as never
       );
       vi.mocked(useTaskStore).mockImplementation(
@@ -480,6 +489,9 @@ describe("TaskBar", () => {
               deltaDays: 0,
             },
             showProgress: true,
+            workingDaysMode: false,
+            workingDaysConfig: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
+            holidayRegion: undefined,
           }) as never
       );
       vi.mocked(useTaskStore).mockImplementation(

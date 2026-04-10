@@ -39,17 +39,21 @@ vi.mock('@/utils/workingDaysCalculator', () => ({
         String(Number(d) + 6).padStart(2, '0'),
       ),
   ),
+  // Identity mock — tests that need actual snapping override this per-test
+  snapForwardToWorkingDay: vi.fn((date: string) => date),
 }));
 
 import { validateDragOperation } from '@/utils/dragValidation';
 import {
   calculateWorkingDays,
   addWorkingDays,
+  snapForwardToWorkingDay,
 } from '@/utils/workingDaysCalculator';
 
 const mockValidate = vi.mocked(validateDragOperation);
 const mockCalcWorkingDays = vi.mocked(calculateWorkingDays);
 const mockAddWorkingDays = vi.mocked(addWorkingDays);
+const mockSnapForward = vi.mocked(snapForwardToWorkingDay);
 
 function createTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -531,5 +535,157 @@ describe('capturePreDragDurations', () => {
     expect(result.size).toBe(3);
     expect(result.has(toTaskId('a'))).toBe(true);
     expect(result.has(toTaskId('c'))).toBe(true);
+  });
+});
+
+// =============================================================================
+// Working-day snapping tests
+// =============================================================================
+
+describe('WD snap: computeResizePreview', () => {
+  const wdCtx: WorkingDaysContext = {
+    enabled: true,
+    config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+  };
+
+  beforeEach(() => {
+    // Make snap shift Saturday +2 to Monday
+    mockSnapForward.mockImplementation((d: string) =>
+      d === '2025-01-11' ? '2025-01-13' : d,
+    );
+  });
+
+  it('snaps resizing-left start forward in WD mode', () => {
+    const state: DragState = {
+      mode: 'resizing-left',
+      originalStartDate: '2025-01-10',
+      originalEndDate: '2025-01-20',
+      startMouseX: 0,
+    };
+    // deltaDays = +1 → newStart = Jan 11 (Sat) → snapped to Jan 13 (Mon)
+    const result = computeResizePreview(state, 1, wdCtx);
+    expect(result).not.toBeNull();
+    expect(result!.previewStart).toBe('2025-01-13');
+    expect(result!.previewEnd).toBe('2025-01-20');
+  });
+
+  it('returns null when snap pushes start past end', () => {
+    const state: DragState = {
+      mode: 'resizing-left',
+      originalStartDate: '2025-01-10',
+      originalEndDate: '2025-01-11', // Sat
+      startMouseX: 0,
+    };
+    // deltaDays = +1 → newStart = Jan 11 → snapped to Jan 13 → past end Jan 11
+    const result = computeResizePreview(state, 1, wdCtx);
+    expect(result).toBeNull();
+  });
+
+  it('snaps resizing-right end forward in WD mode', () => {
+    mockSnapForward.mockImplementation((d: string) =>
+      d === '2025-01-11' ? '2025-01-13' : d,
+    );
+    const state: DragState = {
+      mode: 'resizing-right',
+      originalStartDate: '2025-01-06',
+      originalEndDate: '2025-01-10',
+      startMouseX: 0,
+    };
+    // deltaDays = +1 → newEnd = Jan 11 (Sat) → snapped to Jan 13
+    const result = computeResizePreview(state, 1, wdCtx);
+    expect(result).not.toBeNull();
+    expect(result!.previewEnd).toBe('2025-01-13');
+  });
+
+  it('does not snap when WD mode is off', () => {
+    const state: DragState = {
+      mode: 'resizing-left',
+      originalStartDate: '2025-01-10',
+      originalEndDate: '2025-01-20',
+      startMouseX: 0,
+    };
+    const result = computeResizePreview(state, 1); // no ctx
+    expect(result!.previewStart).toBe('2025-01-11'); // unsnapped
+  });
+});
+
+describe('WD snap: buildMoveUpdates', () => {
+  beforeEach(() => {
+    mockValidate.mockReturnValue({ valid: true });
+  });
+
+  it('snaps drag start to next working day', () => {
+    // Shift +1 day → lands on Saturday → snap to Monday
+    mockSnapForward.mockImplementation((d: string) =>
+      d === '2025-01-11' ? '2025-01-13' : d,
+    );
+    const wdCtx: WorkingDaysContext = {
+      enabled: true,
+      config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+    };
+    const task = createTask({ startDate: '2025-01-10', endDate: '2025-01-20' });
+    const tasks = [task];
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const updates = buildMoveUpdates([task.id], taskMap, 1, wdCtx);
+    expect(updates).toHaveLength(1);
+    expect(updates[0].updates.startDate).toBe('2025-01-13'); // snapped
+  });
+
+  it('snaps milestone to next working day', () => {
+    mockSnapForward.mockImplementation((d: string) =>
+      d === '2025-01-11' ? '2025-01-13' : d,
+    );
+    const wdCtx: WorkingDaysContext = {
+      enabled: true,
+      config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+    };
+    const task = createTask({
+      type: 'milestone',
+      startDate: '2025-01-10',
+      endDate: '2025-01-10',
+      duration: 0,
+    });
+    const tasks = [task];
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const updates = buildMoveUpdates([task.id], taskMap, 1, wdCtx);
+    expect(updates[0].updates.startDate).toBe('2025-01-13');
+    expect(updates[0].updates.endDate).toBe('2025-01-13');
+    expect(updates[0].updates.duration).toBe(0);
+  });
+
+  it('does not snap when WD mode is off', () => {
+    const disabledCtx: WorkingDaysContext = {
+      enabled: false,
+      config: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
+    };
+    const task = createTask({ startDate: '2025-01-10' });
+    const tasks = [task];
+    const taskMap = new Map(tasks.map((t) => [t.id, t]));
+    const updates = buildMoveUpdates([task.id], taskMap, 1, disabledCtx);
+    expect(updates[0].updates.startDate).toBe('2025-01-11'); // unsnapped
+  });
+});
+
+describe('WD snap: buildResizeUpdate', () => {
+  it('snaps both start and end dates', () => {
+    mockSnapForward.mockImplementation((d: string) => {
+      if (d === '2025-01-11') return '2025-01-13';
+      return d;
+    });
+    const wdCtx: WorkingDaysContext = {
+      enabled: true,
+      config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+    };
+    const task = createTask({ startDate: '2025-01-06', endDate: '2025-01-10' });
+    const result = buildResizeUpdate(task, '2025-01-11', '2025-01-20', wdCtx);
+    expect(result).not.toBeNull();
+    expect(result!.startDate).toBe('2025-01-13'); // snapped
+    expect(result!.endDate).toBe('2025-01-20'); // already working day
+  });
+
+  it('does not snap when WD mode is off', () => {
+    const task = createTask({ startDate: '2025-01-06', endDate: '2025-01-10' });
+    const result = buildResizeUpdate(task, '2025-01-11', '2025-01-20');
+    expect(result!.startDate).toBe('2025-01-11'); // unsnapped
   });
 });

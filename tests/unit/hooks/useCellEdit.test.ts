@@ -179,6 +179,110 @@ describe("buildDateFieldUpdate", () => {
 });
 
 // ---------------------------------------------------------------------------
+// WD snap: buildDateFieldUpdate with WorkingDaysContext
+// ---------------------------------------------------------------------------
+
+describe("buildDateFieldUpdate with WD snap", () => {
+  const wdCtx = {
+    enabled: true,
+    config: {
+      excludeSaturday: true,
+      excludeSunday: true,
+      excludeHolidays: false,
+    },
+  };
+
+  const baseTask = makeTask({
+    startDate: "2025-01-06", // Monday
+    endDate: "2025-01-10", // Friday
+    duration: 5,
+  });
+
+  it("snaps Saturday startDate to Monday", () => {
+    const task = makeTask({
+      startDate: "2025-01-06",
+      endDate: "2025-01-20", // far enough that snapped start is still before end
+      duration: 15,
+    });
+    // 2025-01-11 is Saturday → snaps to 2025-01-13 (Monday)
+    const result = buildDateFieldUpdate(task, "startDate", "2025-01-11", wdCtx);
+    expect(result.error).toBeUndefined();
+    expect(result.updates?.startDate).toBe("2025-01-13");
+    // Duration: Jan 13 to Jan 20 = 8 calendar days
+    expect(result.updates?.duration).toBe(8);
+  });
+
+  it("snaps Saturday endDate to Monday, recalculates duration", () => {
+    const task = makeTask({
+      startDate: "2025-01-06",
+      endDate: "2025-01-10",
+      duration: 5,
+    });
+    // Set endDate to 2025-01-11 (Sat) → snaps to 2025-01-13 (Mon)
+    const result = buildDateFieldUpdate(task, "endDate", "2025-01-11", wdCtx);
+    expect(result.error).toBeUndefined();
+    expect(result.updates?.endDate).toBe("2025-01-13");
+    // Duration: Jan 6 to Jan 13 = 8 calendar days
+    expect(result.updates?.duration).toBe(8);
+  });
+
+  it("snaps milestone date and applies to both startDate and endDate", () => {
+    const milestone = makeTask({
+      startDate: "2025-01-10",
+      endDate: "2025-01-10",
+      duration: 0,
+      type: "milestone",
+    });
+    const result = buildDateFieldUpdate(
+      milestone,
+      "startDate",
+      "2025-01-11", // Saturday
+      wdCtx
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.updates).toEqual({
+      startDate: "2025-01-13",
+      endDate: "2025-01-13",
+      duration: 0,
+    });
+  });
+
+  it("rejects snapped endDate that falls before startDate", () => {
+    const task = makeTask({
+      startDate: "2025-01-15", // Wednesday
+      endDate: "2025-01-17",
+      duration: 3,
+    });
+    // endDate = 2025-01-11 (Sat) → snaps to 2025-01-13 (Mon) → before startDate Wed Jan 15
+    const result = buildDateFieldUpdate(task, "endDate", "2025-01-11", wdCtx);
+    expect(result.error).toBe("End date must be after start date");
+  });
+
+  it("does not snap when WD context is not provided", () => {
+    const result = buildDateFieldUpdate(baseTask, "endDate", "2025-01-11");
+    expect(result.updates?.endDate).toBe("2025-01-11"); // unsnapped
+  });
+
+  it("does not snap when WD mode is disabled", () => {
+    const disabledCtx = {
+      enabled: false,
+      config: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
+    };
+    const result = buildDateFieldUpdate(
+      baseTask,
+      "endDate",
+      "2025-01-11",
+      disabledCtx
+    );
+    expect(result.updates?.endDate).toBe("2025-01-11"); // unsnapped
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Pure helper: buildDurationFieldUpdate
 // ---------------------------------------------------------------------------
 

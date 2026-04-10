@@ -24,6 +24,7 @@ import {
   getHolidaysInRange,
   getWorkingDaysSummary,
   snapForwardToWorkingDay,
+  snapBackwardToWorkingDay,
   subtractWorkingDays,
   WorkingDaysLoopError,
 } from "@/utils/workingDaysCalculator";
@@ -491,6 +492,54 @@ describe("workingDaysCalculator", () => {
       mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
       expect(() =>
         snapForwardToWorkingDay("2025-01-06", EXCLUDE_ALL, "XX")
+      ).toThrow(WorkingDaysLoopError);
+    });
+  });
+
+  // ── snapBackwardToWorkingDay ──────────────────────────────────────────────
+
+  describe("snapBackwardToWorkingDay", () => {
+    // Reference week: Mon 2025-01-06 … Sun 2025-01-12
+
+    it("returns a working day unchanged (idempotent)", () => {
+      expect(snapBackwardToWorkingDay("2025-01-10", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10" // Friday
+      );
+    });
+
+    it("snaps Saturday backward to Friday", () => {
+      expect(snapBackwardToWorkingDay("2025-01-11", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10" // Sat → Fri
+      );
+    });
+
+    it("snaps Sunday backward to Friday", () => {
+      expect(snapBackwardToWorkingDay("2025-01-12", EXCLUDE_WEEKENDS)).toBe(
+        "2025-01-10" // Sun → Fri
+      );
+    });
+
+    it("snaps backward past a holiday to the previous working day", () => {
+      // 2025-01-13 is a Monday holiday (MLK day mock)
+      mockGetHolidayForDateString.mockImplementation((d: string) =>
+        d === "2025-01-13" ? makeHoliday("MLK Day") : null
+      );
+      // 2025-01-13 (Mon holiday) → snap back to Fri 2025-01-10
+      expect(
+        snapBackwardToWorkingDay("2025-01-13", EXCLUDE_ALL, "US")
+      ).toBe("2025-01-10");
+    });
+
+    it("returns date unchanged when no exclusions (fast path)", () => {
+      expect(snapBackwardToWorkingDay("2025-01-11", NO_EXCLUSIONS)).toBe(
+        "2025-01-11"
+      );
+    });
+
+    it("throws WorkingDaysLoopError on a degenerate every-day-excluded config", () => {
+      mockGetHolidayForDateString.mockReturnValue(makeHoliday("forever"));
+      expect(() =>
+        snapBackwardToWorkingDay("2025-01-06", EXCLUDE_ALL, "XX")
       ).toThrow(WorkingDaysLoopError);
     });
   });

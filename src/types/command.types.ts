@@ -235,6 +235,13 @@ export interface PasteCellParams {
   previousValue: Task[EditableField];
   previousCutCell?: CopyCellParams;
   cutClearValue?: Task[EditableField]; // Value source cell was set to after cut (for redo)
+  /** Cross-field side effects (e.g., snapping a date also updates duration).
+   *  Optional — existing commands without it behave identically. */
+  sideEffects?: {
+    field: EditableField;
+    newValue: Task[EditableField];
+    previousValue: Task[EditableField];
+  }[];
 }
 
 // Multi-task operations

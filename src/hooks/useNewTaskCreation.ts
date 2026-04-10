@@ -8,10 +8,16 @@ import { useCallback } from "react";
 import { parseISO, addDays } from "date-fns";
 import { useTaskStore } from "@/store/slices/taskSlice";
 import { useChartStore } from "@/store/slices/chartSlice";
-import { toISODateString } from "@/utils/dateUtils";
+import { toISODateString, calculateDuration } from "@/utils/dateUtils";
 import { COLORS } from "@/styles/design-tokens";
 import { DEFAULT_TASK_DURATION } from "@/store/slices/taskSliceHelpers";
 import { DEFAULT_TASK_TYPE } from "@/config/taskDefaults";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
+import {
+  snapForwardToWorkingDay,
+  addWorkingDays as addWD,
+  type WorkingDaysContext,
+} from "@/utils/workingDaysCalculator";
 import type { Task } from "@/types/chart.types";
 
 interface UseNewTaskCreationReturn {
@@ -19,27 +25,57 @@ interface UseNewTaskCreationReturn {
 }
 
 /**
- * Compute start/end dates for a task appended after the latest-ending task.
+ * Compute start/end/duration for a task appended after the latest-ending task.
  * Starts one day after that task's end date, or today if no tasks exist.
+ *
+ * When working-days mode is active, the start date is snapped forward to
+ * the next working day and DEFAULT_TASK_DURATION is interpreted as working
+ * days (e.g., 5 wd = Mon-Fri). Duration is always returned as calendar days
+ * (storage contract).
  *
  * Uses date-fns parseISO + addDays throughout to avoid the UTC/local-time
  * mismatch that arises when mixing `new Date("YYYY-MM-DD")` (UTC midnight)
  * with `.getDate()` / `.setDate()` (local time). date-fns always operates
  * in local time, which matches the toISODateString (format) output.
  */
-function computeAppendDates(lastTask: { endDate?: string } | null): {
+export function computeAppendDates(
+  lastTask: { endDate?: string } | null,
+  ctx?: WorkingDaysContext
+): {
   startDate: string;
   endDate: string;
+  duration: number;
 } {
+  let startStr: string;
   if (lastTask?.endDate) {
-    const start = addDays(parseISO(lastTask.endDate), 1);
-    const end = addDays(start, DEFAULT_TASK_DURATION - 1);
-    return { startDate: toISODateString(start), endDate: toISODateString(end) };
+    startStr = toISODateString(addDays(parseISO(lastTask.endDate), 1));
+  } else {
+    startStr = toISODateString(new Date());
   }
 
-  const today = new Date();
-  const end = addDays(today, DEFAULT_TASK_DURATION - 1);
-  return { startDate: toISODateString(today), endDate: toISODateString(end) };
+  if (ctx?.enabled) {
+    startStr = snapForwardToWorkingDay(startStr, ctx.config, ctx.holidayRegion);
+    const endStr = addWD(
+      startStr,
+      DEFAULT_TASK_DURATION,
+      ctx.config,
+      ctx.holidayRegion
+    );
+    return {
+      startDate: startStr,
+      endDate: endStr,
+      duration: calculateDuration(startStr, endStr),
+    };
+  }
+
+  const endStr = toISODateString(
+    addDays(parseISO(startStr), DEFAULT_TASK_DURATION - 1)
+  );
+  return {
+    startDate: startStr,
+    endDate: endStr,
+    duration: DEFAULT_TASK_DURATION,
+  };
 }
 
 /**
@@ -71,13 +107,17 @@ export function useNewTaskCreation(): UseNewTaskCreationReturn {
       }
       const nextOrder = tasks.length > 0 ? highestOrder + 1 : 0;
 
-      const { startDate, endDate } = computeAppendDates(latestEndTask);
+      const wdCtx = getWorkingDaysContext();
+      const { startDate, endDate, duration } = computeAppendDates(
+        latestEndTask,
+        wdCtx
+      );
 
       addTask({
         name,
         startDate,
         endDate,
-        duration: DEFAULT_TASK_DURATION,
+        duration,
         progress: 0,
         color: COLORS.chart.taskDefault,
         order: nextOrder,

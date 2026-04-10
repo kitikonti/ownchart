@@ -13,7 +13,11 @@ import { useTaskStore } from "./taskSlice";
 import { useDependencyStore } from "./dependencySlice";
 import { useHistoryStore } from "./historySlice";
 import { useFileStore } from "./fileSlice";
-import { CommandType, type CopyCellParams } from "@/types/command.types";
+import {
+  CommandType,
+  type CopyCellParams,
+  type PasteCellParams,
+} from "@/types/command.types";
 import {
   collectTasksWithChildren,
   deepCloneTasks,
@@ -28,6 +32,14 @@ import {
   type SystemCellClipboardData,
 } from "@/utils/clipboard";
 import { buildFlattenedTaskList } from "@/utils/hierarchy";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
+import { buildDateFieldUpdate } from "@/hooks/useCellEdit";
+import { calculateDuration } from "@/utils/dateUtils";
+import {
+  snapForwardToWorkingDay,
+  calculateWorkingDays,
+  addWorkingDays,
+} from "@/utils/workingDaysCalculator";
 
 interface ClipboardState {
   // Row clipboard (for whole tasks)
@@ -306,14 +318,52 @@ function executeRowPaste(params: RowPasteParams): PasteResult {
     return { success: false, error: result.error };
   }
 
+  // Snap pasted task dates to working days when WD mode is active.
+  // Creates new immutable task objects — result.newTasks shares references
+  // with result.mergedTasks, so in-place mutation would be fragile.
+  const wdCtx = getWorkingDaysContext();
+  let pasteResult: PrepareRowPasteResult = result;
+  if (wdCtx.enabled) {
+    const snappedNewTasks = result.newTasks.map((t) => {
+      if (t.type === "summary") return t; // summaries auto-recalculate
+      const snappedStart = snapForwardToWorkingDay(
+        t.startDate,
+        wdCtx.config,
+        wdCtx.holidayRegion
+      );
+      const origWdCount = calculateWorkingDays(
+        t.startDate,
+        t.endDate,
+        wdCtx.config,
+        wdCtx.holidayRegion
+      );
+      const snappedEnd = addWorkingDays(
+        snappedStart,
+        origWdCount,
+        wdCtx.config,
+        wdCtx.holidayRegion
+      );
+      const duration = calculateDuration(snappedStart, snappedEnd);
+      return { ...t, startDate: snappedStart, endDate: snappedEnd, duration };
+    });
+    const oldToSnapped = new Map(
+      result.newTasks.map((old, i) => [old.id, snappedNewTasks[i]])
+    );
+    pasteResult = {
+      ...result,
+      newTasks: snappedNewTasks,
+      mergedTasks: result.mergedTasks.map((t) => oldToSnapped.get(t.id) ?? t),
+    };
+  }
+
   const cutUndoData = collectRowCutUndoData(
     operation,
     sourceTaskIds,
     taskStore.tasks
   );
   const finalTasks = applySingleLevelSummaryRecalculation(
-    result.mergedTasks,
-    result.targetParent
+    pasteResult.mergedTasks,
+    pasteResult.targetParent
   );
 
   applyRowPasteToStores(
@@ -321,10 +371,10 @@ function executeRowPaste(params: RowPasteParams): PasteResult {
     finalTasks,
     cutUndoData.previousCutTaskIds,
     depStore.dependencies,
-    result.remappedDependencies
+    pasteResult.remappedDependencies
   );
   fileStore.markDirty();
-  recordRowPasteCommand(description, result, cutUndoData);
+  recordRowPasteCommand(description, pasteResult, cutUndoData);
 
   if (operation === "cut" && set) {
     set((state) => {
@@ -407,7 +457,54 @@ function executeCellPaste(params: CellPasteParams): PasteResult {
     ? collectCutCellUndoData(taskStore.tasks, cutSource)
     : undefined;
 
-  applyCellMutations(targetTaskId, targetField, value, cutSource);
+  // Date fields route through buildDateFieldUpdate for snapping + duration recalculation.
+  // Non-date fields use the original applyCellMutations path.
+  let effectiveNewValue: Task[EditableField] = value;
+  let sideEffects: PasteCellParams["sideEffects"];
+
+  if (targetField === "startDate" || targetField === "endDate") {
+    const wdCtx = getWorkingDaysContext();
+    const dateResult = buildDateFieldUpdate(
+      task,
+      targetField,
+      value as string,
+      wdCtx
+    );
+    if (dateResult.error || !dateResult.updates) {
+      return { success: false, error: dateResult.error ?? "Unknown error" };
+    }
+
+    const updates = dateResult.updates;
+    const previousDuration = task.duration;
+    effectiveNewValue = updates[targetField] as Task[EditableField];
+    taskStore.updateTask(targetTaskId, updates);
+
+    // Handle cut-source clearing (same as applyCellMutations)
+    if (cutSource) {
+      const clearValue = getClearValueForField(cutSource.field);
+      taskStore.updateTask(cutSource.taskId, {
+        [cutSource.field]: clearValue,
+      });
+      useTaskStore.setState({ cutCell: null });
+    }
+
+    // Build side effects for undo when duration changed
+    if (
+      updates.duration !== undefined &&
+      updates.duration !== previousDuration
+    ) {
+      sideEffects = [
+        {
+          field: "duration" as EditableField,
+          newValue: updates.duration,
+          previousValue: previousDuration,
+        },
+      ];
+    }
+  } else {
+    applyCellMutations(targetTaskId, targetField, value, cutSource);
+  }
+
   fileStore.markDirty();
 
   useHistoryStore.getState().recordCommand({
@@ -418,12 +515,13 @@ function executeCellPaste(params: CellPasteParams): PasteResult {
     params: {
       taskId: targetTaskId,
       field: targetField,
-      newValue: value,
+      newValue: effectiveNewValue,
       previousValue,
       previousCutCell,
       cutClearValue: cutSource
         ? getClearValueForField(cutSource.field)
         : undefined,
+      sideEffects,
     },
   });
 

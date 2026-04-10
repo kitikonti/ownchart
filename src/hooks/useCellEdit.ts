@@ -30,6 +30,8 @@ import {
 import {
   calculateWorkingDays,
   addWorkingDays,
+  snapForwardToWorkingDay,
+  type WorkingDaysContext,
 } from "@/utils/workingDaysCalculator";
 
 // Error message constant to keep validation logic DRY and testable.
@@ -43,25 +45,32 @@ export const DATE_RANGE_ERROR = "End date must be after start date";
 
 /**
  * Validates a date field update and returns the update payload or an error
- * string.
+ * string. When working-days mode is active, the date is snapped forward to
+ * the next working day before validation.
  *
  * @returns `{ updates }` on success or `{ error }` on validation failure.
  */
 export function buildDateFieldUpdate(
   task: Task,
   field: "startDate" | "endDate",
-  localValue: string
+  localValue: string,
+  ctx?: WorkingDaysContext
 ):
   | { updates: Partial<Task>; error?: never }
   | { error: string; updates?: never } {
+  // Snap before milestone check — milestones use the snapped value for both dates.
+  const snappedValue = ctx?.enabled
+    ? snapForwardToWorkingDay(localValue, ctx.config, ctx.holidayRegion)
+    : localValue;
+
   // Milestones are a single point in time — both dates must stay in sync.
   if (task.type === "milestone") {
     return {
-      updates: { startDate: localValue, endDate: localValue, duration: 0 },
+      updates: { startDate: snappedValue, endDate: snappedValue, duration: 0 },
     };
   }
 
-  const newTask = { ...task, [field]: localValue };
+  const newTask = { ...task, [field]: snappedValue };
   const start = new Date(newTask.startDate);
   const end = new Date(newTask.endDate);
 
@@ -70,7 +79,7 @@ export function buildDateFieldUpdate(
   }
 
   const duration = calculateDuration(newTask.startDate, newTask.endDate);
-  return { updates: { [field]: localValue, duration } };
+  return { updates: { [field]: snappedValue, duration } };
 }
 
 /**
@@ -286,7 +295,12 @@ export function useCellEdit({
     }
 
     if (field === "startDate" || field === "endDate") {
-      const result = buildDateFieldUpdate(task, field, localValue);
+      const wdCtx: WorkingDaysContext = {
+        enabled: workingDaysMode,
+        config: workingDaysConfig,
+        holidayRegion: effectiveHolidayRegion,
+      };
+      const result = buildDateFieldUpdate(task, field, localValue, wdCtx);
       if (result.error) {
         setError(result.error);
         return false;

@@ -34,6 +34,7 @@ vi.mock('@/utils/dragValidation', () => ({
 vi.mock('@/utils/workingDaysCalculator', () => ({
   calculateWorkingDays: vi.fn(() => 5),
   addWorkingDays: vi.fn((start: string) => start),
+  snapForwardToWorkingDay: vi.fn((date: string) => date),
 }));
 
 import { getSVGPoint } from '@/utils/svgUtils';

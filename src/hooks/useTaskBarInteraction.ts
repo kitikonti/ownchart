@@ -19,6 +19,7 @@ import {
 } from "@/utils/graph/dateAdjustment";
 import { computeLagDeltaForPreview } from "@/utils/lagDeltaHelpers";
 import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
+import { snapForwardToWorkingDay } from "@/utils/workingDaysCalculator";
 import toast from "react-hot-toast";
 import {
   detectInteractionZone,
@@ -334,13 +335,14 @@ function executeResizeCommit(
 ): void {
   const { tasks, updateTask } = useTaskStore.getState();
   const freshTask = tasks.find((t) => t.id === taskId) ?? fallbackTask;
+  const wdCtx = getWorkingDaysContext();
   const resizeUpdate = buildResizeUpdate(
     freshTask,
     current.currentPreviewStart,
-    current.currentPreviewEnd
+    current.currentPreviewEnd,
+    wdCtx
   );
   if (resizeUpdate) {
-    const wdCtx = getWorkingDaysContext();
     const preDragDurations = capturePreDragDurations(tasks, wdCtx);
     const cascade = shouldCascade(altKey);
     if (cascade) {
@@ -419,8 +421,11 @@ export function useTaskBarInteraction(
       const deltaDays = pixelsToDeltaDays(deltaX, scale.pixelsPerDay);
 
       if (current.mode === "dragging") {
-        const newStart = addDays(current.originalStartDate, deltaDays);
         const ctx = getWorkingDaysContext();
+        const rawStart = addDays(current.originalStartDate, deltaDays);
+        const newStart = ctx.enabled
+          ? snapForwardToWorkingDay(rawStart, ctx.config, ctx.holidayRegion)
+          : rawStart;
         const newEnd = computeEndDateForDrag(
           newStart,
           current.originalStartDate,
@@ -445,7 +450,8 @@ export function useTaskBarInteraction(
           setLagDelta,
         });
       } else {
-        const preview = computeResizePreview(current, deltaDays);
+        const ctx = getWorkingDaysContext();
+        const preview = computeResizePreview(current, deltaDays, ctx);
         if (!preview) return;
 
         syncDragState({
@@ -453,7 +459,6 @@ export function useTaskBarInteraction(
           currentPreviewStart: preview.previewStart,
           currentPreviewEnd: preview.previewEnd,
         });
-        const ctx = getWorkingDaysContext();
         updateLagDeltaIndicator({
           draggedTaskId: task.id,
           previewStart: preview.previewStart,

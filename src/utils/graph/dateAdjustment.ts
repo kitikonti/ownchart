@@ -264,7 +264,6 @@ function calculateConstrainedDatesWD(
       return { startDate: start, endDate: end };
     }
   }
-
 }
 
 /**
@@ -394,8 +393,7 @@ function calculateInitialLagWD(
     if (snappedTarget === lagZero) return 0;
     if (snappedTarget > lagZero) {
       return (
-        calculateWorkingDays(lagZero, snappedTarget, config, holidayRegion) -
-        1
+        calculateWorkingDays(lagZero, snappedTarget, config, holidayRegion) - 1
       );
     }
     return -(

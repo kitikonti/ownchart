@@ -9,7 +9,7 @@ import {
   recalculateSummaryAncestors,
   normalizeTaskOrder,
 } from "@/utils/hierarchy";
-import { toISODateString } from "@/utils/dateUtils";
+import { toISODateString, addDays, calculateDuration } from "@/utils/dateUtils";
 import { useFileStore } from "./fileSlice";
 import { useChartStore } from "./chartSlice";
 import { CommandType } from "@/types/command.types";
@@ -19,6 +19,14 @@ import {
   DEFAULT_TASK_NAME,
   recordCommand,
 } from "./taskSliceHelpers";
+import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
+import {
+  snapForwardToWorkingDay,
+  snapBackwardToWorkingDay,
+  addWorkingDays,
+  subtractWorkingDays,
+  type WorkingDaysContext,
+} from "@/utils/workingDaysCalculator";
 import type { TaskSliceSet, TaskSliceGet, TaskActions } from "./taskSlice";
 
 type InsertionActions = Pick<
@@ -37,52 +45,92 @@ type InsertionActions = Pick<
 const INSERTION_ORDER_STEP = 0.001;
 
 /**
- * Compute start/end dates for an inserted task relative to a reference task.
+ * Compute start/end/duration for an inserted task relative to a reference task.
+ *
+ * Uses date-fns addDays throughout (not `new Date()` + `.setDate()`) to avoid
+ * the UTC/local-time mismatch documented in useNewTaskCreation.ts.
+ *
+ * When working-days mode is active:
+ * - Insert below: start snaps forward, end via addWorkingDays
+ * - Insert above: end snaps backward, start via subtractWorkingDays
+ *   (so the new task stays before the reference)
+ *
+ * Duration is always returned as calendar days (storage contract).
  */
-function computeInsertionDates(
+export function computeInsertionDates(
   refTask: Task,
   direction: "above" | "below",
-  offset: number
-): { startDate: string; endDate: string } {
+  offset: number,
+  ctx?: WorkingDaysContext
+): { startDate: string; endDate: string; duration: number } {
   if (direction === "above") {
     if (refTask.startDate) {
-      const refStart = new Date(refTask.startDate);
-      const end = new Date(refStart);
-      end.setDate(
-        refStart.getDate() - 1 - offset * (DEFAULT_TASK_DURATION + 1)
+      let endDate = addDays(
+        refTask.startDate,
+        -1 - offset * (DEFAULT_TASK_DURATION + 1)
       );
-      const start = new Date(end);
-      start.setDate(end.getDate() - DEFAULT_TASK_DURATION + 1);
-      return {
-        startDate: toISODateString(start),
-        endDate: toISODateString(end),
-      };
+
+      if (ctx?.enabled) {
+        endDate = snapBackwardToWorkingDay(
+          endDate,
+          ctx.config,
+          ctx.holidayRegion
+        );
+        const startDate = subtractWorkingDays(
+          endDate,
+          DEFAULT_TASK_DURATION,
+          ctx.config,
+          ctx.holidayRegion
+        );
+        return {
+          startDate,
+          endDate,
+          duration: calculateDuration(startDate, endDate),
+        };
+      }
+
+      const startDate = addDays(endDate, -(DEFAULT_TASK_DURATION - 1));
+      return { startDate, endDate, duration: DEFAULT_TASK_DURATION };
     }
-    const today = new Date();
-    const weekAgo = new Date(today);
-    weekAgo.setDate(today.getDate() - DEFAULT_TASK_DURATION + 1);
-    return {
-      startDate: toISODateString(weekAgo),
-      endDate: toISODateString(today),
-    };
+    // No reference start — fallback to today
+    const today = toISODateString(new Date());
+    const startDate = addDays(today, -(DEFAULT_TASK_DURATION - 1));
+    return { startDate, endDate: today, duration: DEFAULT_TASK_DURATION };
   }
 
   // direction === "below"
   if (refTask.endDate) {
-    const refEnd = new Date(refTask.endDate);
-    const start = new Date(refEnd);
-    start.setDate(refEnd.getDate() + 1 + offset * (DEFAULT_TASK_DURATION + 1));
-    const end = new Date(start);
-    end.setDate(start.getDate() + DEFAULT_TASK_DURATION - 1);
-    return { startDate: toISODateString(start), endDate: toISODateString(end) };
+    let startDate = addDays(
+      refTask.endDate,
+      1 + offset * (DEFAULT_TASK_DURATION + 1)
+    );
+
+    if (ctx?.enabled) {
+      startDate = snapForwardToWorkingDay(
+        startDate,
+        ctx.config,
+        ctx.holidayRegion
+      );
+      const endDate = addWorkingDays(
+        startDate,
+        DEFAULT_TASK_DURATION,
+        ctx.config,
+        ctx.holidayRegion
+      );
+      return {
+        startDate,
+        endDate,
+        duration: calculateDuration(startDate, endDate),
+      };
+    }
+
+    const endDate = addDays(startDate, DEFAULT_TASK_DURATION - 1);
+    return { startDate, endDate, duration: DEFAULT_TASK_DURATION };
   }
-  const today = new Date();
-  const nextWeek = new Date(today);
-  nextWeek.setDate(today.getDate() + DEFAULT_TASK_DURATION - 1);
-  return {
-    startDate: toISODateString(today),
-    endDate: toISODateString(nextWeek),
-  };
+  // No reference end — fallback to today
+  const today = toISODateString(new Date());
+  const endDate = addDays(today, DEFAULT_TASK_DURATION - 1);
+  return { startDate: today, endDate, duration: DEFAULT_TASK_DURATION };
 }
 
 /** Insert tasks above or below a reference task. */
@@ -100,9 +148,15 @@ function insertTasksRelative(
 
   const tasksToInsert: Array<Omit<Task, "id">> = [];
   const generatedIds: TaskId[] = [];
+  const wdCtx = getWorkingDaysContext();
 
   for (let i = 0; i < count; i++) {
-    const { startDate, endDate } = computeInsertionDates(refTask, direction, i);
+    const { startDate, endDate, duration } = computeInsertionDates(
+      refTask,
+      direction,
+      i,
+      wdCtx
+    );
 
     // Use fractional order relative to refTask so normalizeTaskOrder
     // places new tasks correctly regardless of array position.
@@ -115,7 +169,7 @@ function insertTasksRelative(
       name: DEFAULT_TASK_NAME,
       startDate,
       endDate,
-      duration: DEFAULT_TASK_DURATION,
+      duration,
       progress: 0,
       color: COLORS.chart.taskDefault,
       order: fractionalOrder,
