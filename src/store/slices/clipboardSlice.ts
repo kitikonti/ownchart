@@ -33,6 +33,7 @@ import {
 } from "@/utils/clipboard";
 import { buildFlattenedTaskList } from "@/utils/hierarchy";
 import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
+// buildDateFieldUpdate is a pure function (no hooks) — safe to import from hook file.
 import { buildDateFieldUpdate } from "@/hooks/useCellEdit";
 import { calculateDuration } from "@/utils/dateUtils";
 import {

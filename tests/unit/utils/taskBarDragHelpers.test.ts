@@ -582,9 +582,7 @@ describe('WD snap: computeResizePreview', () => {
   });
 
   it('snaps resizing-right end forward in WD mode', () => {
-    mockSnapForward.mockImplementation((d: string) =>
-      d === '2025-01-11' ? '2025-01-13' : d,
-    );
+    // beforeEach already maps '2025-01-11' → '2025-01-13'
     const state: DragState = {
       mode: 'resizing-right',
       originalStartDate: '2025-01-06',

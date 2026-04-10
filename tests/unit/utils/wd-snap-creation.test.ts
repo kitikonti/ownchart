@@ -110,18 +110,11 @@ describe("computeInsertionDates with WD snap", () => {
   describe("insert above", () => {
     it("snaps end backward and computes start via subtractWorkingDays", () => {
       // Ref starts Mon Jan 6 → end = Jan 5 (Sun) → snap backward to Fri Jan 3
+      // subtractWorkingDays("2025-01-03", 7) counts Fri as day 1 → Thu Dec 26
       const result = computeInsertionDates(refTask, "above", 0, WD_CTX);
-      expect(result.endDate).toBe("2025-01-03"); // Friday
-      // Start = 7wd backward from Fri Jan 3:
-      // Fri=1, Thu=2, Wed=3, Tue=4, Mon=5, (skip Sun+Sat), Fri Dec 27=6, Thu Dec 26=7
-      // subtractWorkingDays("2025-01-03", 7) = Thu 2024-12-26
-      // Wait — subtractWorkingDays counts endDate as day 1 if it's a working day.
-      // Fri Jan 3 = day 1, Thu=2, Wed=3, Tue=4, Mon Dec 30=5, skip Sat+Sun, Fri Dec 26=6, Thu Dec 25=7
-      // But Dec 25 is Christmas — not excluded since excludeHolidays is false.
-      // So subtractWorkingDays("2025-01-03", 7) = 2024-12-26
+      expect(result.endDate).toBe("2025-01-03");
       expect(result.startDate).toBe("2024-12-26");
-      // Calendar duration: Dec 26 to Jan 3 = 9 days
-      expect(result.duration).toBe(9);
+      expect(result.duration).toBe(9); // calendar days Dec 26 → Jan 3
     });
 
     it("does not snap when WD mode is off", () => {

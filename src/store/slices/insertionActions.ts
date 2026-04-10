@@ -92,7 +92,8 @@ export function computeInsertionDates(
       const startDate = addDays(endDate, -(DEFAULT_TASK_DURATION - 1));
       return { startDate, endDate, duration: DEFAULT_TASK_DURATION };
     }
-    // No reference start — fallback to today
+    // No reference start — fallback to today. No WD snap: this path only
+    // triggers for malformed tasks without startDate; "today" is acceptable.
     const today = toISODateString(new Date());
     const startDate = addDays(today, -(DEFAULT_TASK_DURATION - 1));
     return { startDate, endDate: today, duration: DEFAULT_TASK_DURATION };
@@ -127,7 +128,8 @@ export function computeInsertionDates(
     const endDate = addDays(startDate, DEFAULT_TASK_DURATION - 1);
     return { startDate, endDate, duration: DEFAULT_TASK_DURATION };
   }
-  // No reference end — fallback to today
+  // No reference end — fallback to today. No WD snap: this path only
+  // triggers for malformed tasks without endDate; "today" is acceptable.
   const today = toISODateString(new Date());
   const endDate = addDays(today, DEFAULT_TASK_DURATION - 1);
   return { startDate: today, endDate, duration: DEFAULT_TASK_DURATION };
