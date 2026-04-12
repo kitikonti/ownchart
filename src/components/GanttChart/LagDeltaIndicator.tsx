@@ -1,26 +1,24 @@
 /**
- * LagDeltaIndicator — live "Xd → Yd" pills that float near the successor end
- * of dependency arrows during a drag/resize gesture in auto-update-lag
- * mode (auto-scheduling OFF, no Alt). Introduced in #82 stage 4.
+ * LagDeltaIndicator — live "Xd → Yd" pills that float next to the dragged
+ * task bar during a drag/resize gesture in auto-update-lag mode
+ * (auto-scheduling OFF, no Alt). Introduced in #82 stage 4.
  *
- * Each affected dependency gets its own pill. When multiple pills anchor at
- * the same arrowhead (e.g. two predecessors of the same successor), they
- * stack upward so they don't overlap.
+ * Pills always render on the **same row** as the task being dragged/resized.
+ * They are positioned at the outermost right edge of either the original
+ * task bar or the preview bar (whichever extends further), with a small
+ * horizontal offset to prevent overlap. When multiple dependencies are
+ * affected, pills stack vertically.
  *
  * The pills are purely SVG overlays rendered as the last child of
  * `<g class="layer-dependencies">`, so they sit on top of arrows but inside
  * the same coordinate system — no portal, no DOM/SVG transformation.
- *
- * Position is computed by re-running `calculateArrowPath()` for each
- * affected dependency with the current task positions. This guarantees
- * pixel-perfect alignment with the arrows even at non-default zoom levels.
  */
 
 import { memo, useMemo } from "react";
-import type { Dependency, TaskPosition } from "@/types/dependency.types";
+import type { TaskPosition } from "@/types/dependency.types";
 import type { TaskId } from "@/types/branded.types";
 import type { LagDelta } from "@/utils/lagDeltaHelpers";
-import { calculateArrowPath } from "@/utils/arrowPath";
+import type { Dependency } from "@/types/dependency.types";
 import { COLORS } from "@/styles/design-tokens";
 
 /**
@@ -55,40 +53,79 @@ const PILL_RADIUS = 8;
 const PILL_FONT_SIZE = 11;
 /** Approximate character width at PILL_FONT_SIZE for layout estimation. */
 const APPROX_CHAR_WIDTH = 6.2;
-/**
- * Vertical offset above the successor endpoint. Pulls the pill clear of
- * the arrowhead glyph so the two never collide visually.
- */
-const PILL_VERTICAL_OFFSET = 14;
+/** Horizontal offset between the task bar edge and the pill (px). */
+const PILL_HORIZONTAL_OFFSET = 22;
 /** Vertical gap between stacked pills (px). */
 const PILL_STACK_GAP = 2;
+
+// ─── Anchor type ────────────────────────────────────────────────────────────
+
+export type LagDeltaMode = "drag" | "resize-left" | "resize-right";
+
+export interface LagDeltaAnchor {
+  taskId: TaskId;
+  previewLeft: number;
+  previewRight: number;
+  /** Interaction mode — used to filter pills to only those whose relevant
+   *  date edge actually changed during a resize. */
+  mode: LagDeltaMode;
+}
+
+/**
+ * Whether a dependency's lag is affected by a change to a specific date edge
+ * of the anchor task. During drag both edges move so all deps are affected.
+ * During resize only start OR end moves, so we filter by dep type.
+ *
+ * | Dep Type | Predecessor uses | Successor uses |
+ * |----------|-----------------|----------------|
+ * | FS       | end             | start          |
+ * | SS       | start           | start          |
+ * | FF       | end             | end            |
+ * | SF       | start           | end            |
+ */
+function isDepAffectedByMode(
+  dep: Dependency,
+  anchorTaskId: TaskId,
+  mode: LagDeltaMode
+): boolean {
+  if (mode === "drag") return true;
+
+  const changedEdge = mode === "resize-left" ? "start" : "end";
+  const isPredecessor = dep.fromTaskId === anchorTaskId;
+
+  // Which edge of the anchor task does this dep type use?
+  const edgeUsed = isPredecessor
+    ? dep.type === "SS" || dep.type === "SF"
+      ? "start"
+      : "end" // FS, FF use predecessor's end
+    : dep.type === "FF" || dep.type === "SF"
+      ? "end"
+      : "start"; // FS, SS use successor's start
+
+  return edgeUsed === changedEdge;
+}
 
 // ─── Single pill (internal) ─────────────────────────────────────────────────
 
 interface LagDeltaPillProps {
   delta: LagDelta;
-  dep: Dependency;
+  anchor: LagDeltaAnchor;
   taskPositions: Map<TaskId, TaskPosition>;
-  rowHeight: number;
-  /** 0-based stacking index — pills with higher index render further above. */
+  /** Which side of the task bar to place the pill on. */
+  side: "left" | "right";
+  /** 0-based stacking index per side — higher index renders further above. */
   stackIndex: number;
 }
 
 const LagDeltaPill = memo(function LagDeltaPill({
   delta,
-  dep,
+  anchor,
   taskPositions,
-  rowHeight,
+  side,
   stackIndex,
 }: LagDeltaPillProps): JSX.Element | null {
-  const anchor = useMemo(() => {
-    const fromPos = taskPositions.get(dep.fromTaskId);
-    const toPos = taskPositions.get(dep.toTaskId);
-    if (!fromPos || !toPos) return null;
-    return calculateArrowPath(fromPos, toPos, rowHeight, dep.type).arrowHead;
-  }, [dep, taskPositions, rowHeight]);
-
-  if (!anchor) return null;
+  const taskPos = taskPositions.get(anchor.taskId);
+  if (!taskPos) return null;
 
   const text = formatLagDeltaText(delta.oldLag, delta.newLag);
   // Estimate text width without measuring the DOM (we run inside the same
@@ -98,14 +135,24 @@ const LagDeltaPill = memo(function LagDeltaPill({
   const textWidth = Math.ceil(text.length * APPROX_CHAR_WIDTH);
   const pillWidth = textWidth + PILL_PADDING_X * 2;
   const pillHeight = PILL_FONT_SIZE + PILL_PADDING_Y * 2;
-  // Centre the pill on the arrowhead horizontally and pull it above so it
-  // doesn't overlap the arrowhead glyph. Stack upward for multiple pills.
-  const pillX = anchor.x - pillWidth / 2;
+
+  // Position at the outermost edge so the pill never overlaps with either
+  // the original bar or the preview bar.
+  let pillX: number;
+  if (side === "right") {
+    const taskRight = taskPos.x + taskPos.width;
+    const outerRight = Math.max(taskRight, anchor.previewRight);
+    pillX = outerRight + PILL_HORIZONTAL_OFFSET;
+  } else {
+    const taskLeft = taskPos.x;
+    const outerLeft = Math.min(taskLeft, anchor.previewLeft);
+    pillX = outerLeft - PILL_HORIZONTAL_OFFSET - pillWidth;
+  }
+
+  // Vertically centred on the task row, stacked upward for multiple pills.
+  const centerY = taskPos.y + taskPos.height / 2;
   const pillY =
-    anchor.y -
-    PILL_VERTICAL_OFFSET -
-    pillHeight -
-    stackIndex * (pillHeight + PILL_STACK_GAP);
+    centerY - pillHeight / 2 - stackIndex * (pillHeight + PILL_STACK_GAP);
 
   const tooltip = `Lag will update from ${formatLagValue(delta.oldLag)} to ${formatLagValue(delta.newLag)}`;
 
@@ -114,7 +161,7 @@ const LagDeltaPill = memo(function LagDeltaPill({
       className="layer-lag-delta-indicator"
       pointerEvents="none"
       data-testid="lag-delta-indicator"
-      data-dep-id={dep.id}
+      data-dep-id={delta.depId}
     >
       <title>{tooltip}</title>
       <rect
@@ -129,7 +176,7 @@ const LagDeltaPill = memo(function LagDeltaPill({
         strokeWidth={1}
       />
       <text
-        x={anchor.x}
+        x={pillX + pillWidth / 2}
         y={pillY + pillHeight / 2}
         textAnchor="middle"
         dominantBaseline="central"
@@ -149,46 +196,52 @@ interface LagDeltaIndicatorsProps {
   deltas: LagDelta[];
   dependencies: readonly Dependency[];
   taskPositions: Map<TaskId, TaskPosition>;
-  rowHeight: number;
+  anchor: LagDeltaAnchor;
 }
 
 /**
- * Renders one pill per lag delta. Pills that share the same successor task
- * (same arrowhead anchor) are stacked vertically so they don't overlap.
+ * Renders one pill per lag delta. Pills stack vertically on the dragged
+ * task's row so they don't overlap each other.
  */
 export const LagDeltaIndicators = memo(function LagDeltaIndicators({
   deltas,
   dependencies,
   taskPositions,
-  rowHeight,
+  anchor,
 }: LagDeltaIndicatorsProps): JSX.Element {
-  // Resolve deps once and compute per-pill stack indices (group by toTaskId
-  // so pills sharing an arrowhead anchor stack upward without overlap).
+  // Resolve deps, assign side (left/right) and per-side stack indices.
+  // Outgoing deps (dragged task is predecessor) → right side.
+  // Incoming deps (dragged task is successor)  → left side.
   const resolved = useMemo(() => {
     const depMap = new Map(dependencies.map((d) => [d.id, d]));
-    const groupCounters = new Map<TaskId, number>();
-    const items: { delta: LagDelta; dep: Dependency; stackIndex: number }[] =
-      [];
+    const items: {
+      delta: LagDelta;
+      side: "left" | "right";
+      stackIndex: number;
+    }[] = [];
+    let leftCount = 0;
+    let rightCount = 0;
 
     for (const delta of deltas) {
       const dep = depMap.get(delta.depId);
       if (!dep) continue;
-      const stackIndex = groupCounters.get(dep.toTaskId) ?? 0;
-      groupCounters.set(dep.toTaskId, stackIndex + 1);
-      items.push({ delta, dep, stackIndex });
+      if (!isDepAffectedByMode(dep, anchor.taskId, anchor.mode)) continue;
+      const side = dep.fromTaskId === anchor.taskId ? "right" : "left";
+      const stackIndex = side === "right" ? rightCount++ : leftCount++;
+      items.push({ delta, side, stackIndex });
     }
     return items;
-  }, [deltas, dependencies]);
+  }, [deltas, dependencies, anchor.taskId]);
 
   return (
     <>
-      {resolved.map(({ delta, dep, stackIndex }) => (
+      {resolved.map(({ delta, side, stackIndex }) => (
         <LagDeltaPill
           key={delta.depId}
           delta={delta}
-          dep={dep}
+          anchor={anchor}
           taskPositions={taskPositions}
-          rowHeight={rowHeight}
+          side={side}
           stackIndex={stackIndex}
         />
       ))}

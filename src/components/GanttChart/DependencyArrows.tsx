@@ -52,6 +52,7 @@ export function DependencyArrows({
   // Live lag-delta indicator (#82 stage 4) — set during a drag/resize gesture
   // in auto-update-lag mode (auto-scheduling OFF). Cleared on mouseup.
   const lagDeltas = useChartStore((state) => state.lagDeltas);
+  const lagDeltaAnchor = useChartStore((state) => state.lagDeltaAnchor);
   const selectedDependencyId = useDependencyStore(
     (state) => state.selectedDependencyId
   );
@@ -169,12 +170,12 @@ export function DependencyArrows({
       )}
 
       {/* Live lag-delta pills — rendered last so they sit above the arrows. */}
-      {lagDeltas && lagDeltas.length > 0 && (
+      {lagDeltas && lagDeltas.length > 0 && lagDeltaAnchor && (
         <LagDeltaIndicators
           deltas={lagDeltas}
           dependencies={dependencies}
           taskPositions={taskPositions}
-          rowHeight={rowHeight}
+          anchor={lagDeltaAnchor}
         />
       )}
     </g>

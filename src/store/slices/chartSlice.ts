@@ -150,6 +150,18 @@ interface ChartState {
    */
   lagDeltas: LagDelta[] | null;
 
+  /**
+   * Anchor info for positioning lag-delta pills on the dragged task's row.
+   * Stores the dragged task ID and its preview pixel bounds so pills can
+   * position themselves at the outermost edge of original/preview bar.
+   */
+  lagDeltaAnchor: {
+    taskId: TaskId;
+    previewLeft: number;
+    previewRight: number;
+    mode: "drag" | "resize-left" | "resize-right";
+  } | null;
+
   // File load signal (for scroll positioning on file open)
   fileLoadCounter: number;
 
@@ -262,7 +274,15 @@ interface ChartActions {
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: TaskId) => void;
   clearDragState: () => void;
-  setLagDeltas: (deltas: LagDelta[] | null) => void;
+  setLagDeltas: (
+    deltas: LagDelta[] | null,
+    anchor?: {
+      taskId: TaskId;
+      previewLeft: number;
+      previewRight: number;
+      mode: "drag" | "resize-left" | "resize-right";
+    }
+  ) => void;
 
   // File load signal (for scroll positioning)
   signalFileLoaded: () => void;
@@ -354,6 +374,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     viewportWidth: 0,
     dragState: null,
     lagDeltas: null,
+    lagDeltaAnchor: null,
     fileLoadCounter: 0,
     scrollTargetDate: null,
     pendingScrollTop: null,
@@ -1111,6 +1132,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         // Lag deltas are also transient drag overlays — clear them together
         // so stale pills never linger after the gesture ends.
         state.lagDeltas = null;
+        state.lagDeltaAnchor = null;
       });
     },
 
@@ -1118,11 +1140,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // Called from useTaskBarInteraction's mousemove handler in auto-update-lag
     // mode. The setter is a no-op when the new value is structurally equal
     // to the current value to avoid React re-renders on every drag frame.
-    setLagDeltas: (deltas: LagDelta[] | null): void => {
+    setLagDeltas: (
+      deltas: LagDelta[] | null,
+      anchor?: {
+        taskId: TaskId;
+        previewLeft: number;
+        previewRight: number;
+        mode: "drag" | "resize-left" | "resize-right";
+      }
+    ): void => {
       set((state) => {
         const current = state.lagDeltas;
         if (deltas === null || deltas.length === 0) {
-          if (current !== null) state.lagDeltas = null;
+          if (current !== null) {
+            state.lagDeltas = null;
+            state.lagDeltaAnchor = null;
+          }
           return;
         }
         if (
@@ -1135,9 +1168,12 @@ export const useChartStore = create<ChartState & ChartActions>()(
               c.newLag === deltas[i].newLag
           )
         ) {
+          // Deltas unchanged but anchor may have moved — update it.
+          state.lagDeltaAnchor = anchor ?? null;
           return;
         }
         state.lagDeltas = deltas;
+        state.lagDeltaAnchor = anchor ?? null;
       });
     },
 

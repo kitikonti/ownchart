@@ -38,7 +38,11 @@ import {
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
 import type { Dependency } from "@/types/dependency.types";
-import type { TimelineScale, TaskBarGeometry } from "@/utils/timelineUtils";
+import {
+  dateToPixel,
+  type TimelineScale,
+  type TaskBarGeometry,
+} from "@/utils/timelineUtils";
 import type {
   DragState,
   CursorType,
@@ -79,7 +83,19 @@ interface LagDeltaIndicatorUpdate {
   previewEnd: string;
   wdCtx: WorkingDaysContext;
   altKey: boolean;
-  setLagDeltas: (deltas: LagDelta[] | null) => void;
+  setLagDeltas: (
+    deltas: LagDelta[] | null,
+    anchor?: {
+      taskId: TaskId;
+      previewLeft: number;
+      previewRight: number;
+      mode: "drag" | "resize-left" | "resize-right";
+    }
+  ) => void;
+  /** Timeline scale for converting preview dates to pixel bounds. */
+  scale: TimelineScale;
+  /** Interaction mode — drag or which edge is being resized. */
+  mode: "drag" | "resize-left" | "resize-right";
 }
 
 /**
@@ -105,6 +121,8 @@ function updateLagDeltaIndicator({
   wdCtx,
   altKey,
   setLagDeltas,
+  scale,
+  mode,
 }: LagDeltaIndicatorUpdate): void {
   if (shouldCascade(altKey)) {
     setLagDeltas(null);
@@ -120,7 +138,20 @@ function updateLagDeltaIndicator({
     dependencies,
     wdCtx
   );
-  setLagDeltas(deltas.length > 0 ? deltas : null);
+  if (deltas.length === 0) {
+    setLagDeltas(null);
+    return;
+  }
+  // Compute preview pixel bounds for pill positioning.
+  const previewLeft = dateToPixel(previewStart, scale);
+  const previewDuration = calculateDuration(previewStart, previewEnd);
+  const previewRight = previewLeft + previewDuration * scale.pixelsPerDay;
+  setLagDeltas(deltas, {
+    taskId: draggedTaskId,
+    previewLeft,
+    previewRight,
+    mode,
+  });
 }
 
 /** Shared context for post-drag dependency operations. */
@@ -456,6 +487,8 @@ export function useTaskBarInteraction(
           wdCtx: ctx,
           altKey: e.altKey,
           setLagDeltas,
+          scale,
+          mode: "drag",
         });
       } else {
         const ctx = getWorkingDaysContext();
@@ -474,6 +507,9 @@ export function useTaskBarInteraction(
           wdCtx: ctx,
           altKey: e.altKey,
           setLagDeltas,
+          scale,
+          mode:
+            current.mode === "resizing-left" ? "resize-left" : "resize-right",
         });
       }
     });
@@ -500,6 +536,13 @@ export function useTaskBarInteraction(
       wdCtx: getWorkingDaysContext(),
       altKey: e.type === "keydown",
       setLagDeltas,
+      scale,
+      mode:
+        current.mode === "dragging"
+          ? "drag"
+          : current.mode === "resizing-left"
+            ? "resize-left"
+            : "resize-right",
     });
   };
 
