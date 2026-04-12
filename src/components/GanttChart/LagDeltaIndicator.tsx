@@ -1,21 +1,25 @@
 /**
- * LagDeltaIndicator — live "Xd → Yd" pill that floats near the successor end
- * of a dependency arrow during a drag/resize gesture in auto-update-lag
+ * LagDeltaIndicator — live "Xd → Yd" pills that float near the successor end
+ * of dependency arrows during a drag/resize gesture in auto-update-lag
  * mode (auto-scheduling OFF, no Alt). Introduced in #82 stage 4.
  *
- * The pill is purely an SVG overlay rendered as the last child of
- * `<g class="layer-dependencies">`, so it sits on top of arrows but inside
+ * Each affected dependency gets its own pill. When multiple pills anchor at
+ * the same arrowhead (e.g. two predecessors of the same successor), they
+ * stack upward so they don't overlap.
+ *
+ * The pills are purely SVG overlays rendered as the last child of
+ * `<g class="layer-dependencies">`, so they sit on top of arrows but inside
  * the same coordinate system — no portal, no DOM/SVG transformation.
  *
- * Position is computed by re-running `calculateArrowPath()` for the affected
- * dependency with the current task positions. This guarantees pixel-perfect
- * alignment with the arrow even at non-default zoom levels because both
- * `DependencyArrow` and this component go through the same geometry pipeline.
+ * Position is computed by re-running `calculateArrowPath()` for each
+ * affected dependency with the current task positions. This guarantees
+ * pixel-perfect alignment with the arrows even at non-default zoom levels.
  */
 
 import { memo, useMemo } from "react";
 import type { Dependency, TaskPosition } from "@/types/dependency.types";
 import type { TaskId } from "@/types/branded.types";
+import type { LagDelta } from "@/utils/lagDeltaHelpers";
 import { calculateArrowPath } from "@/utils/arrowPath";
 import { COLORS } from "@/styles/design-tokens";
 
@@ -56,20 +60,27 @@ const APPROX_CHAR_WIDTH = 6.2;
  * the arrowhead glyph so the two never collide visually.
  */
 const PILL_VERTICAL_OFFSET = 14;
+/** Vertical gap between stacked pills (px). */
+const PILL_STACK_GAP = 2;
 
-interface LagDeltaIndicatorProps {
-  delta: { depId: string; oldLag: number; newLag: number };
+// ─── Single pill (internal) ─────────────────────────────────────────────────
+
+interface LagDeltaPillProps {
+  delta: LagDelta;
   dependencies: readonly Dependency[];
   taskPositions: Map<TaskId, TaskPosition>;
   rowHeight: number;
+  /** 0-based stacking index — pills with higher index render further above. */
+  stackIndex: number;
 }
 
-export const LagDeltaIndicator = memo(function LagDeltaIndicator({
+const LagDeltaPill = memo(function LagDeltaPill({
   delta,
   dependencies,
   taskPositions,
   rowHeight,
-}: LagDeltaIndicatorProps): JSX.Element | null {
+  stackIndex,
+}: LagDeltaPillProps): JSX.Element | null {
   const dep = useMemo(
     () => dependencies.find((d) => d.id === delta.depId),
     [dependencies, delta.depId]
@@ -94,14 +105,14 @@ export const LagDeltaIndicator = memo(function LagDeltaIndicator({
   const pillWidth = textWidth + PILL_PADDING_X * 2;
   const pillHeight = PILL_FONT_SIZE + PILL_PADDING_Y * 2;
   // Centre the pill on the arrowhead horizontally and pull it above so it
-  // doesn't overlap the arrowhead glyph.
+  // doesn't overlap the arrowhead glyph. Stack upward for multiple pills.
   const pillX = anchor.x - pillWidth / 2;
-  const pillY = anchor.y - PILL_VERTICAL_OFFSET - pillHeight;
+  const pillY =
+    anchor.y -
+    PILL_VERTICAL_OFFSET -
+    pillHeight -
+    stackIndex * (pillHeight + PILL_STACK_GAP);
 
-  // i18n note (#82): the tooltip string is currently hard-coded English. The
-  // existing dependency panel labels still use literal strings as well —
-  // when the project gains an i18n layer (tracked separately), this string
-  // moves through it.
   const tooltip = `Lag will update from ${formatLagValue(delta.oldLag)} to ${formatLagValue(delta.newLag)}`;
 
   return (
@@ -135,5 +146,56 @@ export const LagDeltaIndicator = memo(function LagDeltaIndicator({
         {text}
       </text>
     </g>
+  );
+});
+
+// ─── Multi-pill container (exported) ────────────────────────────────────────
+
+interface LagDeltaIndicatorsProps {
+  deltas: LagDelta[];
+  dependencies: readonly Dependency[];
+  taskPositions: Map<TaskId, TaskPosition>;
+  rowHeight: number;
+}
+
+/**
+ * Renders one pill per lag delta. Pills that share the same successor task
+ * (same arrowhead anchor) are stacked vertically so they don't overlap.
+ */
+export const LagDeltaIndicators = memo(function LagDeltaIndicators({
+  deltas,
+  dependencies,
+  taskPositions,
+  rowHeight,
+}: LagDeltaIndicatorsProps): JSX.Element | null {
+  // Compute per-pill stack indices: group by toTaskId (the anchor point)
+  const stackIndices = useMemo(() => {
+    const depMap = new Map(dependencies.map((d) => [d.id, d]));
+    const groupCounters = new Map<TaskId, number>();
+    const indices = new Map<string, number>();
+
+    for (const delta of deltas) {
+      const dep = depMap.get(delta.depId);
+      if (!dep) continue;
+      const count = groupCounters.get(dep.toTaskId) ?? 0;
+      indices.set(delta.depId, count);
+      groupCounters.set(dep.toTaskId, count + 1);
+    }
+    return indices;
+  }, [deltas, dependencies]);
+
+  return (
+    <>
+      {deltas.map((delta) => (
+        <LagDeltaPill
+          key={delta.depId}
+          delta={delta}
+          dependencies={dependencies}
+          taskPositions={taskPositions}
+          rowHeight={rowHeight}
+          stackIndex={stackIndices.get(delta.depId) ?? 0}
+        />
+      ))}
+    </>
   );
 });

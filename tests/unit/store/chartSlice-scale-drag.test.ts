@@ -214,58 +214,73 @@ describe("Chart Store - Scale & Date Range", () => {
 
   // ─── Lag-delta indicator (#82 stage 4) ────────────────────────────────────
 
-  describe("setLagDelta", () => {
-    it("sets the lag-delta state", () => {
-      const { setLagDelta } = useChartStore.getState();
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
-      expect(useChartStore.getState().lagDelta).toEqual({
-        depId: "dep-1",
-        oldLag: 4,
-        newLag: 6,
-      });
+  describe("setLagDeltas", () => {
+    it("sets the lag-deltas state", () => {
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      expect(useChartStore.getState().lagDeltas).toEqual([
+        { depId: "dep-1", oldLag: 4, newLag: 6 },
+      ]);
     });
 
-    it("clears the lag-delta state when null is passed", () => {
-      const { setLagDelta } = useChartStore.getState();
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
-      setLagDelta(null);
-      expect(useChartStore.getState().lagDelta).toBeNull();
+    it("clears the lag-deltas state when null is passed", () => {
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      setLagDeltas(null);
+      expect(useChartStore.getState().lagDeltas).toBeNull();
     });
 
-    it("structurally short-circuits identical values to avoid re-renders", () => {
-      const { setLagDelta } = useChartStore.getState();
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
-      const refBefore = useChartStore.getState().lagDelta;
-      // Set with a structurally identical (but different reference) object.
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
-      const refAfter = useChartStore.getState().lagDelta;
+    it("normalizes empty array to null", () => {
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      setLagDeltas([]);
+      expect(useChartStore.getState().lagDeltas).toBeNull();
+    });
+
+    it("structurally short-circuits identical arrays to avoid re-renders", () => {
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      const refBefore = useChartStore.getState().lagDeltas;
+      // Set with a structurally identical (but different reference) array.
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      const refAfter = useChartStore.getState().lagDeltas;
       // Same object reference proves the setter early-returned.
       expect(refAfter).toBe(refBefore);
     });
 
     it("updates when any field differs", () => {
-      const { setLagDelta } = useChartStore.getState();
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 7 });
-      expect(useChartStore.getState().lagDelta?.newLag).toBe(7);
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 7 }]);
+      expect(useChartStore.getState().lagDeltas?.[0].newLag).toBe(7);
     });
 
-    it("clearDragState also clears lagDelta", () => {
-      const { setLagDelta, setDragState, clearDragState } =
+    it("updates when array length differs", () => {
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
+      setLagDeltas([
+        { depId: "dep-1", oldLag: 4, newLag: 6 },
+        { depId: "dep-2", oldLag: 0, newLag: 2 },
+      ]);
+      expect(useChartStore.getState().lagDeltas).toHaveLength(2);
+    });
+
+    it("clearDragState also clears lagDeltas", () => {
+      const { setLagDeltas, setDragState, clearDragState } =
         useChartStore.getState();
       setDragState(5, "task-1");
-      setLagDelta({ depId: "dep-1", oldLag: 4, newLag: 6 });
+      setLagDeltas([{ depId: "dep-1", oldLag: 4, newLag: 6 }]);
       clearDragState();
-      expect(useChartStore.getState().lagDelta).toBeNull();
+      expect(useChartStore.getState().lagDeltas).toBeNull();
       expect(useChartStore.getState().dragState).toBeNull();
     });
 
     it("noop when clearing an already-null state (no spurious re-render)", () => {
-      const { setLagDelta } = useChartStore.getState();
-      setLagDelta(null);
-      const refBefore = useChartStore.getState().lagDelta;
-      setLagDelta(null);
-      const refAfter = useChartStore.getState().lagDelta;
+      const { setLagDeltas } = useChartStore.getState();
+      setLagDeltas(null);
+      const refBefore = useChartStore.getState().lagDeltas;
+      setLagDeltas(null);
+      const refAfter = useChartStore.getState().lagDeltas;
       expect(refAfter).toBe(refBefore);
     });
   });

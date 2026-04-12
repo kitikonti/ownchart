@@ -22,7 +22,7 @@ import { useDependencyStore } from "@/store/slices/dependencySlice";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { DependencyArrow } from "./DependencyArrow";
 import { DependencyDragPreview } from "./DependencyDragPreview";
-import { LagDeltaIndicator } from "./LagDeltaIndicator";
+import { LagDeltaIndicators } from "./LagDeltaIndicator";
 
 interface DependencyArrowsProps {
   tasks: Task[];
@@ -51,7 +51,7 @@ export function DependencyArrows({
   const dependencies = useDependencyStore((state) => state.dependencies);
   // Live lag-delta indicator (#82 stage 4) — set during a drag/resize gesture
   // in auto-update-lag mode (auto-scheduling OFF). Cleared on mouseup.
-  const lagDelta = useChartStore((state) => state.lagDelta);
+  const lagDeltas = useChartStore((state) => state.lagDeltas);
   const selectedDependencyId = useDependencyStore(
     (state) => state.selectedDependencyId
   );
@@ -168,10 +168,10 @@ export function DependencyArrows({
         />
       )}
 
-      {/* Live lag-delta pill — rendered last so it sits above the arrows. */}
-      {lagDelta && (
-        <LagDeltaIndicator
-          delta={lagDelta}
+      {/* Live lag-delta pills — rendered last so they sit above the arrows. */}
+      {lagDeltas && lagDeltas.length > 0 && (
+        <LagDeltaIndicators
+          deltas={lagDeltas}
           dependencies={dependencies}
           taskPositions={taskPositions}
           rowHeight={rowHeight}

@@ -17,7 +17,10 @@ import {
   calculateConstrainedDates,
   calculateInitialLag,
 } from "@/utils/graph/dateAdjustment";
-import { computeLagDeltaForPreview } from "@/utils/lagDeltaHelpers";
+import {
+  computeLagDeltasForPreview,
+  type LagDelta,
+} from "@/utils/lagDeltaHelpers";
 import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import { snapForwardToWorkingDay } from "@/utils/workingDaysCalculator";
 import toast from "react-hot-toast";
@@ -76,9 +79,7 @@ interface LagDeltaIndicatorUpdate {
   previewEnd: string;
   wdCtx: WorkingDaysContext;
   altKey: boolean;
-  setLagDelta: (
-    delta: { depId: string; oldLag: number; newLag: number } | null
-  ) => void;
+  setLagDeltas: (deltas: LagDelta[] | null) => void;
 }
 
 /**
@@ -103,15 +104,15 @@ function updateLagDeltaIndicator({
   previewEnd,
   wdCtx,
   altKey,
-  setLagDelta,
+  setLagDeltas,
 }: LagDeltaIndicatorUpdate): void {
   if (shouldCascade(altKey)) {
-    setLagDelta(null);
+    setLagDeltas(null);
     return;
   }
   const { tasks } = useTaskStore.getState();
   const { dependencies } = useDependencyStore.getState();
-  const delta = computeLagDeltaForPreview(
+  const deltas = computeLagDeltasForPreview(
     draggedTaskId,
     previewStart,
     previewEnd,
@@ -119,7 +120,7 @@ function updateLagDeltaIndicator({
     dependencies,
     wdCtx
   );
-  setLagDelta(delta);
+  setLagDeltas(deltas.length > 0 ? deltas : null);
 }
 
 /** Shared context for post-drag dependency operations. */
@@ -378,7 +379,7 @@ export function useTaskBarInteraction(
 ): UseTaskBarInteractionReturn {
   const setSharedDragState = useChartStore((state) => state.setDragState);
   const clearSharedDragState = useChartStore((state) => state.clearDragState);
-  const setLagDelta = useChartStore((state) => state.setLagDelta);
+  const setLagDeltas = useChartStore((state) => state.setLagDeltas);
 
   const [dragState, setDragState] = useState<DragState | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
@@ -454,7 +455,7 @@ export function useTaskBarInteraction(
           previewEnd: newEnd,
           wdCtx: ctx,
           altKey: e.altKey,
-          setLagDelta,
+          setLagDeltas,
         });
       } else {
         const ctx = getWorkingDaysContext();
@@ -472,7 +473,7 @@ export function useTaskBarInteraction(
           previewEnd: preview.previewEnd,
           wdCtx: ctx,
           altKey: e.altKey,
-          setLagDelta,
+          setLagDeltas,
         });
       }
     });
@@ -498,7 +499,7 @@ export function useTaskBarInteraction(
       previewEnd: current.currentPreviewEnd,
       wdCtx: getWorkingDaysContext(),
       altKey: e.type === "keydown",
-      setLagDelta,
+      setLagDeltas,
     });
   };
 

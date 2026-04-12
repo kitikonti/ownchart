@@ -8,7 +8,7 @@
 import { describe, it, expect } from "vitest";
 import { render } from "@testing-library/react";
 import {
-  LagDeltaIndicator,
+  LagDeltaIndicators,
   formatLagDeltaText,
   formatLagValue,
 } from "@/components/GanttChart/LagDeltaIndicator";
@@ -49,7 +49,7 @@ describe("formatLagDeltaText", () => {
   });
 });
 
-describe("LagDeltaIndicator render", () => {
+describe("LagDeltaIndicators render", () => {
   const fromPos: TaskPosition = { x: 100, y: 50, width: 80, height: 20 };
   const toPos: TaskPosition = { x: 300, y: 90, width: 80, height: 20 };
   const taskPositions = new Map<TaskId, TaskPosition>([
@@ -72,8 +72,8 @@ describe("LagDeltaIndicator render", () => {
 
   it("renders the pill with the formatted text", () => {
     const container = renderIn(
-      <LagDeltaIndicator
-        delta={{ depId: "dep-1", oldLag: 4, newLag: 6 }}
+      <LagDeltaIndicators
+        deltas={[{ depId: "dep-1", oldLag: 4, newLag: 6 }]}
         dependencies={[dep]}
         taskPositions={taskPositions}
         rowHeight={28}
@@ -92,8 +92,8 @@ describe("LagDeltaIndicator render", () => {
 
   it("renders nothing when the dep id is missing from dependencies", () => {
     const container = renderIn(
-      <LagDeltaIndicator
-        delta={{ depId: "dep-missing", oldLag: 4, newLag: 6 }}
+      <LagDeltaIndicators
+        deltas={[{ depId: "dep-missing", oldLag: 4, newLag: 6 }]}
         dependencies={[dep]}
         taskPositions={taskPositions}
         rowHeight={28}
@@ -106,8 +106,8 @@ describe("LagDeltaIndicator render", () => {
 
   it("renders nothing when a task position is missing", () => {
     const container = renderIn(
-      <LagDeltaIndicator
-        delta={{ depId: "dep-1", oldLag: 4, newLag: 6 }}
+      <LagDeltaIndicators
+        deltas={[{ depId: "dep-1", oldLag: 4, newLag: 6 }]}
         dependencies={[dep]}
         taskPositions={new Map()}
         rowHeight={28}
@@ -120,8 +120,8 @@ describe("LagDeltaIndicator render", () => {
 
   it("includes a tooltip describing the lag transition", () => {
     const container = renderIn(
-      <LagDeltaIndicator
-        delta={{ depId: "dep-1", oldLag: -1, newLag: 3 }}
+      <LagDeltaIndicators
+        deltas={[{ depId: "dep-1", oldLag: -1, newLag: 3 }]}
         dependencies={[dep]}
         taskPositions={taskPositions}
         rowHeight={28}
@@ -137,8 +137,8 @@ describe("LagDeltaIndicator render", () => {
 
   it("is pointerEvents=none so the pill doesn't intercept clicks on the arrow", () => {
     const container = renderIn(
-      <LagDeltaIndicator
-        delta={{ depId: "dep-1", oldLag: 0, newLag: 2 }}
+      <LagDeltaIndicators
+        deltas={[{ depId: "dep-1", oldLag: 0, newLag: 2 }]}
         dependencies={[dep]}
         taskPositions={taskPositions}
         rowHeight={28}
@@ -148,5 +148,41 @@ describe("LagDeltaIndicator render", () => {
       '[data-testid="lag-delta-indicator"]'
     );
     expect(indicator?.getAttribute("pointer-events")).toBe("none");
+  });
+
+  it("renders multiple pills when given multiple deltas", () => {
+    const fromPos2: TaskPosition = { x: 100, y: 50, width: 80, height: 20 };
+    const toPos2: TaskPosition = { x: 500, y: 130, width: 80, height: 20 };
+    const dep2: Dependency = {
+      id: "dep-2",
+      fromTaskId: "a" as TaskId,
+      toTaskId: "c" as TaskId,
+      type: "FS",
+      lag: 0,
+      createdAt: "2026-01-01T00:00:00Z",
+    };
+    const positions = new Map<TaskId, TaskPosition>([
+      ["a" as TaskId, fromPos2],
+      ["b" as TaskId, toPos],
+      ["c" as TaskId, toPos2],
+    ]);
+
+    const container = renderIn(
+      <LagDeltaIndicators
+        deltas={[
+          { depId: "dep-1", oldLag: 0, newLag: 2 },
+          { depId: "dep-2", oldLag: 1, newLag: 3 },
+        ]}
+        dependencies={[dep, dep2]}
+        taskPositions={positions}
+        rowHeight={28}
+      />
+    );
+    const indicators = container.querySelectorAll(
+      '[data-testid="lag-delta-indicator"]'
+    );
+    expect(indicators).toHaveLength(2);
+    expect(indicators[0].getAttribute("data-dep-id")).toBe("dep-1");
+    expect(indicators[1].getAttribute("data-dep-id")).toBe("dep-2");
   });
 });

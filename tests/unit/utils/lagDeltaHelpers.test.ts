@@ -1,13 +1,12 @@
 /**
  * Unit tests for the live lag-delta indicator's pure helper.
  *
- * Covers the selection rule (incoming preferred → outgoing fallback),
- * the predecessor/successor preview swap, the no-op short-circuit, and
- * the empty-deps null path.
+ * Covers all-deps iteration, the predecessor/successor preview swap,
+ * the no-op short-circuit, and the empty-deps path.
  */
 
 import { describe, it, expect } from "vitest";
-import { computeLagDeltaForPreview } from "@/utils/lagDeltaHelpers";
+import { computeLagDeltasForPreview } from "@/utils/lagDeltaHelpers";
 import type { Task } from "@/types/chart.types";
 import type { Dependency } from "@/types/dependency.types";
 import type { TaskId, HexColor } from "@/types/branded.types";
@@ -54,12 +53,12 @@ function makeDep(
   };
 }
 
-describe("computeLagDeltaForPreview", () => {
+describe("computeLagDeltasForPreview", () => {
   // Reference week: Mon 2026-01-05 .. Fri 2026-01-09
   const pred = makeTask("pred", "2026-01-05", "2026-01-09");
 
-  it("returns null when the dragged task has no dependencies", () => {
-    const result = computeLagDeltaForPreview(
+  it("returns empty array when the dragged task has no dependencies", () => {
+    const result = computeLagDeltasForPreview(
       "lonely" as TaskId,
       "2026-01-12",
       "2026-01-14",
@@ -67,15 +66,15 @@ describe("computeLagDeltaForPreview", () => {
       [],
       CTX_OFF
     );
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   });
 
-  it("returns null when the would-be lag matches the stored lag (no-op short-circuit)", () => {
+  it("returns empty array when the would-be lag matches the stored lag (no-op short-circuit)", () => {
     // Successor at Jan 12-14 with FS lag=2 from pred ending Jan 9.
     // Calendar lag from Jan 9 to Jan 12 = 3 - 1 = 2.
     const succ = makeTask("succ", "2026-01-12", "2026-01-14");
     const dep = makeDep("dep-1", "pred", "succ", "FS", 2);
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "succ" as TaskId,
       succ.startDate,
       succ.endDate,
@@ -83,14 +82,14 @@ describe("computeLagDeltaForPreview", () => {
       [dep],
       CTX_OFF
     );
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   });
 
   it("uses preview position when dragged task is the SUCCESSOR (incoming match)", () => {
     const succ = makeTask("succ", "2026-01-12", "2026-01-14");
     const dep = makeDep("dep-1", "pred", "succ", "FS", 2);
     // Drag the successor to start Jan 14 instead of Jan 12.
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "succ" as TaskId,
       "2026-01-14",
       "2026-01-16",
@@ -99,14 +98,14 @@ describe("computeLagDeltaForPreview", () => {
       CTX_OFF
     );
     // Calendar lag = Jan 14 - Jan 9 - 1 = 4
-    expect(result).toEqual({ depId: "dep-1", oldLag: 2, newLag: 4 });
+    expect(result).toEqual([{ depId: "dep-1", oldLag: 2, newLag: 4 }]);
   });
 
-  it("uses preview position when dragged task is the PREDECESSOR (no incoming, outgoing fallback)", () => {
+  it("uses preview position when dragged task is the PREDECESSOR (outgoing)", () => {
     const succ = makeTask("succ", "2026-01-12", "2026-01-14");
     const dep = makeDep("dep-1", "pred", "succ", "FS", 2);
     // Drag the predecessor to end one day later: Jan 10 instead of Jan 9.
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "pred" as TaskId,
       "2026-01-06",
       "2026-01-10",
@@ -115,17 +114,17 @@ describe("computeLagDeltaForPreview", () => {
       CTX_OFF
     );
     // Calendar lag = Jan 12 - Jan 10 - 1 = 1
-    expect(result).toEqual({ depId: "dep-1", oldLag: 2, newLag: 1 });
+    expect(result).toEqual([{ depId: "dep-1", oldLag: 2, newLag: 1 }]);
   });
 
-  it("prefers incoming over outgoing when the dragged task has both", () => {
+  it("returns deltas for ALL affected deps when the dragged task has both incoming and outgoing", () => {
     const upstream = makeTask("up", "2026-01-01", "2026-01-03");
     const middle = makeTask("mid", "2026-01-05", "2026-01-07");
     const downstream = makeTask("down", "2026-01-12", "2026-01-14");
     const incoming = makeDep("dep-incoming", "up", "mid", "FS", 1);
     const outgoing = makeDep("dep-outgoing", "mid", "down", "FS", 4);
     // Drag the middle task to start Jan 06 (1 day later).
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "mid" as TaskId,
       "2026-01-06",
       "2026-01-08",
@@ -133,14 +132,40 @@ describe("computeLagDeltaForPreview", () => {
       [incoming, outgoing],
       CTX_OFF
     );
-    // Should pick the incoming dep (`dep-incoming`), not the outgoing one.
-    expect(result?.depId).toBe("dep-incoming");
+    // Should return deltas for both dependencies
+    expect(result).toHaveLength(2);
+    expect(result.find((d) => d.depId === "dep-incoming")).toBeTruthy();
+    expect(result.find((d) => d.depId === "dep-outgoing")).toBeTruthy();
   });
 
-  it("returns null when predecessor task can't be resolved", () => {
+  it("only includes deps whose lag actually changes", () => {
+    const upstream = makeTask("up", "2026-01-01", "2026-01-03");
+    const middle = makeTask("mid", "2026-01-05", "2026-01-07");
+    const downstream = makeTask("down", "2026-01-12", "2026-01-14");
+    // incoming lag=1: Jan 5 - Jan 3 - 1 = 1 ✓
+    const incoming = makeDep("dep-incoming", "up", "mid", "FS", 1);
+    // outgoing lag=4: Jan 12 - Jan 7 - 1 = 4 ✓
+    const outgoing = makeDep("dep-outgoing", "mid", "down", "FS", 4);
+    // Drag middle to Jan 06-08. Incoming lag becomes Jan 6 - Jan 3 - 1 = 2 (changed).
+    // Outgoing lag becomes Jan 12 - Jan 8 - 1 = 3 (changed).
+    const result = computeLagDeltasForPreview(
+      "mid" as TaskId,
+      "2026-01-06",
+      "2026-01-08",
+      [upstream, middle, downstream],
+      [incoming, outgoing],
+      CTX_OFF
+    );
+    expect(result).toEqual([
+      { depId: "dep-incoming", oldLag: 1, newLag: 2 },
+      { depId: "dep-outgoing", oldLag: 4, newLag: 3 },
+    ]);
+  });
+
+  it("returns empty array when predecessor task can't be resolved", () => {
     const succ = makeTask("succ", "2026-01-12", "2026-01-14");
     const dep = makeDep("dep-1", "missing", "succ", "FS", 0);
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "succ" as TaskId,
       "2026-01-15",
       "2026-01-17",
@@ -148,7 +173,7 @@ describe("computeLagDeltaForPreview", () => {
       [dep],
       CTX_OFF
     );
-    expect(result).toBeNull();
+    expect(result).toEqual([]);
   });
 
   it("works in WD mode (uses working-day arithmetic)", () => {
@@ -158,7 +183,7 @@ describe("computeLagDeltaForPreview", () => {
     // Drag successor from Mon Jan 12 to Tue Jan 13.
     // WD lag from pred ending Fri 9: lag=0 anchor is Mon 12.
     // Successor at Jan 13 → 1 working day past anchor → lag=+1wd.
-    const result = computeLagDeltaForPreview(
+    const result = computeLagDeltasForPreview(
       "succ" as TaskId,
       "2026-01-13",
       "2026-01-15",
@@ -166,6 +191,6 @@ describe("computeLagDeltaForPreview", () => {
       [dep],
       wdCtx
     );
-    expect(result).toEqual({ depId: "dep-1", oldLag: 0, newLag: 1 });
+    expect(result).toEqual([{ depId: "dep-1", oldLag: 0, newLag: 1 }]);
   });
 });

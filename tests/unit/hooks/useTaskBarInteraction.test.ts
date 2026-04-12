@@ -108,20 +108,20 @@ let updateTaskSpy: ReturnType<typeof vi.fn>;
 let updateMultipleTasksSpy: ReturnType<typeof vi.fn>;
 let setDragStateSpy: ReturnType<typeof vi.fn>;
 let clearDragStateSpy: ReturnType<typeof vi.fn>;
-let setLagDeltaSpy: ReturnType<typeof vi.fn>;
+let setLagDeltasSpy: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   updateTaskSpy = vi.fn();
   updateMultipleTasksSpy = vi.fn();
   setDragStateSpy = vi.fn();
   clearDragStateSpy = vi.fn();
-  setLagDeltaSpy = vi.fn();
+  setLagDeltasSpy = vi.fn();
 
   vi.spyOn(useTaskStore.getState(), 'updateTask').mockImplementation(updateTaskSpy);
   vi.spyOn(useTaskStore.getState(), 'updateMultipleTasks').mockImplementation(updateMultipleTasksSpy);
   vi.spyOn(useChartStore.getState(), 'setDragState').mockImplementation(setDragStateSpy);
   vi.spyOn(useChartStore.getState(), 'clearDragState').mockImplementation(clearDragStateSpy);
-  vi.spyOn(useChartStore.getState(), 'setLagDelta').mockImplementation(setLagDeltaSpy);
+  vi.spyOn(useChartStore.getState(), 'setLagDeltas').mockImplementation(setLagDeltasSpy);
 
   // Default chart store state
   const chartState = useChartStore.getState();
@@ -400,7 +400,7 @@ describe('useTaskBarInteraction', () => {
       // Resize-path lag-delta wiring (#82 stage 4): the setter must be
       // called even when no dependency exists (it pushes null in that case),
       // proving the resize branch is no longer skipping the indicator hook.
-      expect(setLagDeltaSpy).toHaveBeenCalled();
+      expect(setLagDeltasSpy).toHaveBeenCalled();
     });
 
     it('updates lag-delta indicator on drag mousemove (#82 stage 4)', async () => {
@@ -421,7 +421,7 @@ describe('useTaskBarInteraction', () => {
       });
 
       // No deps in fixture → setLagDelta(null) is called, but it IS called.
-      expect(setLagDeltaSpy).toHaveBeenCalled();
+      expect(setLagDeltasSpy).toHaveBeenCalled();
     });
 
     it('updates preview for resize-left', async () => {
