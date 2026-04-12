@@ -4,10 +4,13 @@
  * (auto-scheduling OFF, no Alt). Introduced in #82 stage 4.
  *
  * Pills always render on the **same row** as the task being dragged/resized.
- * They are positioned at the outermost right edge of either the original
- * task bar or the preview bar (whichever extends further), with a small
- * horizontal offset to prevent overlap. When multiple dependencies are
- * affected, pills stack vertically.
+ * Outgoing deps (task is predecessor) show on the right; incoming deps
+ * (task is successor) show on the left. Each side is positioned at the
+ * outermost edge of original bar or preview bar (whichever extends further),
+ * with a horizontal offset to clear the dependency handle circles.
+ *
+ * During resize, only pills whose lag is affected by the changed date edge
+ * are shown (see `isDepAffectedByMode`).
  *
  * The pills are purely SVG overlays rendered as the last child of
  * `<g class="layer-dependencies">`, so they sit on top of arrows but inside
@@ -83,7 +86,8 @@ export interface LagDeltaAnchor {
  * | FF       | end             | end            |
  * | SF       | start           | end            |
  */
-function isDepAffectedByMode(
+/** Exported for unit tests. */
+export function isDepAffectedByMode(
   dep: Dependency,
   anchorTaskId: TaskId,
   mode: LagDeltaMode
@@ -231,7 +235,7 @@ export const LagDeltaIndicators = memo(function LagDeltaIndicators({
       items.push({ delta, side, stackIndex });
     }
     return items;
-  }, [deltas, dependencies, anchor.taskId]);
+  }, [deltas, dependencies, anchor.taskId, anchor.mode]);
 
   return (
     <>

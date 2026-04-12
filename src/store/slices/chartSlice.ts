@@ -48,6 +48,7 @@ import type { HexColor, TaskId } from "@/types/branded.types";
 import { CommandType } from "@/types/command.types";
 import type { ApplyColorsToManualParams } from "@/types/command.types";
 import type { LagDelta } from "@/utils/lagDeltaHelpers";
+import type { LagDeltaAnchor } from "@/components/GanttChart/LagDeltaIndicator";
 import type { DateAdjustment } from "@/types/dependency.types";
 import toast from "react-hot-toast";
 import { useTaskStore } from "./taskSlice";
@@ -155,12 +156,7 @@ interface ChartState {
    * Stores the dragged task ID and its preview pixel bounds so pills can
    * position themselves at the outermost edge of original/preview bar.
    */
-  lagDeltaAnchor: {
-    taskId: TaskId;
-    previewLeft: number;
-    previewRight: number;
-    mode: "drag" | "resize-left" | "resize-right";
-  } | null;
+  lagDeltaAnchor: LagDeltaAnchor | null;
 
   // File load signal (for scroll positioning on file open)
   fileLoadCounter: number;
@@ -274,15 +270,7 @@ interface ChartActions {
   // Drag state (for multi-task preview)
   setDragState: (deltaDays: number, sourceTaskId: TaskId) => void;
   clearDragState: () => void;
-  setLagDeltas: (
-    deltas: LagDelta[] | null,
-    anchor?: {
-      taskId: TaskId;
-      previewLeft: number;
-      previewRight: number;
-      mode: "drag" | "resize-left" | "resize-right";
-    }
-  ) => void;
+  setLagDeltas: (deltas: LagDelta[] | null, anchor?: LagDeltaAnchor) => void;
 
   // File load signal (for scroll positioning)
   signalFileLoaded: () => void;
@@ -1142,12 +1130,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
     // to the current value to avoid React re-renders on every drag frame.
     setLagDeltas: (
       deltas: LagDelta[] | null,
-      anchor?: {
-        taskId: TaskId;
-        previewLeft: number;
-        previewRight: number;
-        mode: "drag" | "resize-left" | "resize-right";
-      }
+      anchor?: LagDeltaAnchor
     ): void => {
       set((state) => {
         const current = state.lagDeltas;

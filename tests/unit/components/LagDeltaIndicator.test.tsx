@@ -11,10 +11,12 @@ import {
   LagDeltaIndicators,
   formatLagDeltaText,
   formatLagValue,
+  isDepAffectedByMode,
 } from "@/components/GanttChart/LagDeltaIndicator";
-import type { TaskPosition } from "@/types/dependency.types";
-import type { TaskId } from "@/types/branded.types";
 import type { LagDeltaAnchor } from "@/components/GanttChart/LagDeltaIndicator";
+import type { TaskPosition } from "@/types/dependency.types";
+import type { Dependency } from "@/types/dependency.types";
+import type { TaskId } from "@/types/branded.types";
 
 describe("formatLagValue", () => {
   it("formats positive lag with the d suffix", () => {
@@ -139,9 +141,7 @@ describe("LagDeltaIndicators render", () => {
     const title = container.querySelector(
       '[data-testid="lag-delta-indicator"] title'
     );
-    expect(title?.textContent).toBe(
-      "Lag will update from \u22121d to 3d"
-    );
+    expect(title?.textContent).toBe("Lag will update from \u22121d to 3d");
   });
 
   it("is pointerEvents=none so the pill doesn't intercept clicks on the arrow", () => {
@@ -289,5 +289,192 @@ describe("LagDeltaIndicators render", () => {
     // Task "a": y=50, height=20 → center = 60
     // Pill should be centred: pillY = 60 - pillHeight/2
     expect(pillY + pillHeight / 2).toBe(60);
+  });
+
+  it("filters pills by mode during resize-right (only end-edge deps)", () => {
+    // dep: FS, task "a" is predecessor → uses predecessor END → affected by resize-right ✓
+    // dep2: SS, task "a" is predecessor → uses predecessor START → NOT affected by resize-right ✗
+    const dep2 = {
+      id: "dep-2",
+      fromTaskId: "a" as TaskId,
+      toTaskId: "b" as TaskId,
+      type: "SS" as const,
+      lag: 0,
+      createdAt: "2026-01-01T00:00:00Z",
+    };
+    const resizeRightAnchor: LagDeltaAnchor = {
+      taskId: "a" as TaskId,
+      previewLeft: 100,
+      previewRight: 200,
+      mode: "resize-right",
+    };
+    const container = renderIn(
+      <LagDeltaIndicators
+        deltas={[
+          { depId: "dep-1", oldLag: 0, newLag: 2 },
+          { depId: "dep-2", oldLag: 0, newLag: 1 },
+        ]}
+        dependencies={[dep, dep2]}
+        taskPositions={taskPositions}
+        anchor={resizeRightAnchor}
+      />
+    );
+    const indicators = container.querySelectorAll(
+      '[data-testid="lag-delta-indicator"]'
+    );
+    // Only dep-1 (FS) should render; dep-2 (SS) is filtered out.
+    expect(indicators).toHaveLength(1);
+    expect(indicators[0].getAttribute("data-dep-id")).toBe("dep-1");
+  });
+
+  it("filters pills by mode during resize-left (only start-edge deps)", () => {
+    // dep: FS, task "a" is predecessor → uses predecessor END → NOT affected by resize-left ✗
+    // dep2: SS, task "a" is predecessor → uses predecessor START → affected by resize-left ✓
+    const dep2 = {
+      id: "dep-2",
+      fromTaskId: "a" as TaskId,
+      toTaskId: "b" as TaskId,
+      type: "SS" as const,
+      lag: 0,
+      createdAt: "2026-01-01T00:00:00Z",
+    };
+    const resizeLeftAnchor: LagDeltaAnchor = {
+      taskId: "a" as TaskId,
+      previewLeft: 80,
+      previewRight: 180,
+      mode: "resize-left",
+    };
+    const container = renderIn(
+      <LagDeltaIndicators
+        deltas={[
+          { depId: "dep-1", oldLag: 0, newLag: 2 },
+          { depId: "dep-2", oldLag: 0, newLag: 1 },
+        ]}
+        dependencies={[dep, dep2]}
+        taskPositions={taskPositions}
+        anchor={resizeLeftAnchor}
+      />
+    );
+    const indicators = container.querySelectorAll(
+      '[data-testid="lag-delta-indicator"]'
+    );
+    // Only dep-2 (SS) should render; dep-1 (FS) is filtered out.
+    expect(indicators).toHaveLength(1);
+    expect(indicators[0].getAttribute("data-dep-id")).toBe("dep-2");
+  });
+});
+
+// ─── isDepAffectedByMode (edge-filtering logic) ────────────────────────────
+
+describe("isDepAffectedByMode", () => {
+  const taskA = "a" as TaskId;
+  const taskB = "b" as TaskId;
+
+  function makeDep(
+    type: Dependency["type"],
+    from: TaskId,
+    to: TaskId
+  ): Dependency {
+    return {
+      id: `dep-${type}-${from}-${to}`,
+      fromTaskId: from,
+      toTaskId: to,
+      type,
+      lag: 0,
+      createdAt: "2026-01-01T00:00:00Z",
+    };
+  }
+
+  it("allows all deps in drag mode regardless of type or role", () => {
+    for (const type of ["FS", "SS", "FF", "SF"] as const) {
+      expect(
+        isDepAffectedByMode(makeDep(type, taskA, taskB), taskA, "drag")
+      ).toBe(true);
+      expect(
+        isDepAffectedByMode(makeDep(type, taskB, taskA), taskA, "drag")
+      ).toBe(true);
+    }
+  });
+
+  // Predecessor role: which dep types use the predecessor's start vs end?
+  // FS → end, FF → end, SS → start, SF → start
+
+  describe("anchor is predecessor (fromTaskId)", () => {
+    it("resize-right (end changes): allows FS and FF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FS", taskA, taskB), taskA, "resize-right")
+      ).toBe(true);
+      expect(
+        isDepAffectedByMode(makeDep("FF", taskA, taskB), taskA, "resize-right")
+      ).toBe(true);
+    });
+
+    it("resize-right (end changes): blocks SS and SF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("SS", taskA, taskB), taskA, "resize-right")
+      ).toBe(false);
+      expect(
+        isDepAffectedByMode(makeDep("SF", taskA, taskB), taskA, "resize-right")
+      ).toBe(false);
+    });
+
+    it("resize-left (start changes): allows SS and SF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("SS", taskA, taskB), taskA, "resize-left")
+      ).toBe(true);
+      expect(
+        isDepAffectedByMode(makeDep("SF", taskA, taskB), taskA, "resize-left")
+      ).toBe(true);
+    });
+
+    it("resize-left (start changes): blocks FS and FF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FS", taskA, taskB), taskA, "resize-left")
+      ).toBe(false);
+      expect(
+        isDepAffectedByMode(makeDep("FF", taskA, taskB), taskA, "resize-left")
+      ).toBe(false);
+    });
+  });
+
+  // Successor role: which dep types use the successor's start vs end?
+  // FS → start, SS → start, FF → end, SF → end
+
+  describe("anchor is successor (toTaskId)", () => {
+    it("resize-right (end changes): allows FF and SF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FF", taskB, taskA), taskA, "resize-right")
+      ).toBe(true);
+      expect(
+        isDepAffectedByMode(makeDep("SF", taskB, taskA), taskA, "resize-right")
+      ).toBe(true);
+    });
+
+    it("resize-right (end changes): blocks FS and SS", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FS", taskB, taskA), taskA, "resize-right")
+      ).toBe(false);
+      expect(
+        isDepAffectedByMode(makeDep("SS", taskB, taskA), taskA, "resize-right")
+      ).toBe(false);
+    });
+
+    it("resize-left (start changes): allows FS and SS", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FS", taskB, taskA), taskA, "resize-left")
+      ).toBe(true);
+      expect(
+        isDepAffectedByMode(makeDep("SS", taskB, taskA), taskA, "resize-left")
+      ).toBe(true);
+    });
+
+    it("resize-left (start changes): blocks FF and SF", () => {
+      expect(
+        isDepAffectedByMode(makeDep("FF", taskB, taskA), taskA, "resize-left")
+      ).toBe(false);
+      expect(
+        isDepAffectedByMode(makeDep("SF", taskB, taskA), taskA, "resize-left")
+      ).toBe(false);
+    });
   });
 });

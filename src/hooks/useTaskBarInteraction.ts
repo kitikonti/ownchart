@@ -21,6 +21,10 @@ import {
   computeLagDeltasForPreview,
   type LagDelta,
 } from "@/utils/lagDeltaHelpers";
+import type {
+  LagDeltaAnchor,
+  LagDeltaMode,
+} from "@/components/GanttChart/LagDeltaIndicator";
 import { getWorkingDaysContext } from "@/store/selectors/workingDaysContextSelector";
 import { snapForwardToWorkingDay } from "@/utils/workingDaysCalculator";
 import toast from "react-hot-toast";
@@ -83,19 +87,11 @@ interface LagDeltaIndicatorUpdate {
   previewEnd: string;
   wdCtx: WorkingDaysContext;
   altKey: boolean;
-  setLagDeltas: (
-    deltas: LagDelta[] | null,
-    anchor?: {
-      taskId: TaskId;
-      previewLeft: number;
-      previewRight: number;
-      mode: "drag" | "resize-left" | "resize-right";
-    }
-  ) => void;
+  setLagDeltas: (deltas: LagDelta[] | null, anchor?: LagDeltaAnchor) => void;
   /** Timeline scale for converting preview dates to pixel bounds. */
   scale: TimelineScale;
   /** Interaction mode — drag or which edge is being resized. */
-  mode: "drag" | "resize-left" | "resize-right";
+  mode: LagDeltaMode;
 }
 
 /**
