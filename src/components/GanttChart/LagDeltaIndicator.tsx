@@ -67,7 +67,7 @@ const PILL_STACK_GAP = 2;
 
 interface LagDeltaPillProps {
   delta: LagDelta;
-  dependencies: readonly Dependency[];
+  dep: Dependency;
   taskPositions: Map<TaskId, TaskPosition>;
   rowHeight: number;
   /** 0-based stacking index — pills with higher index render further above. */
@@ -76,25 +76,19 @@ interface LagDeltaPillProps {
 
 const LagDeltaPill = memo(function LagDeltaPill({
   delta,
-  dependencies,
+  dep,
   taskPositions,
   rowHeight,
   stackIndex,
 }: LagDeltaPillProps): JSX.Element | null {
-  const dep = useMemo(
-    () => dependencies.find((d) => d.id === delta.depId),
-    [dependencies, delta.depId]
-  );
-
   const anchor = useMemo(() => {
-    if (!dep) return null;
     const fromPos = taskPositions.get(dep.fromTaskId);
     const toPos = taskPositions.get(dep.toTaskId);
     if (!fromPos || !toPos) return null;
     return calculateArrowPath(fromPos, toPos, rowHeight, dep.type).arrowHead;
   }, [dep, taskPositions, rowHeight]);
 
-  if (!dep || !anchor) return null;
+  if (!anchor) return null;
 
   const text = formatLagDeltaText(delta.oldLag, delta.newLag);
   // Estimate text width without measuring the DOM (we run inside the same
@@ -167,33 +161,35 @@ export const LagDeltaIndicators = memo(function LagDeltaIndicators({
   dependencies,
   taskPositions,
   rowHeight,
-}: LagDeltaIndicatorsProps): JSX.Element | null {
-  // Compute per-pill stack indices: group by toTaskId (the anchor point)
-  const stackIndices = useMemo(() => {
+}: LagDeltaIndicatorsProps): JSX.Element {
+  // Resolve deps once and compute per-pill stack indices (group by toTaskId
+  // so pills sharing an arrowhead anchor stack upward without overlap).
+  const resolved = useMemo(() => {
     const depMap = new Map(dependencies.map((d) => [d.id, d]));
     const groupCounters = new Map<TaskId, number>();
-    const indices = new Map<string, number>();
+    const items: { delta: LagDelta; dep: Dependency; stackIndex: number }[] =
+      [];
 
     for (const delta of deltas) {
       const dep = depMap.get(delta.depId);
       if (!dep) continue;
-      const count = groupCounters.get(dep.toTaskId) ?? 0;
-      indices.set(delta.depId, count);
-      groupCounters.set(dep.toTaskId, count + 1);
+      const stackIndex = groupCounters.get(dep.toTaskId) ?? 0;
+      groupCounters.set(dep.toTaskId, stackIndex + 1);
+      items.push({ delta, dep, stackIndex });
     }
-    return indices;
+    return items;
   }, [deltas, dependencies]);
 
   return (
     <>
-      {deltas.map((delta) => (
+      {resolved.map(({ delta, dep, stackIndex }) => (
         <LagDeltaPill
           key={delta.depId}
           delta={delta}
-          dependencies={dependencies}
+          dep={dep}
           taskPositions={taskPositions}
           rowHeight={rowHeight}
-          stackIndex={stackIndices.get(delta.depId) ?? 0}
+          stackIndex={stackIndex}
         />
       ))}
     </>
