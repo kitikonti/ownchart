@@ -938,6 +938,40 @@ describe("calculateConstrainedDates — working days", () => {
       expect(r.endDate).toBe("2025-01-08"); // Wed (Mon, Tue, Wed)
       expect(r.startDate).toBe("2025-01-06"); // Mon
     });
+
+    it("lag=3wd ends three working days after predecessor.start", () => {
+      const r = calculateConstrainedDates(pred, 3, "SF", 3, WD_CTX);
+      expect(r.endDate).toBe("2025-01-09"); // Thu (Mon +3 WD = Tue, Wed, Thu)
+      expect(r.startDate).toBe("2025-01-07"); // Tue (3 WD back from Thu)
+    });
+
+    it("lag=3wd with Thursday anchor (weekend crossing in lag)", () => {
+      // Predecessor starts Thu — lag=3 must cross a weekend
+      const predThu = { startDate: "2025-01-02", endDate: "2025-01-08" };
+      const r = calculateConstrainedDates(predThu, 3, "SF", 3, WD_CTX);
+      // Thu +3 WD = Fri(1), Mon(2), Tue(3) → Tue Jan 7
+      expect(r.endDate).toBe("2025-01-07"); // Tue
+      expect(r.startDate).toBe("2025-01-03"); // Fri (3 WD back: Tue, Mon, Fri)
+    });
+
+    it("lag=3wd with Friday anchor (lag crosses weekend immediately)", () => {
+      const predFri = { startDate: "2025-01-03", endDate: "2025-01-09" };
+      const r = calculateConstrainedDates(predFri, 3, "SF", 3, WD_CTX);
+      // Fri +3 WD = Mon(1), Tue(2), Wed(3) → Wed Jan 8
+      expect(r.endDate).toBe("2025-01-08"); // Wed
+      expect(r.startDate).toBe("2025-01-06"); // Mon (3 WD back: Wed, Tue, Mon)
+    });
+
+    it("lag=3wd round-trips through calculateInitialLag", () => {
+      const r = calculateConstrainedDates(pred, 3, "SF", 3, WD_CTX);
+      const inverseLag = calculateInitialLag(
+        pred,
+        { startDate: r.startDate, endDate: r.endDate },
+        "SF",
+        WD_CTX
+      );
+      expect(inverseLag).toBe(3);
+    });
   });
 
   it("respects holidays in the gap (FS, US Thanksgiving-style block)", () => {

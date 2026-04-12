@@ -6,6 +6,7 @@
  *   #4 — Negative lag (lag=-1wd)
  *   #6 — Hidden tasks still participate in scheduling
  *   #9 — Calendar mode panel edits still work
+ *   SF + WD lag=3 regression (off-by-one bug)
  */
 
 import { test, expect } from "@playwright/test";
@@ -13,6 +14,7 @@ import {
   injectAndNavigate,
   fitAndWaitForArrows,
   getStartDate,
+  getEndDate,
   dragTaskBar,
   openDependencyPanel,
   getLagInput,
@@ -364,5 +366,90 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
     // FS lag=5 in calendar days: pred ends 01/10, anchor = 01/11, + 5 = 01/16
     const succStart = await getStartDate(page, "Cal Succ");
     expect(succStart).toBe("01/16/2025");
+  });
+
+  // -------------------------------------------------------------------------
+  // SF + WD — panel edit to lag=3 (regression for off-by-one bug)
+  // -------------------------------------------------------------------------
+
+  test("SF lag=3wd via panel edit places successor end correctly", async ({
+    page,
+  }) => {
+    // Predecessor: Mon Jan 6 – Fri Jan 10 (5 WD).
+    // Successor: initially at a valid SF lag=0 position (end = pred.start).
+    // We'll edit lag to 3 and verify the end date.
+    const PRED = {
+      id: "sf-pred",
+      name: "SF Pred",
+      startDate: "2025-01-06", // Mon
+      endDate: "2025-01-10", // Fri
+      duration: 5,
+      progress: 0,
+      color: "#3b82f6",
+      order: 0,
+      type: "task",
+      metadata: {},
+    };
+
+    // SF lag=0 → successor.end = pred.start (Mon Jan 6).
+    // 3 WD back from Mon: Fri 01/03, Thu 01/02 → start = Thu 01/02.
+    const SUCC = {
+      id: "sf-succ",
+      name: "SF Succ",
+      startDate: "2025-01-02", // Thu (valid SF lag=0 position)
+      endDate: "2025-01-06", // Mon
+      duration: 3,
+      progress: 0,
+      color: "#10b981",
+      order: 1,
+      type: "task",
+      metadata: {},
+    };
+
+    const DEP = {
+      id: "sf-dep",
+      fromTaskId: "sf-pred",
+      toTaskId: "sf-succ",
+      type: "SF",
+      lag: 0,
+      createdAt: "2025-01-01T00:00:00.000Z",
+    };
+
+    const options: StoragePayloadOptions = {
+      tabId: "tab-1111111111-sfwd",
+      tasks: [PRED, SUCC],
+      dependencies: [DEP],
+      chartState: WD_CHART_STATE,
+      fileState: {
+        fileName: "SF WD Lag Test",
+        chartId: "sf-wd-chart-001",
+        lastSaved: "2025-01-01T10:00:00.000Z",
+        isDirty: false,
+      },
+    };
+
+    await injectAndNavigate(page, options, "SF Pred");
+    await fitAndWaitForArrows(page);
+
+    // Change lag from 0 to 3 via panel
+    await openDependencyPanel(page, "SF Pred", "SF Succ");
+    const lagInput = getLagInput(page);
+    await lagInput.click();
+    await lagInput.press("Control+a");
+    await page.keyboard.type("3");
+    await lagInput.press("Tab");
+    await closeDependencyPanel(page);
+
+    // SF lag=3 WD: anchor = pred.start (Mon 01/06).
+    // lagZero = Mon, +3 WD = Tue(1), Wed(2), Thu(3) → Thu 01/09.
+    // Successor.end should be 01/09/2025 (Thu).
+    const succEnd = await getEndDate(page, "SF Succ");
+    expect(succEnd).toBe("01/09/2025");
+    assertWorkingDay(succEnd, "SF Succ end");
+
+    // Successor.start = subtractWorkingDays(Thu, 3) = Tue 01/07.
+    const succStart = await getStartDate(page, "SF Succ");
+    expect(succStart).toBe("01/07/2025");
+    assertWorkingDay(succStart, "SF Succ start");
   });
 });

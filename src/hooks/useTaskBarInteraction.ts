@@ -343,16 +343,23 @@ function executeResizeCommit(
     wdCtx
   );
   if (resizeUpdate) {
-    const preDragDurations = capturePreDragDurations(tasks, wdCtx);
     const cascade = shouldCascade(altKey);
     if (cascade) {
       updateTask(taskId, resizeUpdate, { forceAutoSchedule: true });
-      const depCtx = buildDragDependencyContext(
-        [taskId],
-        wdCtx,
-        preDragDurations
-      );
-      snapSuccessorToConstraint(depCtx);
+      // Right-edge resize changes duration, not position — don't snap the
+      // resized task back to its predecessor constraint. The task's own
+      // successors are already cascaded via forceAutoSchedule above.
+      // Left-edge resize on a successor task is still snapped back because
+      // it would move the constrained anchor (start for FS/SS, end for FF/SF).
+      if (current.mode === "resizing-left") {
+        const preDragDurations = capturePreDragDurations(tasks, wdCtx);
+        const depCtx = buildDragDependencyContext(
+          [taskId],
+          wdCtx,
+          preDragDurations
+        );
+        snapSuccessorToConstraint(depCtx);
+      }
     } else {
       updateTask(taskId, resizeUpdate, { skipAutoSchedule: true });
       const depCtx = buildDragDependencyContext([taskId], wdCtx);
