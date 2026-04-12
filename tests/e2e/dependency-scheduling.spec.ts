@@ -22,6 +22,7 @@ import {
   openDependencyPanel,
   getLagInput,
   dragTaskBar,
+  resizeTaskBar,
 } from "./fixtures/dependency-helpers";
 
 // SVG drag relies on pixel-accurate boundingBox() — Chromium only.
@@ -1210,5 +1211,67 @@ test.describe("All dependency types — SF", () => {
 
     // Task B should have moved (SF cascade)
     expect(await getEndDate(page, "Task B")).not.toBe(origEndB);
+  });
+});
+
+// ===========================================================================
+// Group 9: Resize successor tasks (right-edge resize on constrained tasks)
+// ===========================================================================
+
+test.describe("Resize successor with dependencies", () => {
+  test("right-edge resize on successor changes duration, keeps start constrained", async ({
+    page,
+  }) => {
+    // A→B FS lag=2, auto-scheduling ON. Task B is a successor.
+    await setupAndFit(page, { autoScheduling: true });
+
+    const origStartB = await getStartDate(page, "Task B");
+    const origEndB = await getEndDate(page, "Task B");
+
+    // Resize Task B from the right edge — extend it
+    await resizeTaskBar(page, "Task B", "right", 150);
+
+    // Start date must NOT change (constrained by A→B FS)
+    const newStartB = await getStartDate(page, "Task B");
+    expect(newStartB).toBe(origStartB);
+
+    // End date must have moved later (task extended)
+    const newEndB = await getEndDate(page, "Task B");
+    expect(newEndB).not.toBe(origEndB);
+  });
+
+  test("right-edge resize on successor cascades to its own successors", async ({
+    page,
+  }) => {
+    // A→B→C chain, auto-scheduling ON. Resize B's right edge.
+    // C should move forward because B now ends later.
+    await setupAndFit(page, { autoScheduling: true });
+
+    const origStartC = await getStartDate(page, "Task C");
+
+    // Resize Task B from the right edge — extend it
+    await resizeTaskBar(page, "Task B", "right", 150);
+
+    // Task C should have moved forward (B ends later → C must start later)
+    const newStartC = await getStartDate(page, "Task C");
+    expect(newStartC).not.toBe(origStartC);
+  });
+
+  test("left-edge resize on successor snaps back (constrained anchor)", async ({
+    page,
+  }) => {
+    // A→B FS lag=2, auto-scheduling ON. Left-edge resize would move start,
+    // which violates the FS constraint — should snap back.
+    await setupAndFit(page, { autoScheduling: true });
+
+    const origStartB = await getStartDate(page, "Task B");
+    const origEndB = await getEndDate(page, "Task B");
+
+    // Try to resize Task B from the left edge (move start earlier)
+    await resizeTaskBar(page, "Task B", "left", -150);
+
+    // Start and end should snap back to original (constraint enforced)
+    expect(await getStartDate(page, "Task B")).toBe(origStartB);
+    expect(await getEndDate(page, "Task B")).toBe(origEndB);
   });
 });

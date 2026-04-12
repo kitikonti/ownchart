@@ -6,7 +6,7 @@
  *   #4 — Negative lag (lag=-1wd)
  *   #6 — Hidden tasks still participate in scheduling
  *   #9 — Calendar mode panel edits still work
- *   SF + WD lag=3 regression (off-by-one bug)
+ *   SF + WD lag=3 coverage (closes test gap)
  */
 
 import { test, expect } from "@playwright/test";
@@ -369,7 +369,7 @@ test.describe("WD dependency scheduling gaps (#82)", () => {
   });
 
   // -------------------------------------------------------------------------
-  // SF + WD — panel edit to lag=3 (regression for off-by-one bug)
+  // SF + WD — panel edit to lag=3 (closes test gap)
   // -------------------------------------------------------------------------
 
   test("SF lag=3wd via panel edit places successor end correctly", async ({
