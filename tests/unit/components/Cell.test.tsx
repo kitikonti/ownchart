@@ -546,9 +546,9 @@ describe("useCellEdit", () => {
         column: durationColumn,
       })
     );
-    // WD arithmetic is always active; displayValue returns the working-day
-    // count directly (bypassing the column formatter).
-    expect(result.current.displayValue).toBe("7");
+    // WD arithmetic is always active; displayValue applies the column
+    // formatter to the working-day count (e.g. "7 days").
+    expect(result.current.displayValue).toBe("7 days");
   });
 
   it("initializes localValue when entering edit mode", () => {

@@ -350,7 +350,9 @@ export function useCellEdit({
   /** Format display value for view mode. */
   const displayValue = useMemo((): string => {
     if (workingDays !== null) {
-      return String(workingDays);
+      return column.formatter
+        ? column.formatter(workingDays)
+        : String(workingDays);
     }
 
     if ((field === "startDate" || field === "endDate") && currentValue) {

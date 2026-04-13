@@ -47,9 +47,9 @@ async function setupWithDependency(page: Page): Promise<void> {
 async function clickDependencyArrow(page: Page): Promise<void> {
   // Use the aria-label on the SVG group to find the arrow
   const arrow = page.locator('g[aria-label^="Dependency from"]').first();
-  // Scroll into view first — Firefox rejects force-clicks outside the viewport
-  await arrow.scrollIntoViewIfNeeded();
-  await arrow.click({ force: true });
+  // Firefox rejects even force-clicks on SVG <g> elements outside the viewport.
+  // Use evaluate to dispatch the click event directly, bypassing the viewport check.
+  await arrow.dispatchEvent('click');
   // Panel has aria-label="Edit dependency"
   await expect(
     page.getByRole('dialog', { name: 'Edit dependency' }),
