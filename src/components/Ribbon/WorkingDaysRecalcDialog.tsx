@@ -62,48 +62,54 @@ export function WorkingDaysRecalcDialog({
       }
     >
       <div className="space-y-4">
-        {/* Option 1: Keep positions */}
-        <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors">
-          <input
-            type="radio"
-            name="recalc-mode"
-            checked={selectedMode === "keep-positions"}
-            onChange={() => onModeChange("keep-positions")}
-            className="mt-0.5"
-          />
-          <div>
-            <span className="text-sm font-medium text-slate-800">
-              Keep task positions{" "}
-              <span className="text-xs font-normal text-slate-400">
-                (recommended)
+        <div
+          role="radiogroup"
+          aria-label="Recalculation mode"
+          className="space-y-3"
+        >
+          {/* Option 1: Keep positions */}
+          <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors">
+            <input
+              type="radio"
+              name="recalc-mode"
+              checked={selectedMode === "keep-positions"}
+              onChange={() => onModeChange("keep-positions")}
+              className="mt-0.5"
+            />
+            <div>
+              <span className="text-sm font-medium text-slate-800">
+                Keep task positions{" "}
+                <span className="text-xs font-normal text-slate-400">
+                  (recommended)
+                </span>
               </span>
-            </span>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Task bars stay where they are. Durations and lags are recalculated
-              to match the new calendar.
-            </p>
-          </div>
-        </label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Task bars stay where they are. Durations and lags are
+                recalculated to match the new calendar.
+              </p>
+            </div>
+          </label>
 
-        {/* Option 2: Keep durations */}
-        <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors">
-          <input
-            type="radio"
-            name="recalc-mode"
-            checked={selectedMode === "keep-durations"}
-            onChange={() => onModeChange("keep-durations")}
-            className="mt-0.5"
-          />
-          <div>
-            <span className="text-sm font-medium text-slate-800">
-              Keep durations & lags
-            </span>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Numeric values stay the same. Task bars move to reflect the new
-              working-day calendar.
-            </p>
-          </div>
-        </label>
+          {/* Option 2: Keep durations */}
+          <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-slate-200 p-3 hover:bg-slate-50 transition-colors">
+            <input
+              type="radio"
+              name="recalc-mode"
+              checked={selectedMode === "keep-durations"}
+              onChange={() => onModeChange("keep-durations")}
+              className="mt-0.5"
+            />
+            <div>
+              <span className="text-sm font-medium text-slate-800">
+                Keep durations & lags
+              </span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Numeric values stay the same. Task bars move to reflect the new
+                working-day calendar.
+              </p>
+            </div>
+          </label>
+        </div>
 
         {isAutoSchedulingOff && selectedMode === "keep-durations" && (
           <Alert variant="info">

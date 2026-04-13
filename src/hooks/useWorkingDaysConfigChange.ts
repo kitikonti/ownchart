@@ -94,8 +94,14 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
     null
   );
   const [previewResult, setPreviewResult] = useState<RecalcResult | null>(null);
-  const [selectedMode, setSelectedMode] =
+  const [selectedMode, setSelectedModeRaw] =
     useState<RecalcMode>("keep-positions");
+
+  // Clear stale preview when mode changes — prevents applying wrong results
+  const setSelectedMode = useCallback((mode: RecalcMode): void => {
+    setSelectedModeRaw(mode);
+    setPreviewResult(null);
+  }, []);
 
   const taskCount = useTaskStore((state) => state.tasks.length);
   const autoScheduling = useChartStore((state) => state.autoScheduling);
@@ -122,7 +128,7 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
       setPreviewResult(null);
       setSelectedMode("keep-positions");
     },
-    [applySilently]
+    [applySilently, setSelectedMode]
   );
 
   const proposeHolidayRegionChange = useCallback(
@@ -137,7 +143,7 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
       setPreviewResult(null);
       setSelectedMode("keep-positions");
     },
-    [applySilently]
+    [applySilently, setSelectedMode]
   );
 
   const computePreview = useCallback((): void => {

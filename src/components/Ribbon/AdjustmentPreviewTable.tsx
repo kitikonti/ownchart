@@ -40,7 +40,10 @@ export function AdjustmentPreviewTable({
         <tbody>
           {adjustments.map((adj) => (
             <tr key={adj.taskId} className="border-t border-slate-100">
-              <td className="px-3 py-1.5 text-slate-700 truncate max-w-[160px]">
+              <td
+                className="px-3 py-1.5 text-slate-700 truncate max-w-[160px]"
+                title={nameMap.get(adj.taskId) ?? adj.taskId}
+              >
                 {nameMap.get(adj.taskId) ?? adj.taskId}
               </td>
               <td className="px-3 py-1.5 text-slate-600 whitespace-nowrap">

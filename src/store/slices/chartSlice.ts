@@ -835,20 +835,22 @@ export const useChartStore = create<ChartState & ChartActions>()(
       }
 
       if (mode === "keep-positions") {
-        // Update task durations
+        // Update task durations (Map for O(1) lookups)
         if (durationChanges.length > 0) {
           useTaskStore.setState((state) => {
+            const taskMap = new Map(state.tasks.map((t) => [t.id, t]));
             for (const dc of durationChanges) {
-              const task = state.tasks.find((t) => t.id === dc.taskId);
+              const task = taskMap.get(dc.taskId);
               if (task) task.duration = dc.newDuration;
             }
           });
         }
-        // Update dependency lags
+        // Update dependency lags (Map for O(1) lookups)
         if (lagChanges.length > 0) {
           useDependencyStore.setState((state) => {
+            const depMap = new Map(state.dependencies.map((d) => [d.id, d]));
             for (const lc of lagChanges) {
-              const dep = state.dependencies.find((d) => d.id === lc.depId);
+              const dep = depMap.get(lc.depId);
               if (dep) dep.lag = lc.newLag;
             }
           });

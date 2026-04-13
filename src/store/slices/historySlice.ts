@@ -609,8 +609,9 @@ function undoRecalculateWorkingDays(
   // Reverse duration changes (keep-positions mode)
   if (params.durationChanges.length > 0) {
     useTaskStore.setState((state) => {
+      const taskMap = new Map(state.tasks.map((t) => [t.id, t]));
       for (const dc of params.durationChanges) {
-        const task = state.tasks.find((t) => t.id === dc.taskId);
+        const task = taskMap.get(dc.taskId);
         if (task) task.duration = dc.oldDuration;
       }
     });
@@ -619,8 +620,9 @@ function undoRecalculateWorkingDays(
   // Reverse lag changes (keep-positions mode)
   if (params.lagChanges.length > 0) {
     useDependencyStore.setState((state) => {
+      const depMap = new Map(state.dependencies.map((d) => [d.id, d]));
       for (const lc of params.lagChanges) {
-        const dep = state.dependencies.find((d) => d.id === lc.depId);
+        const dep = depMap.get(lc.depId);
         if (dep) dep.lag = lc.oldLag;
       }
     });
@@ -974,8 +976,9 @@ function redoRecalculateWorkingDays(
   // Re-apply duration changes (keep-positions mode)
   if (params.durationChanges.length > 0) {
     useTaskStore.setState((state) => {
+      const taskMap = new Map(state.tasks.map((t) => [t.id, t]));
       for (const dc of params.durationChanges) {
-        const task = state.tasks.find((t) => t.id === dc.taskId);
+        const task = taskMap.get(dc.taskId);
         if (task) task.duration = dc.newDuration;
       }
     });
@@ -984,8 +987,9 @@ function redoRecalculateWorkingDays(
   // Re-apply lag changes (keep-positions mode)
   if (params.lagChanges.length > 0) {
     useDependencyStore.setState((state) => {
+      const depMap = new Map(state.dependencies.map((d) => [d.id, d]));
       for (const lc of params.lagChanges) {
-        const dep = state.dependencies.find((d) => d.id === lc.depId);
+        const dep = depMap.get(lc.depId);
         if (dep) dep.lag = lc.newLag;
       }
     });

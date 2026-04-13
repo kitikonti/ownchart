@@ -117,29 +117,9 @@ interface ConstrainedDates {
  * @param ctx - Working-days context. **Required** to prevent the
  *   double-conversion bug class (#82 F036): callers must always pass the
  *   active WD context so the unit of `lag` and `successorDuration` is
- *   unambiguous. Pass `{ enabled: false, ... }` for calendar-mode behaviour;
- *   use `getWorkingDaysContext()` from the selector module for the
- *   store-bound case.
+ *   unambiguous. Use `getWorkingDaysContext()` from the selector module
+ *   for the store-bound case, or `DEFAULT_WD_CONTEXT` for calendar-equivalent.
  * @returns The earliest allowed `{ startDate, endDate }` for the successor
- */
-export function calculateConstrainedDates(
-  predecessor: PredecessorDates,
-  successorDuration: number,
-  type: DependencyType,
-  lag: number,
-  ctx: WorkingDaysContext
-): ConstrainedDates {
-  return calculateConstrainedDatesWD(
-    predecessor,
-    successorDuration,
-    type,
-    lag,
-    ctx
-  );
-}
-
-/**
- * Working-days implementation of constraint calculation.
  *
  * Both forward (FS/SS — start anchored, end derived) and backward (FF/SF —
  * end anchored, start derived) directions use the symmetric pair
@@ -151,7 +131,7 @@ export function calculateConstrainedDates(
  * (forward types) or `add(subtractWorkingDays anchor, |lag| + 1)` (backward
  * types) — the symmetric inverse of the positive case.
  */
-function calculateConstrainedDatesWD(
+export function calculateConstrainedDates(
   predecessor: PredecessorDates,
   successorDurationWD: number,
   type: DependencyType,
@@ -255,23 +235,14 @@ function calculateConstrainedDatesWD(
  *   store-bound case.
  * @returns The lag in days (positive = gap, negative = overlap)
  */
-export function calculateInitialLag(
-  predecessor: PredecessorDates,
-  successor: PredecessorDates,
-  type: DependencyType,
-  ctx: WorkingDaysContext
-): number {
-  return calculateInitialLagWD(predecessor, successor, type, ctx);
-}
-
 /**
- * Working-days implementation of {@link calculateInitialLag}. Counts working days
- * in the gap (or overlap) using {@link calculateWorkingDays}, which is
- * inclusive on both endpoints — the helpers below subtract 1 where needed
- * to match the unit convention used by `calculateConstrainedDates`
- * (lag=0 → successor anchor lands on predecessor anchor / dayAfter).
+ * Counts working days in the gap (or overlap) using
+ * {@link calculateWorkingDays}, which is inclusive on both endpoints — the
+ * helpers below subtract 1 where needed to match the unit convention used
+ * by `calculateConstrainedDates` (lag=0 → successor anchor lands on
+ * predecessor anchor / dayAfter).
  */
-function calculateInitialLagWD(
+export function calculateInitialLag(
   predecessor: PredecessorDates,
   successor: PredecessorDates,
   type: DependencyType,
@@ -279,7 +250,7 @@ function calculateInitialLagWD(
 ): number {
   const { config, holidayRegion } = ctx;
 
-  // Inverse of {@link calculateConstrainedDatesWD}'s `kthWorkingDayFrom`:
+  // Inverse of {@link calculateConstrainedDates}'s `kthWorkingDayFrom`:
   // given the same `rawAnchor` and the actual successor anchor `target`,
   // recover the lag. We snap BOTH endpoints forward to their nearest
   // working day, then count working-day steps between them. Steps forward
