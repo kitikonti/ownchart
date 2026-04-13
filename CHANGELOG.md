@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.1](https://github.com/kitikonti/ownchart/compare/v1.7.0...v1.7.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* resolve lodash audit vulnerability and Firefox E2E viewport flake ([017f0d9](https://github.com/kitikonti/ownchart/commit/017f0d94f4af7724dbd129e1ef52bf64495a7945))
+
 ## [1.7.0](https://github.com/kitikonti/ownchart/compare/v1.6.1...v1.7.0) (2026-04-13)
 
 
