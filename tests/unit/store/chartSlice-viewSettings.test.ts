@@ -17,7 +17,6 @@ describe("Chart Store - View Settings", () => {
       showDependencies: true,
       showProgress: true,
       taskLabelPosition: "inside",
-      workingDaysMode: false,
       workingDaysConfig: {
         excludeSaturday: true,
         excludeSunday: true,
@@ -177,22 +176,6 @@ describe("Chart Store - View Settings", () => {
     });
   });
 
-  describe("workingDaysMode", () => {
-    it("should toggle workingDaysMode", () => {
-      expect(useChartStore.getState().workingDaysMode).toBe(false);
-
-      act(() => {
-        useChartStore.getState().setWorkingDaysMode(true);
-      });
-      expect(useChartStore.getState().workingDaysMode).toBe(true);
-
-      act(() => {
-        useChartStore.getState().setWorkingDaysMode(false);
-      });
-      expect(useChartStore.getState().workingDaysMode).toBe(false);
-    });
-  });
-
   describe("workingDaysConfig", () => {
     it("should update excludeSaturday", () => {
       act(() => {
@@ -312,7 +295,6 @@ describe("Chart Store - View Settings", () => {
         showDependencies: true,
         showProgress: true,
         taskLabelPosition: "inside",
-        workingDaysMode: false,
         workingDaysConfig: {
           excludeSaturday: true,
           excludeSunday: true,
@@ -328,7 +310,6 @@ describe("Chart Store - View Settings", () => {
       expect(state.showDependencies).toBe(true);
       expect(state.showProgress).toBe(true);
       expect(state.taskLabelPosition).toBe("inside");
-      expect(state.workingDaysMode).toBe(false);
       expect(state.workingDaysConfig.excludeSaturday).toBe(true);
       expect(state.workingDaysConfig.excludeSunday).toBe(true);
       expect(state.workingDaysConfig.excludeHolidays).toBe(true);

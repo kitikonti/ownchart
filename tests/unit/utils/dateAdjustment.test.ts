@@ -13,12 +13,13 @@ import {
   propagateDateChanges,
   applyDateAdjustments,
   reverseDateAdjustments,
-  DISABLED_WD_CONTEXT,
+  DEFAULT_WD_CONTEXT,
 } from "@/utils/graph/dateAdjustment";
 import type { WorkingDaysContext } from "@/utils/graph/dateAdjustment";
 
-// Shorthand for the calendar-mode tests below.
-const CAL = DISABLED_WD_CONTEXT;
+// Shorthand — DEFAULT_WD_CONTEXT has enabled:true but no exclusions,
+// so addWorkingDays fast-paths to addDays (calendar arithmetic).
+const CAL = DEFAULT_WD_CONTEXT;
 import {
   WD_THANKSGIVING,
   wdThanksgivingTuple,
@@ -990,12 +991,6 @@ describe("calculateConstrainedDates — working days", () => {
     expect(r.startDate).toBe("2025-01-13"); // Mon — region missing → no holiday exclusion
   });
 
-  it("falls back to calendar arithmetic when ctx.enabled is false", () => {
-    const ctxOff: WorkingDaysContext = { ...WD_CTX, enabled: false };
-    const r = calculateConstrainedDates(pred, 3, "FS", 0, ctxOff);
-    expect(r.startDate).toBe("2025-01-11"); // Sat — calendar mode, no snap
-    expect(r.endDate).toBe("2025-01-13");
-  });
 });
 
 describe("calculateInitialLag — working days", () => {
@@ -1030,13 +1025,6 @@ describe("calculateInitialLag — working days", () => {
   it("SF: successor end matches predecessor start → lag=0wd", () => {
     const succ = { startDate: "2025-01-02", endDate: "2025-01-06" };
     expect(calculateInitialLag(pred, succ, "SF", WD_CTX)).toBe(0);
-  });
-
-  it("falls back to calendar inverse when ctx.enabled is false", () => {
-    const ctxOff: WorkingDaysContext = { ...WD_CTX, enabled: false };
-    const succ = { startDate: "2025-01-13", endDate: "2025-01-15" };
-    // Calendar diff = Jan 13 − Jan 10 − 1 = 2
-    expect(calculateInitialLag(pred, succ, "FS", ctxOff)).toBe(2);
   });
 
   // ── Snap-forward of non-working-day targets (#82 wd-pill bug) ────────

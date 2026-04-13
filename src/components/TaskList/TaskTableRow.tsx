@@ -78,9 +78,8 @@ export const TaskTableRow = memo(function TaskTableRow({
   const insertTaskAbove = useTaskStore((state) => state.insertTaskAbove);
   const insertTaskBelow = useTaskStore((state) => state.insertTaskBelow);
 
-  // Working-days display context — when WD mode is on, duration in the table
-  // is rendered as working days (computed at render time, not stored). See #81.
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
+  // Working-days display context — duration is always rendered as working days
+  // (computed at render time, not stored). See #81.
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
 
@@ -95,11 +94,11 @@ export const TaskTableRow = memo(function TaskTableRow({
   const displayTask = useMemo(
     () =>
       computeDisplayTask(task, tasks, {
-        mode: workingDaysMode,
+        mode: true,
         config: workingDaysConfig,
         region: holidayRegion,
       }),
-    [task, tasks, workingDaysMode, workingDaysConfig, holidayRegion]
+    [task, tasks, workingDaysConfig, holidayRegion]
   );
 
   const isExpanded = task.open ?? true;

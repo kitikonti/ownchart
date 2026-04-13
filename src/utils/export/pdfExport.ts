@@ -143,7 +143,6 @@ export interface ExportToPdfParams {
   projectLogo?: ProjectLogo;
   dateFormat: DateFormat;
   colorModeState: ColorModeState;
-  workingDaysMode?: boolean;
   onProgress?: (progress: number) => void;
 }
 
@@ -174,7 +173,6 @@ interface RendererProps {
   currentAppZoom: number;
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
-  workingDaysMode?: boolean;
 }
 
 /** Shared context for SVG assembly (task-table columns + chart combination) */
@@ -184,7 +182,6 @@ interface SvgAssemblyContext {
   columnWidths: Record<string, number>;
   colorModeState: ColorModeState;
   projectName?: string;
-  workingDaysMode?: boolean;
 }
 
 /** Layout values computed once in buildCompleteSvg and passed to SVG sub-assemblers */
@@ -256,7 +253,6 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     projectLogo,
     dateFormat,
     colorModeState,
-    workingDaysMode,
     onProgress,
   } = params;
 
@@ -281,7 +277,6 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     currentAppZoom,
     projectDateRange,
     visibleDateRange,
-    workingDaysMode,
   };
   const assemblyCtx: SvgAssemblyContext = {
     options: effectiveOptions,
@@ -289,7 +284,6 @@ export async function exportToPdf(params: ExportToPdfParams): Promise<void> {
     columnWidths,
     colorModeState,
     projectName,
-    workingDaysMode,
   };
   const svgElement = await renderToSvg(
     dimensions,
@@ -825,7 +819,7 @@ function appendExportHeader(
   ctx: SvgAssemblyContext,
   taskTableWidth: number
 ): void {
-  const { options, columnWidths, workingDaysMode } = ctx;
+  const { options, columnWidths } = ctx;
 
   if (taskTableWidth > 0) {
     const headerOpts: TaskTableHeaderOptions = {
@@ -835,7 +829,6 @@ function appendExportHeader(
       x: 0,
       y: 0,
       density: options.density,
-      workingDaysMode,
     };
     const headerGroup = renderTaskTableHeader(svg, headerOpts);
     setFontFamilyOnTextElements(headerGroup);

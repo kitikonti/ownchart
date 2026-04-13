@@ -99,6 +99,14 @@ function resetStores(): void {
     dependencies: [],
     selectedDependencyId: null,
   });
+  // Reset WD config to no exclusions so calendar arithmetic is used
+  useChartStore.setState({
+    workingDaysConfig: {
+      excludeSaturday: false,
+      excludeSunday: false,
+      excludeHolidays: false,
+    },
+  });
   toastMock.mockClear();
   toastMock.success.mockClear();
   toastMock.error.mockClear();

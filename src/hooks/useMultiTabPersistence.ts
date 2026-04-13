@@ -110,8 +110,6 @@ function restoreChartState(chartState: ChartState): void {
     store.setPendingScrollTop(chartState.scrollTop);
   }
 
-  // Cannot use applyIfDefined — setWorkingDaysConfig auto-derives workingDaysMode
-  // from the config object and must always be called as a unit.
   if (chartState.workingDaysConfig !== undefined) {
     store.setWorkingDaysConfig(chartState.workingDaysConfig);
   }

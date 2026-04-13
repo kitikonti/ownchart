@@ -31,6 +31,7 @@ vi.mock("@/store/slices/taskSlice", () => ({
 }));
 
 import { useTaskStore } from "@/store/slices/taskSlice";
+import { useChartStore } from "@/store/slices/chartSlice";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -64,6 +65,14 @@ describe("useNewTaskCreation", () => {
     vi.mocked(useTaskStore.getState).mockReturnValue({
       tasks: [],
     } as unknown as ReturnType<typeof useTaskStore.getState>);
+    // Reset WD config to no exclusions so calendar arithmetic is used
+    useChartStore.setState({
+      workingDaysConfig: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
+    });
   });
 
   afterEach(() => {

@@ -106,7 +106,6 @@ interface ChartState {
   /** Temporarily inverts the autoScheduling display while Alt is held. */
   altKeyHeld: boolean;
   taskLabelPosition: TaskLabelPosition;
-  workingDaysMode: boolean;
   workingDaysConfig: WorkingDaysConfig;
   holidayRegion: string; // ISO 3166-1 alpha-2 country code (e.g., 'AT', 'DE', 'US')
 
@@ -180,7 +179,6 @@ type SettableViewFields = Pick<
   | "showProgress"
   | "autoScheduling"
   | "taskLabelPosition"
-  | "workingDaysMode"
   | "workingDaysConfig"
   | "holidayRegion"
   | "projectTitle"
@@ -232,9 +230,20 @@ interface ChartActions {
   setShowDependencies: (show: boolean) => void;
   setShowProgress: (show: boolean) => void;
   setTaskLabelPosition: (position: TaskLabelPosition) => void;
-  setWorkingDaysMode: (enabled: boolean) => void;
   setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>) => void;
   setHolidayRegion: (region: string) => void;
+  applyWorkingDaysRecalc: (params: {
+    newConfig: WorkingDaysConfig;
+    newHolidayRegion: string;
+    mode: "keep-positions" | "keep-durations";
+    dateAdjustments: DateAdjustment[];
+    durationChanges: {
+      taskId: TaskId;
+      oldDuration: number;
+      newDuration: number;
+    }[];
+    lagChanges: { depId: string; oldLag: number; newLag: number }[];
+  }) => void;
 
   // Project metadata setters
   setProjectTitle: (title: string) => void;
@@ -333,7 +342,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
     autoScheduling: false,
     altKeyHeld: false,
     taskLabelPosition: "inside",
-    workingDaysMode: false,
     workingDaysConfig: { ...DEFAULT_WORKING_DAYS_CONFIG },
     holidayRegion: detectLocaleHolidayRegion(), // Default based on browser locale
 
@@ -775,22 +783,10 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
     },
 
-    // Set working days mode
-    setWorkingDaysMode: (enabled: boolean): void => {
-      set((state) => {
-        state.workingDaysMode = enabled;
-      });
-    },
-
-    // Set working days configuration (auto-derives workingDaysMode)
+    // Set working days configuration
     setWorkingDaysConfig: (config: Partial<WorkingDaysConfig>): void => {
       set((state) => {
         Object.assign(state.workingDaysConfig, config);
-        // Derive workingDaysMode: true if any exclusion is checked
-        state.workingDaysMode =
-          state.workingDaysConfig.excludeSaturday ||
-          state.workingDaysConfig.excludeSunday ||
-          state.workingDaysConfig.excludeHolidays;
       });
     },
 
@@ -801,6 +797,92 @@ export const useChartStore = create<ChartState & ChartActions>()(
       });
       // Update holiday service with new region
       holidayService.setRegion(region);
+    },
+
+    // Apply working-days config change with recalculation (#83)
+    applyWorkingDaysRecalc: ({
+      newConfig,
+      newHolidayRegion,
+      mode,
+      dateAdjustments,
+      durationChanges,
+      lagChanges,
+    }): void => {
+      const historyStore = useHistoryStore.getState();
+      const fileStore = useFileStore.getState();
+
+      // Snapshot previous values
+      const previousWorkingDaysConfig = { ...get().workingDaysConfig };
+      const previousHolidayRegion = get().holidayRegion;
+
+      // Apply new config
+      set((state) => {
+        state.workingDaysConfig = newConfig;
+        state.holidayRegion = newHolidayRegion;
+      });
+      if (newHolidayRegion !== previousHolidayRegion) {
+        holidayService.setRegion(newHolidayRegion);
+      }
+
+      // Apply changes based on mode
+      if (mode === "keep-durations" && dateAdjustments.length > 0) {
+        useTaskStore.setState((state) => {
+          const parentIds = applyDateAdjustments(dateAdjustments, state.tasks);
+          if (parentIds.size > 0) {
+            recalculateSummaryAncestors(state.tasks, parentIds);
+          }
+        });
+      }
+
+      if (mode === "keep-positions") {
+        // Update task durations
+        if (durationChanges.length > 0) {
+          useTaskStore.setState((state) => {
+            for (const dc of durationChanges) {
+              const task = state.tasks.find((t) => t.id === dc.taskId);
+              if (task) task.duration = dc.newDuration;
+            }
+          });
+        }
+        // Update dependency lags
+        if (lagChanges.length > 0) {
+          useDependencyStore.setState((state) => {
+            for (const lc of lagChanges) {
+              const dep = state.dependencies.find((d) => d.id === lc.depId);
+              if (dep) dep.lag = lc.newLag;
+            }
+          });
+        }
+      }
+
+      const totalChanges =
+        dateAdjustments.length + durationChanges.length + lagChanges.length;
+      if (totalChanges > 0) {
+        toast(`Working days updated — ${totalChanges} change(s) applied`);
+      } else {
+        toast("Working days settings updated");
+      }
+
+      if (!historyStore.isUndoing && !historyStore.isRedoing) {
+        historyStore.recordCommand({
+          id: crypto.randomUUID(),
+          type: CommandType.RECALCULATE_WORKING_DAYS,
+          timestamp: Date.now(),
+          description: "Recalculate working days schedule",
+          params: {
+            previousWorkingDaysConfig,
+            newWorkingDaysConfig: newConfig,
+            previousHolidayRegion,
+            newHolidayRegion,
+            mode,
+            dateAdjustments,
+            durationChanges,
+            lagChanges,
+          },
+        });
+      }
+
+      fileStore.markDirty();
     },
 
     // Set project title
@@ -848,8 +930,7 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const colWidth = getColumnPixelWidth(
           columnId,
           taskState.columnWidths,
-          densityConfig,
-          get().workingDaysMode
+          densityConfig
         );
         const newWidth = isCurrentlyHidden
           ? taskState.taskTableWidth + colWidth // showing: expand
@@ -872,22 +953,19 @@ export const useChartStore = create<ChartState & ChartActions>()(
         const nowShown = oldHidden.filter((id) => !columns.includes(id));
         const nowHidden = columns.filter((id) => !oldHidden.includes(id));
 
-        const wdMode = get().workingDaysMode;
         let delta = 0;
         for (const id of nowShown) {
           delta += getColumnPixelWidth(
             id,
             taskState.columnWidths,
-            densityConfig,
-            wdMode
+            densityConfig
           );
         }
         for (const id of nowHidden) {
           delta -= getColumnPixelWidth(
             id,
             taskState.columnWidths,
-            densityConfig,
-            wdMode
+            densityConfig
           );
         }
 
@@ -1075,13 +1153,6 @@ export const useChartStore = create<ChartState & ChartActions>()(
           state.taskLabelPosition = settings.taskLabelPosition;
         if (settings.workingDaysConfig !== undefined) {
           state.workingDaysConfig = settings.workingDaysConfig;
-          // Derive workingDaysMode from config (ignore persisted mode flag)
-          state.workingDaysMode =
-            settings.workingDaysConfig.excludeSaturday ||
-            settings.workingDaysConfig.excludeSunday ||
-            settings.workingDaysConfig.excludeHolidays;
-        } else if (settings.workingDaysMode !== undefined) {
-          state.workingDaysMode = settings.workingDaysMode;
         }
         if (settings.holidayRegion !== undefined)
           state.holidayRegion = settings.holidayRegion;

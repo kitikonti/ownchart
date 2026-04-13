@@ -93,7 +93,6 @@ describe("useMultiTabPersistence", () => {
       hiddenColumns: [],
       isTaskTableCollapsed: false,
       hiddenTaskIds: [],
-      workingDaysMode: false,
       workingDaysConfig: {
         excludeSaturday: false,
         excludeSunday: false,
@@ -557,26 +556,6 @@ describe("useMultiTabPersistence", () => {
   });
 
   describe("working-days settings persistence (#82 item 26)", () => {
-    it("should auto-derive workingDaysMode=true when config has exclusions", () => {
-      // The hook restores workingDaysConfig via setWorkingDaysConfig,
-      // which auto-derives workingDaysMode from the exclusion flags.
-      const config = {
-        excludeSaturday: true,
-        excludeSunday: true,
-        excludeHolidays: false,
-      };
-      seedTabStorage("tab-1111111111-wdmode", { workingDaysConfig: config });
-
-      renderHook(() => useMultiTabPersistence());
-
-      // Verify config was restored
-      const state = useChartStore.getState();
-      expect(state.workingDaysConfig.excludeSaturday).toBe(true);
-      expect(state.workingDaysConfig.excludeSunday).toBe(true);
-      // workingDaysMode is auto-derived from config exclusions
-      expect(state.workingDaysMode).toBe(true);
-    });
-
     it("should restore workingDaysConfig from localStorage", () => {
       const config = {
         excludeSaturday: true,
@@ -603,7 +582,8 @@ describe("useMultiTabPersistence", () => {
 
       renderHook(() => useMultiTabPersistence());
 
-      expect(useChartStore.getState().workingDaysMode).toBeFalsy();
+      // With no saved WD config, defaults should remain (all exclusions off)
+      expect(useChartStore.getState().workingDaysConfig.excludeSaturday).toBe(false);
     });
 
     it("should round-trip all WD settings through save and restore", () => {
@@ -638,8 +618,6 @@ describe("useMultiTabPersistence", () => {
       renderHook(() => useMultiTabPersistence());
 
       const state = useChartStore.getState();
-      // workingDaysMode is auto-derived from config exclusions
-      expect(state.workingDaysMode).toBe(true);
       expect(state.workingDaysConfig).toEqual(wdConfig);
       expect(state.holidayRegion).toBe("DE");
     });

@@ -35,7 +35,6 @@ export function applyViewSettingsDefaults(loaded: ViewSettings): ViewSettings {
     showDependencies: loaded.showDependencies ?? true,
     showProgress: loaded.showProgress ?? true,
     taskLabelPosition: loaded.taskLabelPosition ?? "inside",
-    workingDaysMode: loaded.workingDaysMode ?? false,
     workingDaysConfig:
       loaded.workingDaysConfig ?? structuredClone(DEFAULT_WORKING_DAYS_CONFIG),
     // intentionally undefined when absent — chartSlice falls back to detectLocaleHolidayRegion()

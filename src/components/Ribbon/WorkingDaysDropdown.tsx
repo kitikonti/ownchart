@@ -9,8 +9,10 @@ import { Checkbox } from "@/components/common/Checkbox";
 import { useChartStore } from "@/store/slices/chartSlice";
 import { holidayService } from "@/services/holidayService";
 import { useDropdown } from "@/hooks/useDropdown";
+import { useWorkingDaysConfigChange } from "@/hooks/useWorkingDaysConfigChange";
 import { DropdownTrigger } from "@/components/Toolbar/DropdownTrigger";
 import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { WorkingDaysRecalcDialog } from "@/components/Ribbon/WorkingDaysRecalcDialog";
 import { TOOLBAR } from "@/styles/design-tokens";
 import type { WorkingDaysConfig } from "@/types/preferences.types";
 
@@ -33,12 +35,20 @@ export function WorkingDaysDropdown({
   labelPriority,
 }: WorkingDaysDropdownProps): JSX.Element {
   const { isOpen, toggle, containerRef, triggerRef } = useDropdown();
+  const {
+    proposeConfigChange,
+    isDialogOpen,
+    previewResult,
+    selectedMode,
+    setSelectedMode,
+    isAutoSchedulingOff,
+    taskCount,
+    computePreview,
+    applyChange,
+    cancelChange,
+  } = useWorkingDaysConfigChange();
 
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
-  const setWorkingDaysConfig = useChartStore(
-    (state) => state.setWorkingDaysConfig
-  );
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
 
   // Get current country name for display
@@ -50,10 +60,9 @@ export function WorkingDaysDropdown({
 
   const handleConfigChange = useCallback(
     (key: ConfigKey, checked: boolean): void => {
-      // Store auto-derives workingDaysMode from config
-      setWorkingDaysConfig({ [key]: checked });
+      proposeConfigChange({ [key]: checked });
     },
-    [setWorkingDaysConfig]
+    [proposeConfigChange]
   );
 
   const getLabel = (key: ConfigKey, label: string): string =>
@@ -68,7 +77,11 @@ export function WorkingDaysDropdown({
         label="Working Days"
         aria-label="Working Days"
         title="Working Days configuration"
-        isActive={workingDaysMode}
+        isActive={
+          workingDaysConfig.excludeSaturday ||
+          workingDaysConfig.excludeSunday ||
+          workingDaysConfig.excludeHolidays
+        }
         labelPriority={labelPriority}
         triggerRef={triggerRef}
       />
@@ -107,6 +120,18 @@ export function WorkingDaysDropdown({
           </div>
         </DropdownPanel>
       )}
+
+      <WorkingDaysRecalcDialog
+        isOpen={isDialogOpen}
+        onClose={cancelChange}
+        onApply={applyChange}
+        onPreview={computePreview}
+        previewResult={previewResult}
+        selectedMode={selectedMode}
+        onModeChange={setSelectedMode}
+        isAutoSchedulingOff={isAutoSchedulingOff}
+        taskCount={taskCount}
+      />
     </div>
   );
 }

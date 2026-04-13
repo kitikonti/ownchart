@@ -60,6 +60,14 @@ describe("useDependencyDrag", () => {
     useTaskStore.getState().setTasks([TASK_A, TASK_B, TASK_C]);
     // Clear all dependencies before each test
     useDependencyStore.setState({ dependencies: [] });
+    // Reset WD config to no exclusions so calendar and WD arithmetic match
+    useChartStore.setState({
+      workingDaysConfig: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
+    });
     vi.restoreAllMocks();
   });
 
@@ -621,7 +629,6 @@ describe("useDependencyDrag", () => {
   describe("working-days mode", () => {
     beforeEach(() => {
       useChartStore.setState({
-        workingDaysMode: true,
         workingDaysConfig: {
           excludeSaturday: true,
           excludeSunday: true,
@@ -637,7 +644,6 @@ describe("useDependencyDrag", () => {
     // here so the block is hermetic.
     afterEach(() => {
       useChartStore.setState({
-        workingDaysMode: false,
         workingDaysConfig: {
           excludeSaturday: false,
           excludeSunday: false,
@@ -694,39 +700,6 @@ describe("useDependencyDrag", () => {
       expect(addDepSpy).toHaveBeenCalledWith(PRED.id, SUCC.id, "FS", 0);
     });
 
-    it("falls back to calendar-day lag when WD mode is OFF", () => {
-      useChartStore.setState({ workingDaysMode: false });
-      const PRED = makeTask("pred", {
-        startDate: "2025-01-06",
-        endDate: "2025-01-10",
-        duration: 5,
-      });
-      const SUCC = makeTask("succ", {
-        startDate: "2025-01-13",
-        endDate: "2025-01-15",
-        duration: 3,
-      });
-      useTaskStore.getState().setTasks([PRED, SUCC]);
-
-      const addDepSpy = vi.spyOn(
-        useDependencyStore.getState(),
-        "addDependency"
-      );
-
-      const { result } = renderHook(() =>
-        useDependencyDrag({ tasks: [PRED, SUCC] })
-      );
-
-      act(() => {
-        result.current.startDrag(PRED.id, "end", makeMouseEvent());
-      });
-      act(() => {
-        result.current.endDrag(SUCC.id, "start");
-      });
-
-      // Calendar arithmetic: Jan 13 - Jan 10 - 1 = 2.
-      expect(addDepSpy).toHaveBeenCalledWith(PRED.id, SUCC.id, "FS", 2);
-    });
   });
 
   it("removes global listeners on unmount during an active drag", () => {

@@ -775,7 +775,6 @@ describe("Dependency Store", () => {
     beforeEach(() => {
       useChartStore.setState({
         autoScheduling: true,
-        workingDaysMode: true,
         workingDaysConfig: {
           excludeSaturday: true,
           excludeSunday: true,
@@ -887,9 +886,14 @@ describe("Dependency Store", () => {
       // must still cascade through propagateDateChanges — the propagation
       // pass operates on the full task list, not the visible/flattened one.
       // Regression test for the explicit decision in #79 + #82 stage 6 plan.
+      // Use no exclusions so WD arithmetic behaves like calendar arithmetic.
       useChartStore.setState({
         autoScheduling: true,
-        workingDaysMode: false,
+        workingDaysConfig: {
+          excludeSaturday: false,
+          excludeSunday: false,
+          excludeHolidays: false,
+        },
         hiddenTaskIds: new Set([tid("middle")]),
       });
       // Confirm the test setup actually applied — we want to prove the
@@ -948,38 +952,6 @@ describe("Dependency Store", () => {
       expect(newC?.startDate).toBe("2026-01-14");
     });
 
-    it("falls back to calendar arithmetic when workingDaysMode is off", () => {
-      useChartStore.setState({ workingDaysMode: false });
-      const pred = createTestTask({
-        id: tid("pred"),
-        startDate: "2026-01-05",
-        endDate: "2026-01-09",
-        duration: 5,
-      });
-      const succ = createTestTask({
-        id: tid("succ"),
-        startDate: "2026-01-20",
-        endDate: "2026-01-22",
-        duration: 3,
-      });
-      useTaskStore.setState({ tasks: [pred, succ] });
-
-      const dep = createTestDependency({
-        id: "dep-fs",
-        fromTaskId: tid("pred"),
-        toTaskId: tid("succ"),
-        type: "FS",
-        lag: 5,
-      });
-      useDependencyStore.setState({ dependencies: [dep] });
-
-      useDependencyStore.getState().updateDependency("dep-fs", { lag: 0 });
-      const after = useTaskStore
-        .getState()
-        .tasks.find((t) => t.id === tid("succ"));
-      // Calendar mode: dayAfter Fri = Sat 10. No snap.
-      expect(after?.startDate).toBe("2026-01-10");
-    });
   });
 
 });

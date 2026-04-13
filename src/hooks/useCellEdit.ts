@@ -22,11 +22,7 @@ import type { TaskId } from "@/types/branded.types";
 import type { NavigationDirection } from "@/types/task.types";
 import type { ColumnDefinition } from "@/config/tableColumns";
 import type { WorkingDaysConfig } from "@/types/preferences.types";
-import {
-  calculateDuration,
-  formatDateByPreference,
-  toISODateString,
-} from "@/utils/dateUtils";
+import { calculateDuration, formatDateByPreference } from "@/utils/dateUtils";
 import {
   calculateWorkingDays,
   addWorkingDays,
@@ -91,25 +87,15 @@ export function buildDateFieldUpdate(
 export function buildDurationFieldUpdate(
   task: Task,
   durationDays: number,
-  workingDaysMode: boolean,
   workingDaysConfig: WorkingDaysConfig,
   effectiveHolidayRegion: string | undefined
 ): Partial<Task> {
-  let endDateStr: string;
-
-  if (workingDaysMode) {
-    endDateStr = addWorkingDays(
-      task.startDate,
-      durationDays,
-      workingDaysConfig,
-      effectiveHolidayRegion
-    );
-  } else {
-    const startDate = new Date(task.startDate);
-    const newEndDate = new Date(startDate);
-    newEndDate.setDate(newEndDate.getDate() + durationDays - 1);
-    endDateStr = toISODateString(newEndDate);
-  }
+  const endDateStr = addWorkingDays(
+    task.startDate,
+    durationDays,
+    workingDaysConfig,
+    effectiveHolidayRegion
+  );
 
   const actualDuration = calculateDuration(task.startDate, endDateStr);
   return { duration: actualDuration, endDate: endDateStr };
@@ -190,7 +176,6 @@ export function useCellEdit({
   const updateTask = useTaskStore((state) => state.updateTask);
 
   // Working days settings
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
 
@@ -207,12 +192,7 @@ export function useCellEdit({
 
   // Memoize working days value (used for both display and edit init)
   const workingDays = useMemo(() => {
-    if (
-      !workingDaysMode ||
-      field !== "duration" ||
-      !task.startDate ||
-      !task.endDate
-    ) {
+    if (field !== "duration" || !task.startDate || !task.endDate) {
       return null;
     }
     return calculateWorkingDays(
@@ -222,7 +202,6 @@ export function useCellEdit({
       effectiveHolidayRegion
     );
   }, [
-    workingDaysMode,
     field,
     task.startDate,
     task.endDate,
@@ -296,7 +275,7 @@ export function useCellEdit({
 
     if (field === "startDate" || field === "endDate") {
       const wdCtx: WorkingDaysContext = {
-        enabled: workingDaysMode,
+        enabled: true,
         config: workingDaysConfig,
         holidayRegion: effectiveHolidayRegion,
       };
@@ -314,7 +293,6 @@ export function useCellEdit({
       const updates = buildDurationFieldUpdate(
         task,
         Number(localValue),
-        workingDaysMode,
         workingDaysConfig,
         effectiveHolidayRegion
       );
@@ -335,7 +313,6 @@ export function useCellEdit({
     updateTask,
     updateCellValue,
     stopCellEdit,
-    workingDaysMode,
     workingDaysConfig,
     effectiveHolidayRegion,
   ]);

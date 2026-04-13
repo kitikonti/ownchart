@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useTaskStore } from '@/store/slices/taskSlice';
 import { useHistoryStore } from '@/store/slices/historySlice';
+import { useChartStore } from '@/store/slices/chartSlice';
 import type { Task, TaskType } from '@/types/chart.types';
 import { toTaskId } from '@/types/branded.types';
 import { COLORS } from '@/styles/design-tokens';
@@ -35,6 +36,14 @@ describe('Task Store - CRUD Operations', () => {
       redoStack: [],
       isUndoing: false,
       isRedoing: false,
+    });
+    // Reset WD config to no exclusions so calendar arithmetic is used
+    useChartStore.setState({
+      workingDaysConfig: {
+        excludeSaturday: false,
+        excludeSunday: false,
+        excludeHolidays: false,
+      },
     });
   });
 

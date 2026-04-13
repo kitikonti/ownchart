@@ -325,7 +325,6 @@ export const TaskBar = React.memo(function TaskBar({
 
   // Shared drag state for multi-task preview
   const sharedDragState = useChartStore((state) => state.dragState);
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
   const showProgress = useChartStore((state) => state.showProgress);
@@ -377,7 +376,7 @@ export const TaskBar = React.memo(function TaskBar({
     if (deltaDays === 0) return null;
 
     const wdCtx: WorkingDaysContext = {
-      enabled: workingDaysMode,
+      enabled: true,
       config: workingDaysConfig,
       holidayRegion: workingDaysConfig.excludeHolidays
         ? holidayRegion
@@ -417,7 +416,6 @@ export const TaskBar = React.memo(function TaskBar({
     task,
     scale,
     geometry,
-    workingDaysMode,
     workingDaysConfig,
     holidayRegion,
   ]);

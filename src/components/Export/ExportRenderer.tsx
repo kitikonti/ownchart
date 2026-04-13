@@ -48,13 +48,6 @@ interface ExportRendererProps {
   currentAppZoom?: number;
   projectDateRange?: { start: Date; end: Date };
   visibleDateRange?: { start: Date; end: Date };
-  /**
-   * When true, the duration column header is suffixed with "(wd)". Plumbed
-   * from the export entry point so this component stays a pure props-driven
-   * renderer (no store reads for cross-cutting export state). Defaults to
-   * `false` when omitted. See #79/#81.
-   */
-  workingDaysMode?: boolean;
 }
 
 /** Column definitions for export (labels must match app's tableColumns.ts) */
@@ -74,12 +67,10 @@ function ExportTaskTableHeader({
   selectedColumns,
   columnWidths,
   width,
-  workingDaysMode,
 }: {
   selectedColumns: ExportColumnKey[];
   columnWidths: Record<string, number>;
   width: number;
-  workingDaysMode: boolean;
 }): JSX.Element {
   return (
     <div
@@ -89,10 +80,7 @@ function ExportTaskTableHeader({
       {selectedColumns.map((key) => {
         const col = EXPORT_COLUMNS.find((c) => c.key === key);
         if (!col) return null;
-        const label =
-          col.key === "duration" && workingDaysMode
-            ? `${col.label} (wd)`
-            : col.label;
+        const label = col.label;
         return (
           <div
             key={col.key}
@@ -263,7 +251,6 @@ export function ExportRenderer({
   currentAppZoom = 1,
   projectDateRange: providedProjectDateRange,
   visibleDateRange,
-  workingDaysMode = false,
 }: ExportRendererProps): JSX.Element {
   // Get density configuration based on selected density
   const densityConfig: DensityConfig = DENSITY_CONFIG[options.density];
@@ -427,7 +414,6 @@ export function ExportRenderer({
               selectedColumns={selectedColumns}
               columnWidths={effectiveColumnWidths}
               width={taskTableWidth}
-              workingDaysMode={workingDaysMode}
             />
           )}
           {/* Timeline header */}

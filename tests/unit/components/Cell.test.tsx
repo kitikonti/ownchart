@@ -78,10 +78,9 @@ vi.mock("@/store/slices/taskSlice", () => ({
 vi.mock("@/store/slices/chartSlice", () => ({
   useChartStore: vi.fn((selector: (s: Record<string, unknown>) => unknown) =>
     selector({
-      workingDaysMode: false,
       workingDaysConfig: {
-        excludeSaturday: true,
-        excludeSunday: true,
+        excludeSaturday: false,
+        excludeSunday: false,
         excludeHolidays: false,
       },
       holidayRegion: "",
@@ -547,7 +546,9 @@ describe("useCellEdit", () => {
         column: durationColumn,
       })
     );
-    expect(result.current.displayValue).toBe("7 days");
+    // WD arithmetic is always active; displayValue returns the working-day
+    // count directly (bypassing the column formatter).
+    expect(result.current.displayValue).toBe("7");
   });
 
   it("initializes localValue when entering edit mode", () => {

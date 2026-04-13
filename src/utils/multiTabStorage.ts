@@ -61,7 +61,6 @@ export interface ChartState {
   showProgress?: boolean;
   autoScheduling?: boolean;
   taskLabelPosition?: "before" | "inside" | "after" | "none";
-  workingDaysMode?: boolean;
   workingDaysConfig?: {
     excludeSaturday: boolean;
     excludeSunday: boolean;

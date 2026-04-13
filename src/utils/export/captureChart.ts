@@ -225,14 +225,8 @@ async function captureContainerToCanvas(
 export async function captureChart(
   params: CaptureChartParams
 ): Promise<HTMLCanvasElement> {
-  const {
-    tasks,
-    options,
-    currentAppZoom,
-    projectDateRange,
-    visibleDateRange,
-    workingDaysMode,
-  } = params;
+  const { tasks, options, currentAppZoom, projectDateRange, visibleDateRange } =
+    params;
   // Normalise once so both calculateExportDimensions and renderAndSettle
   // receive the same concrete value — avoids dual-path `?? {}` guards.
   const columnWidths = params.columnWidths ?? {};
@@ -271,7 +265,6 @@ export async function captureChart(
       currentAppZoom,
       projectDateRange,
       visibleDateRange,
-      workingDaysMode,
     });
 
     // Wait for fonts and paint before triggering capture

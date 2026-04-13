@@ -21,7 +21,6 @@ describe("WorkingDaysDropdown", () => {
         excludeSunday: false,
         excludeHolidays: false,
       },
-      workingDaysMode: false,
       holidayRegion: "AT",
     });
   });
@@ -56,7 +55,7 @@ describe("WorkingDaysDropdown", () => {
     expect(screen.getByText("Exclude Holidays (XX)")).toBeInTheDocument();
   });
 
-  it("toggles excludeSaturday and store auto-derives workingDaysMode", () => {
+  it("toggles excludeSaturday in config", () => {
     render(<WorkingDaysDropdown />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
@@ -64,18 +63,15 @@ describe("WorkingDaysDropdown", () => {
 
     const state = useChartStore.getState();
     expect(state.workingDaysConfig.excludeSaturday).toBe(true);
-    // workingDaysMode is auto-derived by the store
-    expect(state.workingDaysMode).toBe(true);
   });
 
-  it("disables workingDaysMode when all exclusions are unchecked", () => {
+  it("unchecks all exclusions when last one is toggled off", () => {
     useChartStore.setState({
       workingDaysConfig: {
         excludeSaturday: true,
         excludeSunday: false,
         excludeHolidays: false,
       },
-      workingDaysMode: true,
     });
     render(<WorkingDaysDropdown />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
@@ -84,7 +80,6 @@ describe("WorkingDaysDropdown", () => {
 
     const state = useChartStore.getState();
     expect(state.workingDaysConfig.excludeSaturday).toBe(false);
-    expect(state.workingDaysMode).toBe(false);
   });
 
   it("shows info text about working days behavior", () => {
@@ -116,15 +111,14 @@ describe("WorkingDaysDropdown", () => {
     expect(panel).toBeInTheDocument();
   });
 
-  it("reads workingDaysMode from store for isActive indicator", () => {
-    // When mode is derived as active, the trigger should reflect it
+  it("shows active indicator when exclusions are configured", () => {
+    // When config has exclusions, the trigger should reflect it
     useChartStore.setState({
       workingDaysConfig: {
         excludeSaturday: true,
         excludeSunday: true,
         excludeHolidays: false,
       },
-      workingDaysMode: true,
     });
     render(<WorkingDaysDropdown />);
 

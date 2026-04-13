@@ -1,9 +1,12 @@
 /**
  * Single source of truth for building a {@link WorkingDaysContext} from
  * chartSlice. All scheduling-aware code paths (taskSlice, dependencySlice,
- * useTaskBarInteraction, future config-change recalc dialog) call through
- * here so that the holiday-region resolution rule and the WD-mode flag
- * cannot drift between consumers.
+ * useTaskBarInteraction, config-change recalc dialog) call through here so
+ * that the holiday-region resolution rule cannot drift between consumers.
+ *
+ * Working-day arithmetic is always active — the config (excludeSaturday,
+ * excludeSunday, excludeHolidays) defines which days count. When nothing
+ * is excluded, every day is a working day (fast-path in the calculator).
  */
 
 import { useChartStore } from "@/store/slices/chartSlice";
@@ -15,10 +18,9 @@ import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
  * (use a zustand selector hook there instead).
  */
 export function getWorkingDaysContext(): WorkingDaysContext {
-  const { workingDaysMode, workingDaysConfig, holidayRegion } =
-    useChartStore.getState();
+  const { workingDaysConfig, holidayRegion } = useChartStore.getState();
   return {
-    enabled: workingDaysMode,
+    enabled: true,
     config: workingDaysConfig,
     // The region is only meaningful when holidays are excluded; otherwise
     // pass `undefined` so the calculator skips the holiday-service path.

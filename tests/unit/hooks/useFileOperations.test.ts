@@ -406,20 +406,4 @@ describe("useFileOperations — handleSave", () => {
     expect(viewSettings.hiddenTaskIds).toEqual(["t1", "t2"]);
   });
 
-  it("should pass workingDaysMode from chart store to serialize", async () => {
-    useChartStore.setState({ workingDaysMode: "custom" });
-    mockSaveFile.mockResolvedValue({
-      success: true,
-      fileName: "test.ownchart",
-    });
-
-    const { result } = renderHook(() => useFileOperations());
-
-    await act(async () => {
-      await result.current.handleSave();
-    });
-
-    const viewSettings = mockSerialize.mock.calls[0][1];
-    expect(viewSettings.workingDaysMode).toBe("custom");
-  });
 });

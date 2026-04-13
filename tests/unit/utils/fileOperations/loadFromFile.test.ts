@@ -404,7 +404,6 @@ describe('loadFromFile', () => {
       expect(viewSettings.showDependencies).toBe(true);
       expect(viewSettings.showProgress).toBe(true);
       expect(viewSettings.taskLabelPosition).toBe('inside');
-      expect(viewSettings.workingDaysMode).toBe(false);
       expect(viewSettings.hiddenColumns).toEqual([]);
       expect(viewSettings.isTaskTableCollapsed).toBe(false);
       expect(viewSettings.hiddenTaskIds).toEqual([]);
@@ -420,7 +419,6 @@ describe('loadFromFile', () => {
       vs.showDependencies = false;
       vs.showProgress = false;
       vs.taskLabelPosition = 'after';
-      vs.workingDaysMode = true;
       vs.hiddenColumns = ['startDate', 'endDate'];
       vs.isTaskTableCollapsed = true;
       vs.hiddenTaskIds = ['123e4567-e89b-12d3-a456-426614174001'];
@@ -435,7 +433,6 @@ describe('loadFromFile', () => {
       expect(viewSettings.showDependencies).toBe(false);
       expect(viewSettings.showProgress).toBe(false);
       expect(viewSettings.taskLabelPosition).toBe('after');
-      expect(viewSettings.workingDaysMode).toBe(true);
       expect(viewSettings.hiddenColumns).toEqual(['startDate', 'endDate']);
       expect(viewSettings.isTaskTableCollapsed).toBe(true);
       expect(viewSettings.hiddenTaskIds).toEqual([

@@ -12,7 +12,9 @@ import {
   POPULAR_COUNTRY_CODES,
 } from "@/services/holidayService";
 import { useDropdown } from "@/hooks/useDropdown";
+import { useWorkingDaysConfigChange } from "@/hooks/useWorkingDaysConfigChange";
 import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
+import { WorkingDaysRecalcDialog } from "@/components/Ribbon/WorkingDaysRecalcDialog";
 import { TOOLBAR } from "@/styles/design-tokens";
 
 const ICON_SIZE = TOOLBAR.iconSize;
@@ -39,8 +41,20 @@ export function HolidayRegionPopover(): JSX.Element {
     },
   });
 
+  const {
+    proposeHolidayRegionChange,
+    isDialogOpen,
+    previewResult,
+    selectedMode,
+    setSelectedMode,
+    isAutoSchedulingOff,
+    taskCount,
+    computePreview,
+    applyChange,
+    cancelChange,
+  } = useWorkingDaysConfigChange();
+
   const holidayRegion = useChartStore((state) => state.holidayRegion);
-  const setHolidayRegion = useChartStore((state) => state.setHolidayRegion);
 
   // Filter countries based on search
   const filteredCountries = useMemo(() => {
@@ -61,10 +75,10 @@ export function HolidayRegionPopover(): JSX.Element {
 
   const handleCountrySelect = useCallback(
     (code: string): void => {
-      setHolidayRegion(code);
+      proposeHolidayRegionChange(code);
       close(true);
     },
-    [setHolidayRegion, close]
+    [proposeHolidayRegionChange, close]
   );
 
   /** Scroll the active option into view */
@@ -226,6 +240,18 @@ export function HolidayRegionPopover(): JSX.Element {
           </div>
         </DropdownPanel>
       )}
+
+      <WorkingDaysRecalcDialog
+        isOpen={isDialogOpen}
+        onClose={cancelChange}
+        onApply={applyChange}
+        onPreview={computePreview}
+        previewResult={previewResult}
+        selectedMode={selectedMode}
+        onModeChange={setSelectedMode}
+        isAutoSchedulingOff={isAutoSchedulingOff}
+        taskCount={taskCount}
+      />
     </div>
   );
 }

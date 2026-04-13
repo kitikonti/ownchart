@@ -70,12 +70,9 @@ export function capturePreDragDurations(
   tasks: readonly Task[],
   wdCtx: WorkingDaysContext
 ): Map<TaskId, number> {
-  // Both branches clamp to ≥ 1 — a zero-day duration would make
+  // Clamp to ≥ 1 — a zero-day duration would make
   // calculateConstrainedDates produce a degenerate range and corrupt the
   // snap-back position. Defensively normalised here so every caller is safe.
-  if (!wdCtx.enabled) {
-    return new Map(tasks.map((t) => [t.id, Math.max(1, t.duration ?? 1)]));
-  }
   return new Map(
     tasks.map((t) => [
       t.id,
@@ -145,10 +142,10 @@ export function computeEndDateForDrag(
   taskType: TaskType | undefined,
   ctx: WorkingDaysContext
 ): string {
-  if (ctx.enabled && taskType !== "milestone") {
-    // Working-days mode: preserve the original working-day count, shifting from
-    // the new start. deltaDays is intentionally not used here — the displacement
-    // is already captured in newStartDate.
+  if (taskType !== "milestone") {
+    // Preserve the original working-day count, shifting from the new start.
+    // deltaDays is intentionally not used here — the displacement is already
+    // captured in newStartDate.
     const originalWorkingDays = calculateWorkingDays(
       originalStartDate,
       originalEndDate,
@@ -188,7 +185,7 @@ export function computeResizePreview(
 
   if (dragState.mode === "resizing-left") {
     let newStart = addDays(dragState.originalStartDate, deltaDays);
-    if (ctx?.enabled) {
+    if (ctx) {
       newStart = snapForwardToWorkingDay(
         newStart,
         ctx.config,
@@ -202,7 +199,7 @@ export function computeResizePreview(
 
   // resizing-right
   let newEnd = addDays(dragState.originalEndDate, deltaDays);
-  if (ctx?.enabled) {
+  if (ctx) {
     newEnd = snapForwardToWorkingDay(newEnd, ctx.config, ctx.holidayRegion);
   }
   const duration = calculateDuration(dragState.originalStartDate, newEnd);
@@ -264,10 +261,12 @@ function buildSingleTaskMoveUpdate(
   ctx: WorkingDaysContext
 ): Partial<Task> | null {
   const rawStartDate = addDays(t.startDate, deltaDays);
-  // Snap to working day when WD mode is active.
-  const newStartDate = ctx.enabled
-    ? snapForwardToWorkingDay(rawStartDate, ctx.config, ctx.holidayRegion)
-    : rawStartDate;
+  // Snap to working day.
+  const newStartDate = snapForwardToWorkingDay(
+    rawStartDate,
+    ctx.config,
+    ctx.holidayRegion
+  );
   // Compute a calendar-shifted end date for validation purposes.
   // For non-milestones the final committed end date may differ (working-days
   // recalculation happens below), but validation only needs to know whether
@@ -340,7 +339,7 @@ export function buildResizeUpdate(
   let startDate = previewStart ?? task.startDate;
   let endDate = previewEnd ?? task.endDate;
 
-  if (ctx?.enabled) {
+  if (ctx) {
     startDate = snapForwardToWorkingDay(
       startDate,
       ctx.config,

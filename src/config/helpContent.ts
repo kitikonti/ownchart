@@ -585,7 +585,7 @@ const FEATURE_SECTIONS: HelpSection[] = [
         id: "feat-task-duration",
         title: "Duration",
         description:
-          'Duration is calculated from start and end dates. Edit it directly to adjust the end date. In working days mode, weekends and holidays are excluded from the count and the column header shows "Duration (wd)".',
+          "Duration is calculated from start and end dates. Edit it directly to adjust the end date. Weekends and holidays are excluded from the count based on your Working Days configuration.",
         keywords: ["duration", "length", "days"],
       },
       {
@@ -952,16 +952,16 @@ const FEATURE_SECTIONS: HelpSection[] = [
     topics: [
       {
         id: "feat-wd-modes",
-        title: "Working Days Modes",
+        title: "Working Days Configuration",
         description:
-          "Choose from Off (all days), Mon-Fri, Mon-Sat, or a custom set of working days. When enabled, durations are counted in working days and dragging skips non-working days.",
+          "Configure which days count as working days by excluding Saturdays, Sundays, and/or holidays. Durations are always counted in working days and dragging always skips non-working days.",
         keywords: ["working days", "mode", "business days"],
       },
       {
         id: "feat-wd-holidays",
         title: "Holiday Region",
         description:
-          "Select a country from 199 supported regions to highlight public holidays in the timeline. Holidays are excluded from working day counts when working days mode is enabled.",
+          "Select a country from 199 supported regions to highlight public holidays in the timeline. Holidays are excluded from working day counts when the Exclude Holidays option is enabled.",
         keywords: ["holiday", "country", "region", "public"],
       },
       {

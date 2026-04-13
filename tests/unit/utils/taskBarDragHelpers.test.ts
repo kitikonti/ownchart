@@ -89,9 +89,10 @@ const defaultConfig: WorkingDaysConfig = {
   excludeHolidays: false,
 };
 
+// Default context: enabled but no exclusions → WD arithmetic degrades to calendar days.
 const disabledCtx: WorkingDaysContext = {
-  enabled: false,
-  config: defaultConfig,
+  enabled: true,
+  config: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
   holidayRegion: undefined,
 };
 
@@ -205,8 +206,8 @@ describe('pixelsToDeltaDays', () => {
 // ─── computeEndDateForDrag ─────────────────────────────────────────────
 
 describe('computeEndDateForDrag', () => {
-  it('uses calendar days shift when working days disabled', () => {
-    const result = computeEndDateForDrag(
+  it('uses working days calculation with no-exclusion context', () => {
+    computeEndDateForDrag(
       '2025-01-15',
       '2025-01-10',
       '2025-01-20',
@@ -214,8 +215,19 @@ describe('computeEndDateForDrag', () => {
       'task',
       disabledCtx,
     );
-    // addDays('2025-01-20', 5) = '2025-01-25'
-    expect(result).toBe('2025-01-25');
+    // Even with no exclusions the WD path is always used
+    expect(mockCalcWorkingDays).toHaveBeenCalledWith(
+      '2025-01-10',
+      '2025-01-20',
+      disabledCtx.config,
+      undefined,
+    );
+    expect(mockAddWorkingDays).toHaveBeenCalledWith(
+      '2025-01-15',
+      5,
+      disabledCtx.config,
+      undefined,
+    );
   });
 
   it('uses working days calculation when enabled', () => {
@@ -346,8 +358,9 @@ describe('buildMoveUpdates', () => {
     expect(updates).toHaveLength(1);
     expect(updates[0].id).toBe(t.id);
     expect(updates[0].updates.startDate).toBe('2025-01-15');
-    expect(updates[0].updates.endDate).toBe('2025-01-25');
-    expect(updates[0].updates.duration).toBe(11);
+    // WD path: calculateWorkingDays returns 5, addWorkingDays mock shifts +6
+    expect(updates[0].updates.endDate).toBe('2025-01-21');
+    expect(updates[0].updates.duration).toBe(7);
   });
 
   it('builds milestone updates with duration 0', () => {
@@ -480,15 +493,16 @@ describe('capturePreDragDurations', () => {
     mockCalcWorkingDays.mockReturnValue(5);
   });
 
-  it('returns calendar-day durations when ctx.enabled is false', () => {
+  it('always uses working-day calculation (even with no exclusions)', () => {
     const tasks = [
       createTask({ id: toTaskId('a'), duration: 7 }),
       createTask({ id: toTaskId('b'), duration: 3 }),
     ];
     const result = capturePreDragDurations(tasks, disabledCtx);
-    expect(result.get(toTaskId('a'))).toBe(7);
-    expect(result.get(toTaskId('b'))).toBe(3);
-    expect(mockCalcWorkingDays).not.toHaveBeenCalled();
+    // Mock always returns 5, so both tasks get WD count = 5
+    expect(result.get(toTaskId('a'))).toBe(5);
+    expect(result.get(toTaskId('b'))).toBe(5);
+    expect(mockCalcWorkingDays).toHaveBeenCalledTimes(2);
   });
 
   it('returns working-day counts when ctx.enabled is true', () => {
@@ -517,7 +531,8 @@ describe('capturePreDragDurations', () => {
     expect(result.get(toTaskId('a'))).toBe(1);
   });
 
-  it('falls back to 1 when task.duration is missing in calendar mode', () => {
+  it('clamps to 1 when calculateWorkingDays returns 0 (no-exclusion ctx)', () => {
+    mockCalcWorkingDays.mockReturnValue(0);
     const tasks: Task[] = [
       { ...createTask({ id: toTaskId('a') }), duration: 0 },
     ];
@@ -595,16 +610,6 @@ describe('WD snap: computeResizePreview', () => {
     expect(result!.previewEnd).toBe('2025-01-13');
   });
 
-  it('does not snap when WD mode is off', () => {
-    const state: DragState = {
-      mode: 'resizing-left',
-      originalStartDate: '2025-01-10',
-      originalEndDate: '2025-01-20',
-      startMouseX: 0,
-    };
-    const result = computeResizePreview(state, 1); // no ctx
-    expect(result!.previewStart).toBe('2025-01-11'); // unsnapped
-  });
 });
 
 describe('WD snap: buildMoveUpdates', () => {
@@ -651,17 +656,6 @@ describe('WD snap: buildMoveUpdates', () => {
     expect(updates[0].updates.duration).toBe(0);
   });
 
-  it('does not snap when WD mode is off', () => {
-    const disabledCtx: WorkingDaysContext = {
-      enabled: false,
-      config: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
-    };
-    const task = createTask({ startDate: '2025-01-10' });
-    const tasks = [task];
-    const taskMap = new Map(tasks.map((t) => [t.id, t]));
-    const updates = buildMoveUpdates([task.id], taskMap, 1, disabledCtx);
-    expect(updates[0].updates.startDate).toBe('2025-01-11'); // unsnapped
-  });
 });
 
 describe('WD snap: buildResizeUpdate', () => {
@@ -681,9 +675,4 @@ describe('WD snap: buildResizeUpdate', () => {
     expect(result!.endDate).toBe('2025-01-20'); // already working day
   });
 
-  it('does not snap when WD mode is off', () => {
-    const task = createTask({ startDate: '2025-01-06', endDate: '2025-01-10' });
-    const result = buildResizeUpdate(task, '2025-01-11', '2025-01-20');
-    expect(result!.startDate).toBe('2025-01-11'); // unsnapped
-  });
 });

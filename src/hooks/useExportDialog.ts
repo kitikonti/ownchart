@@ -221,7 +221,6 @@ export function useExportDialog(): UseExportDialogResult {
   const viewportScrollLeft = useChartStore((state) => state.viewportScrollLeft);
   const viewportWidth = useChartStore((state) => state.viewportWidth);
   const hiddenTaskIds = useChartStore((state) => state.hiddenTaskIds);
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
   const workingDaysConfig = useChartStore((state) => state.workingDaysConfig);
   const holidayRegion = useChartStore((state) => state.holidayRegion);
 
@@ -243,12 +242,12 @@ export function useExportDialog(): UseExportDialogResult {
     () =>
       prepareExportTasks(tasks, hiddenTaskIds, {
         workingDays: {
-          mode: workingDaysMode,
+          mode: true,
           config: workingDaysConfig,
           region: holidayRegion,
         },
       }),
-    [tasks, hiddenTaskIds, workingDaysMode, workingDaysConfig, holidayRegion]
+    [tasks, hiddenTaskIds, workingDaysConfig, holidayRegion]
   );
   const hiddenTaskCount = useMemo(
     () => tasks.length - exportTasks.length,
@@ -356,7 +355,6 @@ export function useExportDialog(): UseExportDialogResult {
           projectDateRange,
           visibleDateRange,
           projectName,
-          workingDaysMode,
         });
       } else if (selectedExportFormat === "pdf") {
         const { exportToPdf } = await import("@/utils/export/pdfExport");
@@ -374,7 +372,6 @@ export function useExportDialog(): UseExportDialogResult {
           projectLogo: projectLogo ?? undefined,
           dateFormat,
           colorModeState,
-          workingDaysMode,
           onProgress: setExportProgress,
         });
       } else if (selectedExportFormat === "svg") {
@@ -389,7 +386,6 @@ export function useExportDialog(): UseExportDialogResult {
           visibleDateRange,
           projectName,
           colorModeState,
-          workingDaysMode,
           onProgress: setExportProgress,
         });
       }

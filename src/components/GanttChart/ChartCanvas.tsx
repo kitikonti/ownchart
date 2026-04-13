@@ -93,14 +93,9 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
     [selectedDep, updateDependency]
   );
 
-  // Working days mode is global; the unit of `Dependency.lag` follows it
-  // (working days when on, calendar days when off — D1 in epic #79). The
-  // panel input therefore stores its value AS-IS into `dep.lag` without any
-  // unit conversion. The previous lagWorkingToCalendar / lagCalendarToWorking
-  // bridge predated #82 and assumed the stored value was always calendar
-  // days; combining it with the cascade's WD interpretation produced a
-  // double-conversion bug (regression caught by tests/e2e/wd-lag-panel-edit-bug.spec.ts).
-  const workingDaysMode = useChartStore((s) => s.workingDaysMode);
+  // Working-day arithmetic is always active — the unit of `Dependency.lag`
+  // is always working days (D1 in epic #79). The panel input stores its
+  // value AS-IS into `dep.lag` without any unit conversion.
 
   const handleUpdateLag = useCallback(
     (lagValue: number): void => {
@@ -122,7 +117,7 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
     return null;
   }
 
-  // The stored lag is already in the unit dictated by `workingDaysMode`,
+  // The stored lag is already in working-day units (always active),
   // so display = stored. No conversion (see handleUpdateLag comment above).
   const displayLag = selectedDep.lag ?? 0;
 
@@ -131,7 +126,7 @@ const DependencyPanelBridge = memo(function DependencyPanelBridge({
       key={selectedDep.id}
       dependency={selectedDep}
       displayLag={displayLag}
-      lagUnit={workingDaysMode ? "working days" : "days"}
+      lagUnit="days"
       fromTaskName={selectedFromTask.name}
       toTaskName={selectedToTask.name}
       position={panelPosition}

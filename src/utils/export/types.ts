@@ -445,12 +445,4 @@ export interface ExportLayoutInput {
    * Required when options.dateRangeMode === 'visible'.
    */
   visibleDateRange?: { start: Date; end: Date };
-  /**
-   * When true, the duration column header is suffixed with "(wd)" and the
-   * caller is expected to have pre-converted task durations to working days
-   * (see `useExportDialog.exportTasks`). Defaults to `false` (calendar mode).
-   * Tracked at this layer so all three export pipelines (PNG/PDF/SVG) share
-   * the same flag without each adding a bespoke parameter. See #79/#81.
-   */
-  workingDaysMode?: boolean;
 }

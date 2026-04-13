@@ -12,9 +12,10 @@ import type { Dependency } from "@/types/dependency.types";
 import type { TaskId, HexColor } from "@/types/branded.types";
 import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
 
+// Default context: enabled but no exclusions → WD arithmetic degrades to calendar days.
 const CTX_OFF: WorkingDaysContext = {
-  enabled: false,
-  config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+  enabled: true,
+  config: { excludeSaturday: false, excludeSunday: false, excludeHolidays: false },
   holidayRegion: undefined,
 };
 
@@ -179,7 +180,11 @@ describe("computeLagDeltasForPreview", () => {
   it("works in WD mode (uses working-day arithmetic)", () => {
     const succ = makeTask("succ", "2026-01-12", "2026-01-14");
     const dep = makeDep("dep-1", "pred", "succ", "FS", 0);
-    const wdCtx: WorkingDaysContext = { ...CTX_OFF, enabled: true };
+    const wdCtx: WorkingDaysContext = {
+      enabled: true,
+      config: { excludeSaturday: true, excludeSunday: true, excludeHolidays: false },
+      holidayRegion: undefined,
+    };
     // Drag successor from Mon Jan 12 to Tue Jan 13.
     // WD lag from pred ending Fri 9: lag=0 anchor is Mon 12.
     // Successor at Jan 13 → 1 working day past anchor → lag=+1wd.

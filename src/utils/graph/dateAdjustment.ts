@@ -34,7 +34,6 @@ import type {
   DateAdjustment,
 } from "@/types/dependency.types";
 import { addDays, calculateDuration } from "@/utils/dateUtils";
-import { differenceInDays, parseISO } from "date-fns";
 import { topologicalSort, getSuccessors } from "./topologicalSort";
 import {
   calculateWorkingDays,
@@ -47,17 +46,15 @@ import {
 export type { WorkingDaysContext };
 
 /**
- * Sentinel "calendar mode" working-days context. Used by code paths that
- * need to call the now-required-ctx versions of calculateInitialLag /
- * calculateConstrainedDates without consulting the store (e.g. unit tests
- * or pure helpers in calendar-only contexts).
+ * Default working-days context with no exclusions. Every day is a working
+ * day, so WD arithmetic degrades to simple calendar arithmetic via the
+ * fast paths in addWorkingDays / calculateWorkingDays.
  *
- * Holding this as a frozen module constant — rather than constructing a
- * fresh object on each call — guarantees referential stability for any
- * future React.memo / useMemo dependency that compares it.
+ * Used by code paths that need a concrete ctx without consulting the store
+ * (e.g. unit tests, pure helpers, or when no ctx is provided).
  */
-export const DISABLED_WD_CONTEXT: WorkingDaysContext = Object.freeze({
-  enabled: false,
+export const DEFAULT_WD_CONTEXT: WorkingDaysContext = Object.freeze({
+  enabled: true,
   config: Object.freeze({
     excludeSaturday: false,
     excludeSunday: false,
@@ -132,63 +129,17 @@ export function calculateConstrainedDates(
   lag: number,
   ctx: WorkingDaysContext
 ): ConstrainedDates {
-  return ctx.enabled
-    ? calculateConstrainedDatesWD(
-        predecessor,
-        successorDuration,
-        type,
-        lag,
-        ctx
-      )
-    : calculateConstrainedDatesCal(predecessor, successorDuration, type, lag);
+  return calculateConstrainedDatesWD(
+    predecessor,
+    successorDuration,
+    type,
+    lag,
+    ctx
+  );
 }
 
 /**
- * Calendar-day variant of {@link calculateConstrainedDates}. Pure date
- * arithmetic — no working-days knowledge. Symmetric counterpart to
- * {@link calculateConstrainedDatesWD}.
- */
-function calculateConstrainedDatesCal(
-  predecessor: PredecessorDates,
-  successorDuration: number,
-  type: DependencyType,
-  lag: number
-): ConstrainedDates {
-  switch (type) {
-    case "FS": {
-      // successor.start >= predecessor.end + 1 + lag
-      // +1 because endDate is the last work day (inclusive)
-      const start = addDays(predecessor.endDate, 1 + lag);
-      const end = addDays(start, successorDuration - 1);
-      return { startDate: start, endDate: end };
-    }
-    case "SS": {
-      // successor.start >= predecessor.start + lag
-      const start = addDays(predecessor.startDate, lag);
-      const end = addDays(start, successorDuration - 1);
-      return { startDate: start, endDate: end };
-    }
-    case "FF": {
-      // successor.end >= predecessor.end + lag
-      const end = addDays(predecessor.endDate, lag);
-      const start = addDays(end, -(successorDuration - 1));
-      return { startDate: start, endDate: end };
-    }
-    case "SF": {
-      // successor.end >= predecessor.start + lag
-      const end = addDays(predecessor.startDate, lag);
-      const start = addDays(end, -(successorDuration - 1));
-      return { startDate: start, endDate: end };
-    }
-  }
-}
-
-/**
- * Working-days variant of {@link calculateConstrainedDates}.
- *
- * Extracted into a private helper so the public function stays under the
- * complexity threshold and the calendar-day path remains a clean fallback for
- * projects with WD mode off.
+ * Working-days implementation of constraint calculation.
  *
  * Both forward (FS/SS — start anchored, end derived) and backward (FF/SF —
  * end anchored, start derived) directions use the symmetric pair
@@ -310,51 +261,11 @@ export function calculateInitialLag(
   type: DependencyType,
   ctx: WorkingDaysContext
 ): number {
-  return ctx.enabled
-    ? calculateInitialLagWD(predecessor, successor, type, ctx)
-    : calculateInitialLagCal(predecessor, successor, type);
+  return calculateInitialLagWD(predecessor, successor, type, ctx);
 }
 
 /**
- * Calendar-day inverse — symmetric counterpart to {@link calculateInitialLagWD}.
- */
-function calculateInitialLagCal(
-  predecessor: PredecessorDates,
-  successor: PredecessorDates,
-  type: DependencyType
-): number {
-  switch (type) {
-    case "FS":
-      // Inverse of: successor.start = predecessor.end + 1 + lag
-      return (
-        differenceInDays(
-          parseISO(successor.startDate),
-          parseISO(predecessor.endDate)
-        ) - 1
-      );
-    case "SS":
-      // Inverse of: successor.start = predecessor.start + lag
-      return differenceInDays(
-        parseISO(successor.startDate),
-        parseISO(predecessor.startDate)
-      );
-    case "FF":
-      // Inverse of: successor.end = predecessor.end + lag
-      return differenceInDays(
-        parseISO(successor.endDate),
-        parseISO(predecessor.endDate)
-      );
-    case "SF":
-      // Inverse of: successor.end = predecessor.start + lag
-      return differenceInDays(
-        parseISO(successor.endDate),
-        parseISO(predecessor.startDate)
-      );
-  }
-}
-
-/**
- * Working-days variant of {@link calculateInitialLag}. Counts working days
+ * Working-days implementation of {@link calculateInitialLag}. Counts working days
  * in the gap (or overlap) using {@link calculateWorkingDays}, which is
  * inclusive on both endpoints — the helpers below subtract 1 where needed
  * to match the unit convention used by `calculateConstrainedDates`
@@ -475,9 +386,7 @@ export function propagateDateChanges(
   // a disabled ctx, or omit it entirely. Internally we always work with a
   // concrete ctx so calculateConstrainedDates / calculateInitialLag (which
   // require ctx after #82 F042) get a single, unambiguous value.
-  const wdCtx: WorkingDaysContext = options?.workingDays?.enabled
-    ? options.workingDays
-    : DISABLED_WD_CONTEXT;
+  const wdCtx: WorkingDaysContext = options?.workingDays ?? DEFAULT_WD_CONTEXT;
 
   // Compute the duration of a task in the active unit (WD or calendar).
   // Encapsulated so the build-working-copy and apply-adjustment paths agree.

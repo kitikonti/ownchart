@@ -12,6 +12,7 @@ import type {
 import type { ColorModeState } from "./colorMode.types";
 import type { EditableField } from "./task.types";
 import type { HexColor, TaskId } from "./branded.types";
+import type { WorkingDaysConfig } from "./preferences.types";
 
 export interface CascadeUpdate {
   id: TaskId;
@@ -82,6 +83,7 @@ export enum CommandType {
 
   // Scheduling operations
   TOGGLE_AUTO_SCHEDULING = "toggleAutoScheduling",
+  RECALCULATE_WORKING_DAYS = "recalculateWorkingDays",
 }
 
 // Type mapping — single source of truth for CommandType → Params
@@ -108,6 +110,7 @@ export type CommandParamsMap = {
   [CommandType.HIDE_TASKS]: HideTasksParams;
   [CommandType.UNHIDE_TASKS]: UnhideTasksParams;
   [CommandType.TOGGLE_AUTO_SCHEDULING]: ToggleAutoSchedulingParams;
+  [CommandType.RECALCULATE_WORKING_DAYS]: RecalculateWorkingDaysParams;
 };
 
 // Derived discriminated union — adding a new CommandType only requires updating CommandParamsMap
@@ -284,4 +287,19 @@ export interface ToggleAutoSchedulingParams {
   previousValue: boolean;
   newValue: boolean;
   dateAdjustments: DateAdjustment[];
+}
+
+export interface RecalculateWorkingDaysParams {
+  previousWorkingDaysConfig: WorkingDaysConfig;
+  newWorkingDaysConfig: WorkingDaysConfig;
+  previousHolidayRegion: string;
+  newHolidayRegion: string;
+  mode: "keep-positions" | "keep-durations";
+  dateAdjustments: DateAdjustment[];
+  durationChanges: {
+    taskId: TaskId;
+    oldDuration: number;
+    newDuration: number;
+  }[];
+  lagChanges: { depId: string; oldLag: number; newLag: number }[];
 }

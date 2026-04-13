@@ -132,7 +132,6 @@ type ChartSliceNeeded = Pick<
   | "showProgress"
   | "autoScheduling"
   | "taskLabelPosition"
-  | "workingDaysMode"
   | "workingDaysConfig"
   | "holidayRegion"
   | "colorModeState"
@@ -201,7 +200,6 @@ function useChartSliceState(): ChartSliceNeeded {
   const showProgress = useChartStore((s) => s.showProgress);
   const autoScheduling = useChartStore((s) => s.autoScheduling);
   const taskLabelPosition = useChartStore((s) => s.taskLabelPosition);
-  const workingDaysMode = useChartStore((s) => s.workingDaysMode);
   const workingDaysConfig = useChartStore((s) => s.workingDaysConfig);
   const holidayRegion = useChartStore((s) => s.holidayRegion);
   const colorModeState = useChartStore((s) => s.colorModeState);
@@ -228,7 +226,6 @@ function useChartSliceState(): ChartSliceNeeded {
     showProgress,
     autoScheduling,
     taskLabelPosition,
-    workingDaysMode,
     workingDaysConfig,
     holidayRegion,
     colorModeState,
@@ -380,7 +377,6 @@ function useFeatureViewSettings(
   | "showProgress"
   | "autoScheduling"
   | "taskLabelPosition"
-  | "workingDaysMode"
   | "workingDaysConfig"
   | "holidayRegion"
   | "projectTitle"
@@ -396,7 +392,6 @@ function useFeatureViewSettings(
     showProgress,
     autoScheduling,
     taskLabelPosition,
-    workingDaysMode,
     workingDaysConfig,
     holidayRegion,
     projectTitle,
@@ -413,7 +408,6 @@ function useFeatureViewSettings(
       showProgress,
       autoScheduling,
       taskLabelPosition,
-      workingDaysMode,
       workingDaysConfig,
       holidayRegion,
       projectTitle,
@@ -429,7 +423,6 @@ function useFeatureViewSettings(
       showProgress,
       autoScheduling,
       taskLabelPosition,
-      workingDaysMode,
       workingDaysConfig,
       holidayRegion,
       projectTitle,

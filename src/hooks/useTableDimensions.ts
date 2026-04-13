@@ -23,23 +23,16 @@ export function useTableDimensions(): UseTableDimensionsResult {
   const columnWidths = useTaskStore((state) => state.columnWidths);
   const densityConfig = useDensityConfig();
   const hiddenColumns = useChartStore((state) => state.hiddenColumns);
-  const workingDaysMode = useChartStore((state) => state.workingDaysMode);
 
   const totalColumnWidth = useMemo(() => {
     return getVisibleColumns(hiddenColumns).reduce((sum, col) => {
       // Use getColumnPixelWidth — the same function buildGridTemplateColumns
       // uses to render the actual grid. This ensures the split pane's max
-      // constraint matches the rendered table width, including the WD-mode
-      // duration column floor (DURATION_WD_EXTRA_PX).
-      const width = getColumnPixelWidth(
-        col.id,
-        columnWidths,
-        densityConfig,
-        workingDaysMode
-      );
+      // constraint matches the rendered table width.
+      const width = getColumnPixelWidth(col.id, columnWidths, densityConfig);
       return sum + width;
     }, 0);
-  }, [columnWidths, densityConfig, hiddenColumns, workingDaysMode]);
+  }, [columnWidths, densityConfig, hiddenColumns]);
 
   return { totalColumnWidth };
 }

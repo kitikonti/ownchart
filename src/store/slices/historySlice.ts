@@ -26,6 +26,7 @@ import {
   type HideTasksParams,
   type UnhideTasksParams,
   type ToggleAutoSchedulingParams,
+  type RecalculateWorkingDaysParams,
 } from "@/types/command.types";
 import type { Task } from "@/types/chart.types";
 import type { TaskId } from "@/types/branded.types";
@@ -585,6 +586,47 @@ function undoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
   }
 }
 
+function undoRecalculateWorkingDays(
+  params: RecalculateWorkingDaysParams
+): void {
+  const chartStore = useChartStore.getState();
+  chartStore.setWorkingDaysConfig(params.previousWorkingDaysConfig);
+  chartStore.setHolidayRegion(params.previousHolidayRegion);
+
+  // Reverse date adjustments (keep-durations mode)
+  if (params.dateAdjustments.length > 0) {
+    useTaskStore.setState((state) => {
+      const parentIds = reverseDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
+  }
+
+  // Reverse duration changes (keep-positions mode)
+  if (params.durationChanges.length > 0) {
+    useTaskStore.setState((state) => {
+      for (const dc of params.durationChanges) {
+        const task = state.tasks.find((t) => t.id === dc.taskId);
+        if (task) task.duration = dc.oldDuration;
+      }
+    });
+  }
+
+  // Reverse lag changes (keep-positions mode)
+  if (params.lagChanges.length > 0) {
+    useDependencyStore.setState((state) => {
+      for (const lc of params.lagChanges) {
+        const dep = state.dependencies.find((d) => d.id === lc.depId);
+        if (dep) dep.lag = lc.oldLag;
+      }
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Redo handlers
 // ---------------------------------------------------------------------------
@@ -909,6 +951,47 @@ function redoToggleAutoScheduling(params: ToggleAutoSchedulingParams): void {
   }
 }
 
+function redoRecalculateWorkingDays(
+  params: RecalculateWorkingDaysParams
+): void {
+  const chartStore = useChartStore.getState();
+  chartStore.setWorkingDaysConfig(params.newWorkingDaysConfig);
+  chartStore.setHolidayRegion(params.newHolidayRegion);
+
+  // Re-apply date adjustments (keep-durations mode)
+  if (params.dateAdjustments.length > 0) {
+    useTaskStore.setState((state) => {
+      const parentIds = applyDateAdjustments(
+        params.dateAdjustments,
+        state.tasks
+      );
+      if (parentIds.size > 0) {
+        recalculateSummaryAncestors(state.tasks, parentIds);
+      }
+    });
+  }
+
+  // Re-apply duration changes (keep-positions mode)
+  if (params.durationChanges.length > 0) {
+    useTaskStore.setState((state) => {
+      for (const dc of params.durationChanges) {
+        const task = state.tasks.find((t) => t.id === dc.taskId);
+        if (task) task.duration = dc.newDuration;
+      }
+    });
+  }
+
+  // Re-apply lag changes (keep-positions mode)
+  if (params.lagChanges.length > 0) {
+    useDependencyStore.setState((state) => {
+      for (const lc of params.lagChanges) {
+        const dep = state.dependencies.find((d) => d.id === lc.depId);
+        if (dep) dep.lag = lc.newLag;
+      }
+    });
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Command dispatchers
 // ---------------------------------------------------------------------------
@@ -955,6 +1038,8 @@ function executeUndoCommand(command: Command): void {
       return undoHideStateChange(command.params);
     case CommandType.TOGGLE_AUTO_SCHEDULING:
       return undoToggleAutoScheduling(command.params);
+    case CommandType.RECALCULATE_WORKING_DAYS:
+      return undoRecalculateWorkingDays(command.params);
     default:
       return assertNever(command);
   }
@@ -1002,6 +1087,8 @@ function executeRedoCommand(command: Command): void {
       return redoUnhideTasks(command.params);
     case CommandType.TOGGLE_AUTO_SCHEDULING:
       return redoToggleAutoScheduling(command.params);
+    case CommandType.RECALCULATE_WORKING_DAYS:
+      return redoRecalculateWorkingDays(command.params);
     default:
       return assertNever(command);
   }

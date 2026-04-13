@@ -33,7 +33,6 @@ vi.mock("@/store/slices/taskSlice", () => ({
 }));
 
 const defaultChartState = {
-  workingDaysMode: false,
   workingDaysConfig: {
     excludeSaturday: false,
     excludeSunday: false,
@@ -298,12 +297,11 @@ describe("buildDurationFieldUpdate", () => {
     excludeHolidays: false,
   };
 
-  describe("calendar mode (workingDaysMode = false)", () => {
+  describe("calendar mode (no exclusions)", () => {
     it("computes end date as startDate + (durationDays - 1)", () => {
       const result = buildDurationFieldUpdate(
         baseTask,
         5,
-        false,
         calendarConfig,
         undefined
       );
@@ -315,7 +313,6 @@ describe("buildDurationFieldUpdate", () => {
       const result = buildDurationFieldUpdate(
         baseTask,
         1,
-        false,
         calendarConfig,
         undefined
       );
@@ -324,13 +321,12 @@ describe("buildDurationFieldUpdate", () => {
     });
   });
 
-  describe("working days mode (workingDaysMode = true)", () => {
+  describe("working days mode (with exclusions)", () => {
     it("delegates to addWorkingDays for end date calculation", () => {
-      // With no exclusions, working-days mode should behave like calendar mode.
+      // With no exclusions, working-days arithmetic should behave like calendar mode.
       const result = buildDurationFieldUpdate(
         baseTask,
         5,
-        true,
         calendarConfig, // no exclusions → same as calendar
         undefined
       );
@@ -349,7 +345,6 @@ describe("buildDurationFieldUpdate", () => {
       const result = buildDurationFieldUpdate(
         baseTask,
         5,
-        true,
         weekdayConfig,
         undefined
       );
