@@ -47,7 +47,8 @@ async function setupWithDependency(page: Page): Promise<void> {
 async function clickDependencyArrow(page: Page): Promise<void> {
   // Use the aria-label on the SVG group to find the arrow
   const arrow = page.locator('g[aria-label^="Dependency from"]').first();
-  // SVG paths need force:true since Playwright may not consider them "visible" at the click point
+  // Scroll into view first — Firefox rejects force-clicks outside the viewport
+  await arrow.scrollIntoViewIfNeeded();
   await arrow.click({ force: true });
   // Panel has aria-label="Edit dependency"
   await expect(
