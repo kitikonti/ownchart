@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.0](https://github.com/kitikonti/ownchart/compare/v1.6.1...v1.7.0) (2026-04-13)
+
+
+### Features
+
+* add WD anchor-snap helper, holiday preload, typed loop error ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([9b373af](https://github.com/kitikonti/ownchart/commit/9b373af0ae84e85c51c94911aac5b4559974479a)), closes [#79](https://github.com/kitikonti/ownchart/issues/79)
+* delete enforceDepConstraint, thread WD ctx through stores ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([359c28f](https://github.com/kitikonti/ownchart/commit/359c28f04ddbd30ae957bb11698906b670d502f2))
+* display task duration in working days when WD mode is on ([#81](https://github.com/kitikonti/ownchart/issues/81)) ([17f0a95](https://github.com/kitikonti/ownchart/commit/17f0a95842b90bf04fb5342b150cbf64dca9932a))
+* live Alt-key refresh for lag-delta pill ([#82](https://github.com/kitikonti/ownchart/issues/82) F044/F045/F046) ([aa67463](https://github.com/kitikonti/ownchart/commit/aa6746342c6fbd38cdc137f0affe7cad957dac24))
+* live lag-delta indicator pill ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([07dfce3](https://github.com/kitikonti/ownchart/commit/07dfce37f4b3e66acf4cfa00d30668c1b2126cd2)), closes [#79](https://github.com/kitikonti/ownchart/issues/79)
+* snap all user-facing date paths to working days when WD mode is on ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([bd43b13](https://github.com/kitikonti/ownchart/commit/bd43b134e900605c48e769cbae3fde7082c07f06))
+* unify to always-WD arithmetic + two-option config dialog ([#79](https://github.com/kitikonti/ownchart/issues/79)/[#83](https://github.com/kitikonti/ownchart/issues/83)) ([31190b2](https://github.com/kitikonti/ownchart/commit/31190b2f7f229c0ff2a186f056f49ccfa6b54722))
+* WD-aware calculateConstrainedDates / propagateDateChanges ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([2a29e92](https://github.com/kitikonti/ownchart/commit/2a29e92099fdbddc46f1739d1b937e5d7c3c3bf3))
+
+
+### Bug Fixes
+
+* address review findings — fallback comments, test cleanup, import note ([fa2a0a2](https://github.com/kitikonti/ownchart/commit/fa2a0a2e19730dae7b1e712105205bbb7bd238f6))
+* address review findings — fallback comments, test cleanup, import note ([296a4dd](https://github.com/kitikonti/ownchart/commit/296a4dd1e4bf8ef08b7ef32f9b03b2e8212bb85f))
+* allow right-edge resize on tasks with predecessor dependencies ([924cf7e](https://github.com/kitikonti/ownchart/commit/924cf7e7d192a45160f37b8480fe05cdb9d92990))
+* lag-delta inverse must snap target to working day ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([22b216f](https://github.com/kitikonti/ownchart/commit/22b216fd985eb3327989816f7be7ef36f35873f3))
+* lag-delta pill ignored Alt-key inversion ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([85f3ff5](https://github.com/kitikonti/ownchart/commit/85f3ff54ed8cd06b4401a499a1c21c510bf63a92))
+* panel-edit lag double-conversion in WD mode ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([825ac28](https://github.com/kitikonti/ownchart/commit/825ac28cf7dd02e62e095e35e4ec646df1d8d282))
+* same lag double-conversion in useDependencyDrag ([#82](https://github.com/kitikonti/ownchart/issues/82), F036) ([866505c](https://github.com/kitikonti/ownchart/commit/866505c633b34034e745a5308059583d7430b5ca)), closes [#79](https://github.com/kitikonti/ownchart/issues/79)
+* show lag delta pills for all affected dependencies during drag/resize ([124e73e](https://github.com/kitikonti/ownchart/commit/124e73ead2e3d7a5eb03e1de7251e2470376b3cf))
+* split pane max-width ignores WD-mode duration column floor ([#81](https://github.com/kitikonti/ownchart/issues/81)) ([14b565b](https://github.com/kitikonti/ownchart/commit/14b565bade2f94edabedd632ca8b6c49aff1877d))
+
+
+### Code Refactoring
+
+* address review findings on WD display sub-issue ([#81](https://github.com/kitikonti/ownchart/issues/81)) ([1013866](https://github.com/kitikonti/ownchart/commit/1013866f634c55d87bb5f79ed847e806f0b12fde))
+* extract WD selectors and pre-drag capture; add stage 3 tests ([#82](https://github.com/kitikonti/ownchart/issues/82)) ([0a44704](https://github.com/kitikonti/ownchart/commit/0a447045189b4ea851bc1ebed2794ef4635146f4))
+* fix review findings — inline wrappers, Map lookups, stale preview, a11y ([f05714c](https://github.com/kitikonti/ownchart/commit/f05714ccfdf4c9b5d01439043b77ab3da8239d01))
+* fix review findings — shared anchor type, dep array, edge-filter tests ([f97fd47](https://github.com/kitikonti/ownchart/commit/f97fd4780cda40326868ffa6b68df6bff4870e16))
+* fix review findings — shared hook, dedup nameMap, a11y, tests ([f12c524](https://github.com/kitikonti/ownchart/commit/f12c52441049b598fc4d13249600392e1ec9d777))
+* make WD context required on lag/constraint helpers ([#82](https://github.com/kitikonti/ownchart/issues/82) F042) ([ff9c6f7](https://github.com/kitikonti/ownchart/commit/ff9c6f7a01b41243eb5ed0ecdc31e5efcfa6e40b))
+* resolve dep in parent and fix return type in LagDeltaIndicators ([a5d5998](https://github.com/kitikonti/ownchart/commit/a5d5998757b94ce3832478ab964bb3489955dd98))
+
+
+### UI/UX
+
+* replace Working Days dropdown with single dialog for batch config ([7ad87a0](https://github.com/kitikonti/ownchart/commit/7ad87a037d896197b0a12bbebfe3a3c53adec526))
+* reposition lag delta pills on dragged task row with edge-aware filtering ([9cb247e](https://github.com/kitikonti/ownchart/commit/9cb247e1dedd141bb2d815923c55a60bc732cc80))
+
 ## [1.6.1](https://github.com/kitikonti/ownchart/compare/v1.6.0...v1.6.1) (2026-04-07)
 
 
