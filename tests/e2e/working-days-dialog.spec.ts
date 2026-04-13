@@ -1,8 +1,9 @@
 /**
- * E2E tests for the Working Days config-change dialog (#83).
+ * E2E tests for the Working Days config dialog (#83).
  *
- * The dialog appears when the user changes WD settings on a project with
- * tasks. It offers two options: keep positions (default) or keep durations.
+ * Clicking the "Working Days" toolbar button opens a dialog containing
+ * checkboxes (Sat / Sun / Holidays) and — when tasks exist — a
+ * recalculation mode selector (keep-durations default, keep-positions).
  */
 
 import { test, expect } from "@playwright/test";
@@ -43,7 +44,7 @@ const FIT_TASK = {
 };
 
 function buildOptions(
-  tasks = [WEEK_TASK, FIT_TASK]
+  tasks = [WEEK_TASK, FIT_TASK],
 ): StoragePayloadOptions {
   return {
     tabId: TAB_ID,
@@ -75,42 +76,48 @@ function buildOptions(
 
 async function setup(
   page: import("@playwright/test").Page,
-  tasks = [WEEK_TASK, FIT_TASK]
+  tasks = [WEEK_TASK, FIT_TASK],
 ): Promise<void> {
   await injectAndNavigate(
     page,
     buildOptions(tasks),
-    tasks[0]?.name ?? "Week Task"
+    tasks[0]?.name ?? "Week Task",
   );
 }
 
-async function openWorkingDaysDropdown(
-  page: import("@playwright/test").Page
-): Promise<void> {
+/** Open the Working Days dialog via the Format tab toolbar button. */
+async function openWorkingDaysDialog(
+  page: import("@playwright/test").Page,
+): Promise<import("@playwright/test").Locator> {
   await page.getByRole("tab", { name: "Format" }).click();
   await page
     .getByRole("button", { name: "Working Days", exact: false })
     .click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 5_000 });
+  return dialog;
 }
 
-test.describe("Working Days config-change dialog", () => {
-  test("dialog appears with two options and Preview button", async ({
+test.describe("Working Days config dialog", () => {
+  test("dialog shows checkboxes, mode selector, and Preview button", async ({
     page,
   }) => {
     await setup(page);
-    await openWorkingDaysDropdown(page);
+    const dialog = await openWorkingDaysDialog(page);
 
-    await page.getByLabel("Exclude Saturdays").click();
+    // Checkboxes inside dialog
+    await expect(dialog.getByText("Exclude Saturdays")).toBeVisible();
+    await expect(dialog.getByText("Exclude Sundays")).toBeVisible();
+    await expect(dialog.getByText(/Exclude Holidays/)).toBeVisible();
 
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5_000 });
-    await expect(dialog.getByText("Update Working Days")).toBeVisible();
-    // Both options visible
+    // Both recalc options visible (project has tasks)
     await expect(dialog.getByText("Keep task positions")).toBeVisible();
     await expect(dialog.getByText("Keep durations & lags")).toBeVisible();
+
     // Preview button
     await expect(
-      dialog.getByRole("button", { name: "Preview changes" })
+      dialog.getByRole("button", { name: "Preview changes" }),
     ).toBeVisible();
 
     await dialog.getByRole("button", { name: "Cancel" }).click();
@@ -118,13 +125,10 @@ test.describe("Working Days config-change dialog", () => {
 
   test("Cancel leaves everything unchanged", async ({ page }) => {
     await setup(page);
-    await openWorkingDaysDropdown(page);
+    const dialog = await openWorkingDaysDialog(page);
 
-    await page.getByLabel("Exclude Saturdays").click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5_000 });
-
+    // Toggle a checkbox then cancel
+    await dialog.getByLabel("Exclude Saturdays").click();
     await dialog.getByRole("button", { name: "Cancel" }).click();
     await expect(dialog).not.toBeVisible();
 
@@ -132,18 +136,31 @@ test.describe("Working Days config-change dialog", () => {
     expect(endDate).toBe("04/12/2026");
   });
 
-  test("Keep positions (default): dates stay, Apply succeeds", async ({
-    page,
-  }) => {
+  test("Keep durations (default): Apply moves tasks", async ({ page }) => {
     await setup(page);
-    await openWorkingDaysDropdown(page);
+    const dialog = await openWorkingDaysDialog(page);
 
-    await page.getByLabel("Exclude Saturdays").click();
+    await dialog.getByLabel("Exclude Saturdays").click();
 
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    // Default is "keep durations" — just click Apply
+    await dialog.getByRole("button", { name: "Apply" }).click();
+    await expect(dialog).not.toBeVisible();
 
-    // Default is "keep positions" — just click Apply
+    // Under keep-durations, task bars move to skip the new non-working day
+    // Week Task spans Mon-Sun (7d), with Sat excluded it still keeps its
+    // WD duration but may shift end date
+    const startDate = await getStartDate(page, "Week Task");
+    expect(startDate).toBe("04/06/2026"); // Start stays on Monday
+  });
+
+  test("Keep positions: dates stay, Apply succeeds", async ({ page }) => {
+    await setup(page);
+    const dialog = await openWorkingDaysDialog(page);
+
+    await dialog.getByLabel("Exclude Saturdays").click();
+
+    // Switch to keep-positions mode
+    await dialog.getByText("Keep task positions").click();
     await dialog.getByRole("button", { name: "Apply" }).click();
     await expect(dialog).not.toBeVisible();
 
@@ -154,7 +171,9 @@ test.describe("Working Days config-change dialog", () => {
     expect(endDate).toBe("04/12/2026");
   });
 
-  test("empty chart: no dialog, config changes silently", async ({ page }) => {
+  test("empty chart: dialog opens without recalc section", async ({
+    page,
+  }) => {
     await page.addInitScript(() => {
       localStorage.setItem("ownchart-welcome-dismissed", "true");
       localStorage.setItem("ownchart-tour-completed", "true");
@@ -162,27 +181,36 @@ test.describe("Working Days config-change dialog", () => {
     await page.goto("/");
     await expect(page.locator("#root")).toBeVisible();
     await expect(
-      page.getByRole("grid", { name: "Task spreadsheet" })
+      page.getByRole("grid", { name: "Task spreadsheet" }),
     ).toBeVisible();
 
+    // Open dialog
     await page.getByRole("tab", { name: "Format" }).click();
     await page
       .getByRole("button", { name: "Working Days", exact: false })
       .click();
-    await page.getByLabel("Exclude Saturdays").click();
 
-    await page.waitForTimeout(500);
-    await expect(page.getByRole("dialog")).not.toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 5_000 });
+
+    // Checkboxes are present
+    await expect(dialog.getByText("Exclude Saturdays")).toBeVisible();
+
+    // Recalc mode section is hidden (no tasks)
+    await expect(dialog.getByText("Keep durations & lags")).not.toBeVisible();
+    await expect(dialog.getByText("Keep task positions")).not.toBeVisible();
+
+    await dialog.getByRole("button", { name: "Cancel" }).click();
   });
 
   test("Undo reverts config after keep-positions apply", async ({ page }) => {
     await setup(page);
-    await openWorkingDaysDropdown(page);
+    const dialog = await openWorkingDaysDialog(page);
 
-    await page.getByLabel("Exclude Saturdays").click();
+    await dialog.getByLabel("Exclude Saturdays").click();
 
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 5_000 });
+    // Switch to keep-positions and apply
+    await dialog.getByText("Keep task positions").click();
     await dialog.getByRole("button", { name: "Apply" }).click();
 
     // Dates didn't move (keep-positions), but config changed

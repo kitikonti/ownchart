@@ -20,10 +20,22 @@ interface RecalcPreviewTableProps {
   mode: RecalcMode;
 }
 
+/** Map from task ID → display name, built once per render. */
+function useTaskNameMap(): Map<string, string> {
+  const tasks = useTaskStore((state) => state.tasks);
+  return useMemo(() => {
+    const map = new Map<string, string>();
+    for (const t of tasks) map.set(t.id, t.name || "(unnamed)");
+    return map;
+  }, [tasks]);
+}
+
 export function RecalcPreviewTable({
   result,
   mode,
 }: RecalcPreviewTableProps): JSX.Element {
+  const nameMap = useTaskNameMap();
+
   const total =
     result.dateAdjustments.length +
     result.durationChanges.length +
@@ -41,13 +53,19 @@ export function RecalcPreviewTable({
     <div className="space-y-2">
       <SummaryLine result={result} />
       {mode === "keep-durations" && result.dateAdjustments.length > 0 && (
-        <DateAdjustmentTable adjustments={result.dateAdjustments} />
+        <DateAdjustmentTable
+          adjustments={result.dateAdjustments}
+          nameMap={nameMap}
+        />
       )}
       {mode === "keep-positions" && result.durationChanges.length > 0 && (
-        <DurationChangeTable changes={result.durationChanges} />
+        <DurationChangeTable
+          changes={result.durationChanges}
+          nameMap={nameMap}
+        />
       )}
       {mode === "keep-positions" && result.lagChanges.length > 0 && (
-        <LagChangeTable changes={result.lagChanges} />
+        <LagChangeTable changes={result.lagChanges} nameMap={nameMap} />
       )}
     </div>
   );
@@ -80,21 +98,16 @@ function SummaryLine({ result }: { result: RecalcResult }): JSX.Element {
 
 function DateAdjustmentTable({
   adjustments,
+  nameMap,
 }: {
   adjustments: RecalcResult["dateAdjustments"];
+  nameMap: Map<string, string>;
 }): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
-  const nameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of tasks) map.set(t.id, t.name || "(unnamed)");
-    return map;
-  }, [tasks]);
-
   const fmt = (d: string): string => formatDate(d, "MMM dd, yyyy");
 
   return (
     <div className="max-h-48 overflow-y-auto border border-slate-200 rounded text-xs">
-      <table className="w-full">
+      <table className="w-full" aria-label="Task date adjustments">
         <thead className="bg-slate-50 sticky top-0">
           <tr className="text-left text-slate-500">
             <th className="px-3 py-1.5 font-medium">Task</th>
@@ -158,19 +171,14 @@ function DateCell({
 
 function DurationChangeTable({
   changes,
+  nameMap,
 }: {
   changes: RecalcResult["durationChanges"];
+  nameMap: Map<string, string>;
 }): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
-  const nameMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const t of tasks) map.set(t.id, t.name || "(unnamed)");
-    return map;
-  }, [tasks]);
-
   return (
     <div className="max-h-48 overflow-y-auto border border-slate-200 rounded text-xs">
-      <table className="w-full">
+      <table className="w-full" aria-label="Task duration changes">
         <thead className="bg-slate-50 sticky top-0">
           <tr className="text-left text-slate-500">
             <th className="px-3 py-1.5 font-medium">Task</th>
@@ -207,28 +215,26 @@ function DurationChangeTable({
 
 function LagChangeTable({
   changes,
+  nameMap,
 }: {
   changes: RecalcResult["lagChanges"];
+  nameMap: Map<string, string>;
 }): JSX.Element {
-  const tasks = useTaskStore((state) => state.tasks);
   const dependencies = useDependencyStore((state) => state.dependencies);
 
-  const depMap = useMemo(() => {
-    const nm = new Map<string, string>();
-    for (const t of tasks) nm.set(t.id, t.name || "(unnamed)");
-    const dm = new Map<string, { from: string; to: string }>();
+  const depLabelMap = useMemo(() => {
+    const dm = new Map<string, string>();
     for (const d of dependencies) {
-      dm.set(d.id, {
-        from: nm.get(d.fromTaskId) ?? d.fromTaskId,
-        to: nm.get(d.toTaskId) ?? d.toTaskId,
-      });
+      const from = nameMap.get(d.fromTaskId) ?? d.fromTaskId;
+      const to = nameMap.get(d.toTaskId) ?? d.toTaskId;
+      dm.set(d.id, `${from} \u2192 ${to}`);
     }
     return dm;
-  }, [tasks, dependencies]);
+  }, [dependencies, nameMap]);
 
   return (
     <div className="max-h-32 overflow-y-auto border border-slate-200 rounded text-xs">
-      <table className="w-full">
+      <table className="w-full" aria-label="Dependency lag changes">
         <thead className="bg-slate-50 sticky top-0">
           <tr className="text-left text-slate-500">
             <th className="px-3 py-1.5 font-medium">Dependency</th>
@@ -237,8 +243,7 @@ function LagChangeTable({
         </thead>
         <tbody>
           {changes.map((ch) => {
-            const dep = depMap.get(ch.depId);
-            const label = dep ? `${dep.from} \u2192 ${dep.to}` : ch.depId;
+            const label = depLabelMap.get(ch.depId) ?? ch.depId;
             return (
               <tr key={ch.depId} className="border-t border-slate-100">
                 <td

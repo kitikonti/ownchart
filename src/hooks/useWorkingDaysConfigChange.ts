@@ -50,6 +50,8 @@ export interface UseWorkingDaysConfigChangeReturn {
   cancelChange: () => void;
 }
 
+const DEFAULT_MODE: RecalcMode = "keep-durations";
+
 function buildNewContext(
   fullConfig: WorkingDaysConfig,
   region: string
@@ -87,15 +89,16 @@ function primeHolidayCache(
 }
 
 export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [draftConfig, setDraftConfig] = useState<WorkingDaysConfig | null>(
     null
   );
   const [pendingHolidayChange, setPendingHolidayChange] =
     useState<PendingHolidayChange | null>(null);
   const [previewResult, setPreviewResult] = useState<RecalcResult | null>(null);
-  const [selectedMode, setSelectedModeRaw] =
-    useState<RecalcMode>("keep-durations");
+  const [selectedMode, setSelectedModeRaw] = useState<RecalcMode>(DEFAULT_MODE);
+
+  // Derive dialog open state from draft — no separate boolean needed
+  const isDialogOpen = draftConfig !== null;
 
   // Clear stale preview when mode changes
   const setSelectedMode = useCallback((mode: RecalcMode): void => {
@@ -106,13 +109,20 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
   const taskCount = useTaskStore((state) => state.tasks.length);
   const autoScheduling = useChartStore((state) => state.autoScheduling);
 
+  /** Reset all dialog state to closed. */
+  const resetDialog = useCallback((): void => {
+    setDraftConfig(null);
+    setPendingHolidayChange(null);
+    setPreviewResult(null);
+    setSelectedModeRaw(DEFAULT_MODE);
+  }, []);
+
   const openConfigDialog = useCallback((): void => {
     const { workingDaysConfig } = useChartStore.getState();
     setDraftConfig({ ...workingDaysConfig });
     setPendingHolidayChange(null);
     setPreviewResult(null);
-    setSelectedModeRaw("keep-durations");
-    setDialogOpen(true);
+    setSelectedModeRaw(DEFAULT_MODE);
   }, []);
 
   const updateDraftConfig = useCallback(
@@ -137,8 +147,7 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
     setDraftConfig({ ...workingDaysConfig });
     setPendingHolidayChange({ holidayRegion: region });
     setPreviewResult(null);
-    setSelectedModeRaw("keep-durations");
-    setDialogOpen(true);
+    setSelectedModeRaw(DEFAULT_MODE);
   }, []);
 
   const computePreview = useCallback((): void => {
@@ -180,10 +189,7 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
       if (pendingHolidayChange) {
         chartState.setHolidayRegion(region);
       }
-      setDialogOpen(false);
-      setDraftConfig(null);
-      setPendingHolidayChange(null);
-      setPreviewResult(null);
+      resetDialog();
       return;
     }
 
@@ -209,25 +215,21 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
       lagChanges: result.lagChanges,
     });
 
-    setDialogOpen(false);
-    setDraftConfig(null);
-    setPendingHolidayChange(null);
-    setPreviewResult(null);
-  }, [draftConfig, pendingHolidayChange, previewResult, selectedMode]);
-
-  const cancelChange = useCallback((): void => {
-    setDialogOpen(false);
-    setDraftConfig(null);
-    setPendingHolidayChange(null);
-    setPreviewResult(null);
-  }, []);
+    resetDialog();
+  }, [
+    draftConfig,
+    pendingHolidayChange,
+    previewResult,
+    selectedMode,
+    resetDialog,
+  ]);
 
   return {
     openConfigDialog,
     draftConfig,
     updateDraftConfig,
     proposeHolidayRegionChange,
-    isDialogOpen: dialogOpen,
+    isDialogOpen,
     previewResult,
     selectedMode,
     setSelectedMode,
@@ -235,6 +237,6 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
     taskCount,
     computePreview,
     applyChange,
-    cancelChange,
+    cancelChange: resetDialog,
   };
 }

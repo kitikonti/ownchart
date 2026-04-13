@@ -13,6 +13,7 @@ import {
 } from "@/services/holidayService";
 import { useDropdown } from "@/hooks/useDropdown";
 import { useWorkingDaysConfigChange } from "@/hooks/useWorkingDaysConfigChange";
+import { useHolidayCountryName } from "@/hooks/useHolidayCountryName";
 import { DropdownPanel } from "@/components/Toolbar/DropdownPanel";
 import { WorkingDaysRecalcDialog } from "@/components/Ribbon/WorkingDaysRecalcDialog";
 import { TOOLBAR } from "@/styles/design-tokens";
@@ -57,6 +58,7 @@ export function HolidayRegionPopover(): JSX.Element {
   } = useWorkingDaysConfigChange();
 
   const holidayRegion = useChartStore((state) => state.holidayRegion);
+  const currentCountryName = useHolidayCountryName();
 
   // Filter countries based on search
   const filteredCountries = useMemo(() => {
@@ -68,12 +70,6 @@ export function HolidayRegionPopover(): JSX.Element {
         c.code.toLowerCase().includes(search)
     );
   }, [countrySearch]);
-
-  // Get current country name
-  const currentCountryName = useMemo(() => {
-    const country = ALL_COUNTRIES.find((c) => c.code === holidayRegion);
-    return country?.name || holidayRegion;
-  }, [holidayRegion]);
 
   const handleCountrySelect = useCallback(
     (code: string): void => {
