@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.2](https://github.com/kitikonti/ownchart/compare/v1.7.1...v1.7.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* apply duration formatter in WD mode and fix Firefox E2E flakes ([6197b98](https://github.com/kitikonti/ownchart/commit/6197b98603ff394b844d6d87cc2201af81186e4f))
+
 ## [1.7.1](https://github.com/kitikonti/ownchart/compare/v1.7.0...v1.7.1) (2026-04-13)
 
 
