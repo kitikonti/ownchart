@@ -54,7 +54,7 @@ describe("date-holidays eager loading chain", () => {
       "src/store/slices/chartSlice.ts",
       "src/components/GanttChart/GridLines.tsx",
       "src/components/Ribbon/HolidayRegionPopover.tsx",
-      "src/components/Ribbon/WorkingDaysDropdown.tsx",
+      "src/components/Ribbon/WorkingDaysButton.tsx",
       "src/utils/workingDaysCalculator.ts",
     ];
 

@@ -43,6 +43,8 @@ export function HolidayRegionPopover(): JSX.Element {
 
   const {
     proposeHolidayRegionChange,
+    draftConfig,
+    updateDraftConfig,
     isDialogOpen,
     previewResult,
     selectedMode,
@@ -241,17 +243,22 @@ export function HolidayRegionPopover(): JSX.Element {
         </DropdownPanel>
       )}
 
-      <WorkingDaysRecalcDialog
-        isOpen={isDialogOpen}
-        onClose={cancelChange}
-        onApply={applyChange}
-        onPreview={computePreview}
-        previewResult={previewResult}
-        selectedMode={selectedMode}
-        onModeChange={setSelectedMode}
-        isAutoSchedulingOff={isAutoSchedulingOff}
-        taskCount={taskCount}
-      />
+      {draftConfig && (
+        <WorkingDaysRecalcDialog
+          isOpen={isDialogOpen}
+          onClose={cancelChange}
+          onApply={applyChange}
+          onPreview={computePreview}
+          draftConfig={draftConfig}
+          onDraftConfigChange={updateDraftConfig}
+          holidayCountryName={currentCountryName}
+          previewResult={previewResult}
+          selectedMode={selectedMode}
+          onModeChange={setSelectedMode}
+          isAutoSchedulingOff={isAutoSchedulingOff}
+          taskCount={taskCount}
+        />
+      )}
     </div>
   );
 }

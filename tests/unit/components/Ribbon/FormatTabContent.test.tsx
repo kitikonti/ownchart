@@ -27,7 +27,7 @@ describe("FormatTabContent", () => {
     expect(screen.getByTitle("Week Numbering System")).toBeInTheDocument();
   });
 
-  it("renders WorkingDaysDropdown", () => {
+  it("renders WorkingDaysButton", () => {
     render(<FormatTabContent />);
 
     expect(

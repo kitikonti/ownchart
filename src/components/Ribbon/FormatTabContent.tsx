@@ -19,7 +19,7 @@ import {
 } from "@/components/Toolbar/ToolbarPrimitives";
 import { TOOLBAR } from "@/styles/design-tokens";
 import { ToolbarDropdown } from "@/components/Toolbar/ToolbarDropdown";
-import { WorkingDaysDropdown } from "./WorkingDaysDropdown";
+import { WorkingDaysButton } from "./WorkingDaysButton";
 
 import { useChartStore } from "@/store/slices/chartSlice";
 import { useUserPreferencesStore } from "@/store/slices/userPreferencesSlice";
@@ -82,7 +82,7 @@ export function FormatTabContent(): JSX.Element {
 
       {/* Calendar */}
       <ToolbarGroup label="Calendar">
-        <WorkingDaysDropdown labelPriority={1} />
+        <WorkingDaysButton labelPriority={1} />
         <ToolbarDropdown
           value={firstDayOfWeek}
           options={FIRST_DAY_OF_WEEK_OPTIONS}

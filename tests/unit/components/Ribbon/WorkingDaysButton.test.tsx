@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { WorkingDaysDropdown } from "@/components/Ribbon/WorkingDaysDropdown";
+import { WorkingDaysButton } from "@/components/Ribbon/WorkingDaysButton";
 import { useChartStore } from "@/store/slices/chartSlice";
+import { useTaskStore } from "@/store/slices/taskSlice";
 
 vi.mock("@/services/holidayService", () => ({
   holidayService: {
@@ -13,7 +14,7 @@ vi.mock("@/services/holidayService", () => ({
   },
 }));
 
-describe("WorkingDaysDropdown", () => {
+describe("WorkingDaysButton", () => {
   beforeEach(() => {
     useChartStore.setState({
       workingDaysConfig: {
@@ -23,15 +24,16 @@ describe("WorkingDaysDropdown", () => {
       },
       holidayRegion: "AT",
     });
+    useTaskStore.setState({ tasks: [] });
   });
 
   it("renders trigger button with label", () => {
-    render(<WorkingDaysDropdown />);
+    render(<WorkingDaysButton />);
     expect(screen.getByTitle("Working Days configuration")).toBeInTheDocument();
   });
 
-  it("opens dropdown panel on click", () => {
-    render(<WorkingDaysDropdown />);
+  it("opens dialog with checkboxes on click", () => {
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
     expect(screen.getByText("Exclude Saturdays")).toBeInTheDocument();
@@ -41,7 +43,7 @@ describe("WorkingDaysDropdown", () => {
 
   it("displays current country name for holidays", () => {
     useChartStore.setState({ holidayRegion: "DE" });
-    render(<WorkingDaysDropdown />);
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
     expect(screen.getByText("Exclude Holidays (Germany)")).toBeInTheDocument();
@@ -49,41 +51,14 @@ describe("WorkingDaysDropdown", () => {
 
   it("falls back to region code when country not found", () => {
     useChartStore.setState({ holidayRegion: "XX" });
-    render(<WorkingDaysDropdown />);
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
     expect(screen.getByText("Exclude Holidays (XX)")).toBeInTheDocument();
   });
 
-  it("toggles excludeSaturday in config", () => {
-    render(<WorkingDaysDropdown />);
-    fireEvent.click(screen.getByTitle("Working Days configuration"));
-
-    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
-
-    const state = useChartStore.getState();
-    expect(state.workingDaysConfig.excludeSaturday).toBe(true);
-  });
-
-  it("unchecks all exclusions when last one is toggled off", () => {
-    useChartStore.setState({
-      workingDaysConfig: {
-        excludeSaturday: true,
-        excludeSunday: false,
-        excludeHolidays: false,
-      },
-    });
-    render(<WorkingDaysDropdown />);
-    fireEvent.click(screen.getByTitle("Working Days configuration"));
-
-    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
-
-    const state = useChartStore.getState();
-    expect(state.workingDaysConfig.excludeSaturday).toBe(false);
-  });
-
   it("shows info text about working days behavior", () => {
-    render(<WorkingDaysDropdown />);
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
     expect(
@@ -93,7 +68,7 @@ describe("WorkingDaysDropdown", () => {
 
   it("holidays checkbox aria-label includes country name", () => {
     useChartStore.setState({ holidayRegion: "DE" });
-    render(<WorkingDaysDropdown />);
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
     expect(
@@ -101,29 +76,59 @@ describe("WorkingDaysDropdown", () => {
     ).toBeInTheDocument();
   });
 
-  it("dropdown panel has ARIA role and label", () => {
-    render(<WorkingDaysDropdown />);
+  it("hides recalc mode section when no tasks exist", () => {
+    render(<WorkingDaysButton />);
     fireEvent.click(screen.getByTitle("Working Days configuration"));
 
-    const panel = screen.getByRole("group", {
-      name: "Working Days configuration",
-    });
-    expect(panel).toBeInTheDocument();
+    expect(screen.queryByText(/Keep durations/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Keep task positions/)).not.toBeInTheDocument();
   });
 
-  it("shows active indicator when exclusions are configured", () => {
-    // When config has exclusions, the trigger should reflect it
-    useChartStore.setState({
-      workingDaysConfig: {
-        excludeSaturday: true,
-        excludeSunday: true,
-        excludeHolidays: false,
-      },
+  it("shows recalc mode section when tasks exist", () => {
+    useTaskStore.setState({
+      tasks: [
+        {
+          id: "t1",
+          name: "Task 1",
+          startDate: "2026-04-01",
+          endDate: "2026-04-03",
+          duration: 3,
+          type: "task",
+          progress: 0,
+          level: 0,
+          sortOrder: 0,
+          manuallyScheduled: false,
+        },
+      ] as never[],
     });
-    render(<WorkingDaysDropdown />);
 
-    // The trigger button should have the active styling (border)
-    const trigger = screen.getByTitle("Working Days configuration");
-    expect(trigger.closest("button")).toHaveClass("dropdown-trigger-active");
+    render(<WorkingDaysButton />);
+    fireEvent.click(screen.getByTitle("Working Days configuration"));
+
+    expect(screen.getByText(/Keep durations & lags/)).toBeInTheDocument();
+    expect(screen.getByText(/Keep task positions/)).toBeInTheDocument();
+  });
+
+  it("applies config directly when no tasks and Apply is clicked", () => {
+    render(<WorkingDaysButton />);
+    fireEvent.click(screen.getByTitle("Working Days configuration"));
+
+    // Toggle Saturday
+    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
+    fireEvent.click(screen.getByText("Apply"));
+
+    const state = useChartStore.getState();
+    expect(state.workingDaysConfig.excludeSaturday).toBe(true);
+  });
+
+  it("cancel discards draft changes", () => {
+    render(<WorkingDaysButton />);
+    fireEvent.click(screen.getByTitle("Working Days configuration"));
+
+    fireEvent.click(screen.getByLabelText("Exclude Saturdays"));
+    fireEvent.click(screen.getByText("Cancel"));
+
+    const state = useChartStore.getState();
+    expect(state.workingDaysConfig.excludeSaturday).toBe(false);
   });
 });

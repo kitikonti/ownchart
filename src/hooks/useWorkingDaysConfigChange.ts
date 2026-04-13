@@ -1,12 +1,11 @@
 /**
- * Hook that intercepts working-days config changes to show a recalculation
- * dialog when the project has existing tasks. If the chart is empty, changes
- * are applied silently (no dialog, no undo command — no tasks to revert).
+ * Hook that manages working-days config changes via a dialog.
  *
- * Used by both WorkingDaysDropdown and HolidayRegionPopover, which each
- * mount their own instance. Concurrent opens are prevented by the UX (only
- * one dropdown is open at a time), and each instance's dialog is gated on
- * its own `pendingChange` state.
+ * The dialog always opens (even with no tasks) so the user can toggle
+ * multiple checkboxes before applying. When the project has tasks, a
+ * recalculation mode selector and preview are shown.
+ *
+ * Used by both WorkingDaysButton and HolidayRegionPopover.
  *
  * Part of #83 — config-change recalculation.
  */
@@ -27,13 +26,18 @@ import type { Task } from "@/types/chart.types";
 import type { WorkingDaysConfig } from "@/types/preferences.types";
 import type { WorkingDaysContext } from "@/utils/workingDaysCalculator";
 
-interface PendingChange {
-  config?: Partial<WorkingDaysConfig>;
-  holidayRegion?: string;
+interface PendingHolidayChange {
+  holidayRegion: string;
 }
 
 export interface UseWorkingDaysConfigChangeReturn {
-  proposeConfigChange: (config: Partial<WorkingDaysConfig>) => void;
+  /** Open the config dialog (copies current store config into draft). */
+  openConfigDialog: () => void;
+  /** Draft config being edited in the dialog (null when dialog closed). */
+  draftConfig: WorkingDaysConfig | null;
+  /** Update checkbox state within the dialog. */
+  updateDraftConfig: (partial: Partial<WorkingDaysConfig>) => void;
+  /** Propose a holiday region change (used by HolidayRegionPopover). */
   proposeHolidayRegionChange: (region: string) => void;
   isDialogOpen: boolean;
   previewResult: RecalcResult | null;
@@ -47,20 +51,13 @@ export interface UseWorkingDaysConfigChangeReturn {
 }
 
 function buildNewContext(
-  pending: PendingChange,
-  currentConfig: WorkingDaysConfig,
-  currentRegion: string
-): { ctx: WorkingDaysContext; fullConfig: WorkingDaysConfig; region: string } {
-  const fullConfig = { ...currentConfig, ...pending.config };
-  const region = pending.holidayRegion ?? currentRegion;
+  fullConfig: WorkingDaysConfig,
+  region: string
+): WorkingDaysContext {
   return {
-    ctx: {
-      enabled: true,
-      config: fullConfig,
-      holidayRegion: fullConfig.excludeHolidays ? region : undefined,
-    },
-    fullConfig,
-    region,
+    enabled: true,
+    config: fullConfig,
+    holidayRegion: fullConfig.excludeHolidays ? region : undefined,
   };
 }
 
@@ -90,14 +87,17 @@ function primeHolidayCache(
 }
 
 export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
-  const [pendingChange, setPendingChange] = useState<PendingChange | null>(
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [draftConfig, setDraftConfig] = useState<WorkingDaysConfig | null>(
     null
   );
+  const [pendingHolidayChange, setPendingHolidayChange] =
+    useState<PendingHolidayChange | null>(null);
   const [previewResult, setPreviewResult] = useState<RecalcResult | null>(null);
   const [selectedMode, setSelectedModeRaw] =
-    useState<RecalcMode>("keep-positions");
+    useState<RecalcMode>("keep-durations");
 
-  // Clear stale preview when mode changes — prevents applying wrong results
+  // Clear stale preview when mode changes
   const setSelectedMode = useCallback((mode: RecalcMode): void => {
     setSelectedModeRaw(mode);
     setPreviewResult(null);
@@ -106,97 +106,102 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
   const taskCount = useTaskStore((state) => state.tasks.length);
   const autoScheduling = useChartStore((state) => state.autoScheduling);
 
-  const applySilently = useCallback((pending: PendingChange): void => {
-    const chartStore = useChartStore.getState();
-    if (pending.config) {
-      chartStore.setWorkingDaysConfig(pending.config);
-    }
-    if (pending.holidayRegion) {
-      chartStore.setHolidayRegion(pending.holidayRegion);
-    }
+  const openConfigDialog = useCallback((): void => {
+    const { workingDaysConfig } = useChartStore.getState();
+    setDraftConfig({ ...workingDaysConfig });
+    setPendingHolidayChange(null);
+    setPreviewResult(null);
+    setSelectedModeRaw("keep-durations");
+    setDialogOpen(true);
   }, []);
 
-  const proposeConfigChange = useCallback(
-    (config: Partial<WorkingDaysConfig>): void => {
-      const tasks = useTaskStore.getState().tasks;
-      const change: PendingChange = { config };
-      if (tasks.length === 0) {
-        applySilently(change);
-        return;
-      }
-      setPendingChange(change);
+  const updateDraftConfig = useCallback(
+    (partial: Partial<WorkingDaysConfig>): void => {
+      setDraftConfig((prev) => (prev ? { ...prev, ...partial } : prev));
       setPreviewResult(null);
-      setSelectedMode("keep-positions");
     },
-    [applySilently, setSelectedMode]
+    []
   );
 
-  const proposeHolidayRegionChange = useCallback(
-    (region: string): void => {
-      const tasks = useTaskStore.getState().tasks;
-      const change: PendingChange = { holidayRegion: region };
-      if (tasks.length === 0) {
-        applySilently(change);
-        return;
-      }
-      setPendingChange(change);
-      setPreviewResult(null);
-      setSelectedMode("keep-positions");
-    },
-    [applySilently, setSelectedMode]
-  );
+  const proposeHolidayRegionChange = useCallback((region: string): void => {
+    const tasks = useTaskStore.getState().tasks;
+    const { workingDaysConfig } = useChartStore.getState();
+
+    if (tasks.length === 0) {
+      // Apply silently — no tasks to recalculate
+      useChartStore.getState().setHolidayRegion(region);
+      return;
+    }
+
+    // Open dialog with current config + pending holiday change
+    setDraftConfig({ ...workingDaysConfig });
+    setPendingHolidayChange({ holidayRegion: region });
+    setPreviewResult(null);
+    setSelectedModeRaw("keep-durations");
+    setDialogOpen(true);
+  }, []);
 
   const computePreview = useCallback((): void => {
-    if (!pendingChange) return;
+    if (!draftConfig) return;
 
     const chartState = useChartStore.getState();
     const tasks = useTaskStore.getState().tasks;
     const deps = useDependencyStore.getState().dependencies;
     const oldCtx = buildOldContext();
-    const { ctx, region } = buildNewContext(
-      pendingChange,
-      chartState.workingDaysConfig,
-      chartState.holidayRegion
-    );
+    const region =
+      pendingHolidayChange?.holidayRegion ?? chartState.holidayRegion;
+    const newCtx = buildNewContext(draftConfig, region);
 
-    if (ctx.holidayRegion) {
+    if (newCtx.holidayRegion) {
       primeHolidayCache(region, chartState.holidayRegion, tasks);
     }
 
     const result = computeWorkingDaysRecalc(
       tasks,
       deps,
-      ctx,
+      newCtx,
       oldCtx,
       selectedMode
     );
     setPreviewResult(result);
-  }, [pendingChange, selectedMode]);
+  }, [draftConfig, pendingHolidayChange, selectedMode]);
 
   const applyChange = useCallback((): void => {
-    if (!pendingChange) return;
+    if (!draftConfig) return;
 
     const chartState = useChartStore.getState();
     const tasks = useTaskStore.getState().tasks;
+    const region =
+      pendingHolidayChange?.holidayRegion ?? chartState.holidayRegion;
+
+    if (tasks.length === 0) {
+      // No tasks — just apply the config directly
+      chartState.setWorkingDaysConfig(draftConfig);
+      if (pendingHolidayChange) {
+        chartState.setHolidayRegion(region);
+      }
+      setDialogOpen(false);
+      setDraftConfig(null);
+      setPendingHolidayChange(null);
+      setPreviewResult(null);
+      return;
+    }
+
     const deps = useDependencyStore.getState().dependencies;
     const oldCtx = buildOldContext();
-    const { ctx, fullConfig, region } = buildNewContext(
-      pendingChange,
-      chartState.workingDaysConfig,
-      chartState.holidayRegion
-    );
+    const newCtx = buildNewContext(draftConfig, region);
 
-    if (ctx.holidayRegion) {
+    if (newCtx.holidayRegion) {
       primeHolidayCache(region, chartState.holidayRegion, tasks);
     }
 
     // Reuse preview if available, otherwise compute
     const result =
       previewResult ??
-      computeWorkingDaysRecalc(tasks, deps, ctx, oldCtx, selectedMode);
+      computeWorkingDaysRecalc(tasks, deps, newCtx, oldCtx, selectedMode);
 
     chartState.applyWorkingDaysRecalc({
-      newConfig: fullConfig,
+      newConfig: draftConfig,
       newHolidayRegion: region,
       mode: selectedMode,
       dateAdjustments: result.dateAdjustments,
@@ -204,19 +209,25 @@ export function useWorkingDaysConfigChange(): UseWorkingDaysConfigChangeReturn {
       lagChanges: result.lagChanges,
     });
 
-    setPendingChange(null);
+    setDialogOpen(false);
+    setDraftConfig(null);
+    setPendingHolidayChange(null);
     setPreviewResult(null);
-  }, [pendingChange, previewResult, selectedMode]);
+  }, [draftConfig, pendingHolidayChange, previewResult, selectedMode]);
 
   const cancelChange = useCallback((): void => {
-    setPendingChange(null);
+    setDialogOpen(false);
+    setDraftConfig(null);
+    setPendingHolidayChange(null);
     setPreviewResult(null);
   }, []);
 
   return {
-    proposeConfigChange,
+    openConfigDialog,
+    draftConfig,
+    updateDraftConfig,
     proposeHolidayRegionChange,
-    isDialogOpen: pendingChange !== null,
+    isDialogOpen: dialogOpen,
     previewResult,
     selectedMode,
     setSelectedMode,
