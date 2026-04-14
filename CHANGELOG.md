@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.5](https://github.com/kitikonti/ownchart/compare/v1.7.4...v1.7.5) (2026-04-14)
+
+
+### Bug Fixes
+
+* use MouseEvent dispatch for SVG click in WebKit E2E tests ([d00631a](https://github.com/kitikonti/ownchart/commit/d00631ac14e859a2d13859affa286a5baa5b97c9))
+
 ## [1.7.4](https://github.com/kitikonti/ownchart/compare/v1.7.2...v1.7.4) (2026-04-14)
 
 
