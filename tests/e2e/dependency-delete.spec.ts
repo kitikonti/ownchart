@@ -48,9 +48,11 @@ async function clickDependencyArrow(page: Page): Promise<void> {
   // Use the aria-label on the SVG group to find the arrow
   const arrow = page.locator('g[aria-label^="Dependency from"]').first();
   // Firefox/WebKit reject Playwright's click() on SVG <g> elements outside
-  // the viewport (microsoft/playwright#22082). Native DOM .click() fires a
-  // real bubbling event that React picks up, bypassing viewport checks.
-  await arrow.evaluate(el => (el as SVGGElement).click());
+  // the viewport (microsoft/playwright#22082). SVG <g> elements lack .click()
+  // in WebKit, so dispatch a real MouseEvent that bubbles up to React's root.
+  await arrow.evaluate(el =>
+    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })),
+  );
   // Panel has aria-label="Edit dependency"
   await expect(
     page.getByRole('dialog', { name: 'Edit dependency' }),
