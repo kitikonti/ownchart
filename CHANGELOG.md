@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.7](https://github.com/kitikonti/ownchart/compare/v1.7.6...v1.7.7) (2026-04-14)
+
+
+### Bug Fixes
+
+* revert unintended dependency-helpers change, update VRT snapshots ([e21532e](https://github.com/kitikonti/ownchart/commit/e21532ee0700c8f326f6ec5ecfda1edbadbaab05))
+
 ## [1.7.6](https://github.com/kitikonti/ownchart/compare/v1.7.5...v1.7.6) (2026-04-14)
 
 
