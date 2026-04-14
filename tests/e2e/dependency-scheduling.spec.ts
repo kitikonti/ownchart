@@ -36,12 +36,12 @@ test.skip(
 // ---------------------------------------------------------------------------
 
 /**
- * Task A: Jan 6–10  (5 days)
- * Task B: Jan 13–17 (5 days)  — 2-day gap after A (weekend)
- * Task C: Jan 20–24 (5 days)  — 2-day gap after B (weekend)
+ * Task A: Jan 6–10  (5 days, Mon–Fri)
+ * Task B: Jan 13–17 (5 days, Mon–Fri)  — weekend gap after A
+ * Task C: Jan 20–24 (5 days, Mon–Fri)  — weekend gap after B
  *
- * FS dependency A→B: lag = 2 (Jan 10 → Jan 13, gap of 2 days)
- * FS dependency B→C: lag = 2 (Jan 17 → Jan 20, gap of 2 days)
+ * FS dependency A→B: lag = 0 working days (consecutive working days across weekend)
+ * FS dependency B→C: lag = 0 working days (consecutive working days across weekend)
  */
 const TASK_A = {
   id: "sched-task-a",
@@ -87,7 +87,7 @@ const DEP_A_B = {
   fromTaskId: "sched-task-a",
   toTaskId: "sched-task-b",
   type: "FS",
-  lag: 2,
+  lag: 0,
   createdAt: "2025-01-06T10:00:00.000Z",
 };
 
@@ -96,7 +96,7 @@ const DEP_B_C = {
   fromTaskId: "sched-task-b",
   toTaskId: "sched-task-c",
   type: "FS",
-  lag: 2,
+  lag: 0,
   createdAt: "2025-01-06T10:00:00.000Z",
 };
 
@@ -206,7 +206,7 @@ test.describe("Lag display and editing", () => {
     await openDependencyPanel(page, "Task A", "Task B");
 
     const lagInput = getLagInput(page);
-    await expect(lagInput).toHaveValue("2");
+    await expect(lagInput).toHaveValue("0");
   });
 
   test("lag input is editable — type new value and commit with Enter", async ({
@@ -252,7 +252,7 @@ test.describe("Lag display and editing", () => {
     await lagInput.press("Tab");
 
     // The input should revert to the original value
-    await expect(lagInput).toHaveValue("2");
+    await expect(lagInput).toHaveValue("0");
   });
 
   test("lag input clamps to ±365", async ({ page }) => {
@@ -295,9 +295,9 @@ test.describe("Dependency creation with auto-calculated lag", () => {
     expect(newStartC).toBe(origStartC);
     expect(newEndC).toBe(origEndC);
 
-    // Verify the lag is auto-calculated as 2
+    // Verify the lag is auto-calculated as 0 (consecutive working days across weekend)
     await openDependencyPanel(page, "Task B", "Task C");
-    await expect(getLagInput(page)).toHaveValue("2");
+    await expect(getLagInput(page)).toHaveValue("0");
   });
 
   test("creating dependency between overlapping tasks calculates negative lag", async ({
@@ -359,7 +359,7 @@ test.describe("Panel edits always enforce constraints", () => {
     await page.keyboard.type("5");
     await lagInput.press("Enter");
 
-    // Task B should have shifted forward by 3 days (lag 2 → 5)
+    // Task B should have shifted forward (lag 0 → 5 working days)
     const newStartB = await getStartDate(page, "Task B");
     expect(newStartB).not.toBe(origStartB);
   });
@@ -395,7 +395,7 @@ test.describe("Panel edits always enforce constraints", () => {
     const panel = page.getByRole("dialog", { name: "Edit dependency" });
     await panel.getByRole("radio", { name: "SS" }).click();
 
-    // Task B should reposition (SS with lag=2 means B.start = A.start + 2 = Jan 8)
+    // Task B should reposition (SS with lag=0 means B.start = A.start)
     const newStartB = await getStartDate(page, "Task B");
     expect(newStartB).not.toBe(origStartB);
   });
@@ -443,15 +443,15 @@ test.describe("Drag behavior — auto-scheduling ON", () => {
     // Task B should also have moved (cascaded)
     expect(newStartB).not.toBe(origStartB);
 
-    // Verify lag is still 2
+    // Verify lag is still 0
     await openDependencyPanel(page, "Task A", "Task B");
-    await expect(getLagInput(page)).toHaveValue("2");
+    await expect(getLagInput(page)).toHaveValue("0");
   });
 
   test("drag predecessor LEFT also cascades successor backward (lag stays fixed)", async ({
     page,
   }) => {
-    // Task A: Jan 6–10, Task B: Jan 13–17, FS lag=2
+    // Task A: Jan 6–10, Task B: Jan 13–17, FS lag=0 WD
     const origStartA = await getStartDate(page, "Task A");
     const origStartB = await getStartDate(page, "Task B");
 
@@ -467,9 +467,9 @@ test.describe("Drag behavior — auto-scheduling ON", () => {
     // Task B should ALSO have moved earlier (backward cascade)
     expect(newStartB).not.toBe(origStartB);
 
-    // Verify lag is still 2 (constraint maintained bidirectionally)
+    // Verify lag is still 0 (constraint maintained bidirectionally)
     await openDependencyPanel(page, "Task A", "Task B");
-    await expect(getLagInput(page)).toHaveValue("2");
+    await expect(getLagInput(page)).toHaveValue("0");
   });
 
   test("Alt+drag predecessor suppresses cascade (lag auto-updates)", async ({
@@ -488,7 +488,7 @@ test.describe("Drag behavior — auto-scheduling ON", () => {
     await openDependencyPanel(page, "Task A", "Task B");
     const lagInput = getLagInput(page);
     const lagValue = await lagInput.inputValue();
-    expect(parseInt(lagValue, 10)).not.toBe(2);
+    expect(parseInt(lagValue, 10)).not.toBe(0);
   });
 
   test("chain cascade A→B→C — dragging A moves both B and C", async ({
@@ -561,8 +561,8 @@ test.describe("Drag behavior — auto-scheduling OFF", () => {
     await openDependencyPanel(page, "Task A", "Task B");
     const lagInput = getLagInput(page);
     const lagValue = await lagInput.inputValue();
-    // Lag should be less than 2 since A moved forward but B stayed
-    expect(parseInt(lagValue, 10)).toBeLessThan(2);
+    // Lag should be less than 0 since A moved forward but B stayed
+    expect(parseInt(lagValue, 10)).toBeLessThan(0);
   });
 
   test("Alt+drag predecessor forces cascade even with auto-scheduling OFF", async ({
@@ -577,9 +577,9 @@ test.describe("Drag behavior — auto-scheduling OFF", () => {
     const newStartB = await getStartDate(page, "Task B");
     expect(newStartB).not.toBe(origStartB);
 
-    // Lag should still be 2 (cascade preserved the constraint)
+    // Lag should still be 0 (cascade preserved the constraint)
     await openDependencyPanel(page, "Task A", "Task B");
-    await expect(getLagInput(page)).toHaveValue("2");
+    await expect(getLagInput(page)).toHaveValue("0");
   });
 
   test("toolbar shows temporary override indicator during Alt+drag", async ({
@@ -647,7 +647,7 @@ test.describe("Drag successor behavior", () => {
   test("auto-scheduling ON — drag successor snaps back to constraint position", async ({
     page,
   }) => {
-    // Setup: A→B FS lag=2. Auto-scheduling ON.
+    // Setup: A→B FS lag=0 WD. Auto-scheduling ON.
     // Task B starts at Jan 13. Moving B should snap it back.
     await setupAndFit(page, { autoScheduling: true });
 
@@ -656,13 +656,13 @@ test.describe("Drag successor behavior", () => {
     // Drag Task B to the right (away from constraint)
     await dragTaskBar(page, "Task B", 150);
 
-    // Task B should snap back to its constraint position (lag=2 after Task A)
+    // Task B should snap back to its constraint position (lag=0 WD after Task A)
     const newStartB = await getStartDate(page, "Task B");
     expect(newStartB).toBe(origStartB);
 
-    // Lag should still be 2
+    // Lag should still be 0
     await openDependencyPanel(page, "Task A", "Task B");
-    await expect(getLagInput(page)).toHaveValue("2");
+    await expect(getLagInput(page)).toHaveValue("0");
   });
 
   test("auto-scheduling ON — drag successor LEFT snaps back to constraint position", async ({
@@ -681,7 +681,7 @@ test.describe("Drag successor behavior", () => {
   });
 
   test("auto-scheduling OFF — drag successor updates lag", async ({ page }) => {
-    // Setup: A→B FS lag=2. Auto-scheduling OFF.
+    // Setup: A→B FS lag=0 WD. Auto-scheduling OFF.
     await setupAndFit(page, { autoScheduling: false });
 
     const origStartB = await getStartDate(page, "Task B");
@@ -697,8 +697,8 @@ test.describe("Drag successor behavior", () => {
     await openDependencyPanel(page, "Task A", "Task B");
     const lagInput = getLagInput(page);
     const lagValue = await lagInput.inputValue();
-    // Lag should be greater than 2 since B moved further from A
-    expect(parseInt(lagValue, 10)).toBeGreaterThan(2);
+    // Lag should be greater than 0 since B moved further from A
+    expect(parseInt(lagValue, 10)).toBeGreaterThan(0);
   });
 
   test("auto-scheduling OFF — drag successor LEFT updates lag", async ({
@@ -713,7 +713,7 @@ test.describe("Drag successor behavior", () => {
     await openDependencyPanel(page, "Task A", "Task B");
     const lagInput = getLagInput(page);
     const lagValue = await lagInput.inputValue();
-    expect(parseInt(lagValue, 10)).toBeLessThan(2);
+    expect(parseInt(lagValue, 10)).toBeLessThan(0);
   });
 });
 
@@ -727,7 +727,7 @@ test.describe("Working days lag and duration preservation", () => {
   }) => {
     // Task A: Wed Jan 8 – Fri Jan 10 (3 days)
     // Task B: Mon Jan 13 – Fri Jan 17 (5 cal days, 5 working days)
-    // FS lag = 2 calendar days (Sat+Sun gap)
+    // FS lag = 0 working days (consecutive working days across weekend)
     // Change lag to 5 → Task B should move but keep 5-day duration
     const taskA = {
       ...TASK_A,
@@ -920,7 +920,7 @@ test.describe("Undo/redo for dependency operations", () => {
 
     const origStartB = await getStartDate(page, "Task B");
 
-    // Change lag from 2 to 5
+    // Change lag from 0 to 5
     await openDependencyPanel(page, "Task A", "Task B");
     const lagInput = getLagInput(page);
     await lagInput.click();
@@ -1115,8 +1115,8 @@ test.describe("All dependency types — FF", () => {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(200);
 
-    // FF: new end = Jan 10 + 5 = Jan 15
-    expect(await getEndDate(page, "Task B")).toBe("01/15/2025");
+    // FF: new end = Jan 10 + 5 WD = Jan 17 (Fri)
+    expect(await getEndDate(page, "Task B")).toBe("01/17/2025");
   });
 
   test("FF: drag predecessor cascades to successor", async ({ page }) => {
@@ -1183,8 +1183,8 @@ test.describe("All dependency types — SF", () => {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(200);
 
-    // SF: new end = Jan 6 + 5 = Jan 11
-    expect(await getEndDate(page, "Task B")).toBe("01/11/2025");
+    // SF: new end = Jan 6 + 5 WD = Jan 13 (Mon)
+    expect(await getEndDate(page, "Task B")).toBe("01/13/2025");
   });
 
   test("SF: drag predecessor cascades to successor", async ({ page }) => {
@@ -1222,7 +1222,7 @@ test.describe("Resize successor with dependencies", () => {
   test("right-edge resize on successor changes duration, keeps start constrained", async ({
     page,
   }) => {
-    // A→B FS lag=2, auto-scheduling ON. Task B is a successor.
+    // A→B FS lag=0 WD, auto-scheduling ON. Task B is a successor.
     await setupAndFit(page, { autoScheduling: true });
 
     const origStartB = await getStartDate(page, "Task B");
@@ -1260,7 +1260,7 @@ test.describe("Resize successor with dependencies", () => {
   test("left-edge resize on successor snaps back (constrained anchor)", async ({
     page,
   }) => {
-    // A→B FS lag=2, auto-scheduling ON. Left-edge resize would move start,
+    // A→B FS lag=0 WD, auto-scheduling ON. Left-edge resize would move start,
     // which violates the FS constraint — should snap back.
     await setupAndFit(page, { autoScheduling: true });
 
