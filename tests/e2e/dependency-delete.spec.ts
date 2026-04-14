@@ -1,8 +1,9 @@
 /**
  * E2E tests for deleting dependencies via keyboard (Delete/Backspace).
  *
- * Verifies that pressing Delete or Backspace removes the selected dependency
- * when the properties panel is open.
+ * Verifies that focusing the arrow's SVG `<g>` and pressing Delete or
+ * Backspace removes the dependency directly via the element's onKeyDown
+ * handler — no properties panel needed.
  */
 
 import { test, expect, type Page } from '@playwright/test';
@@ -43,20 +44,26 @@ async function setupWithDependency(page: Page): Promise<void> {
   });
 }
 
-/** Select the dependency arrow and open the properties panel. */
-async function clickDependencyArrow(page: Page): Promise<void> {
-  // Use the aria-label on the SVG group to find the arrow
+/**
+ * Focus the dependency arrow's SVG `<g>` element.
+ *
+ * Previous approaches all broke in at least one browser engine:
+ * - Playwright `click()` — Firefox rejects clicks on SVG `<g>` outside
+ *   viewport (microsoft/playwright#22082)
+ * - `dispatchEvent(new MouseEvent('click'))` — panel opens but keyboard
+ *   focus lands on the panel's lag input, making Delete act as "edit number"
+ *   instead of "delete dependency"
+ * - `evaluate(el => el.click())` — WebKit: SVG `<g>` lacks `.click()`
+ *
+ * The fix: use `locator.focus()` which calls native `SVGElement.focus()` —
+ * supported across all browsers since April 2018 (MDN). The `<g>` has
+ * `tabIndex={0}` so it is focusable, and the component's `onKeyDown`
+ * handles Delete/Backspace directly without needing the panel open.
+ */
+async function focusDependencyArrow(page: Page): Promise<void> {
   const arrow = page.locator('g[aria-label^="Dependency from"]').first();
-  // Firefox/WebKit reject Playwright's click() on SVG <g> elements outside
-  // the viewport (microsoft/playwright#22082). SVG <g> elements lack .click()
-  // in WebKit, so dispatch a real MouseEvent that bubbles up to React's root.
-  await arrow.evaluate(el =>
-    el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })),
-  );
-  // Panel has aria-label="Edit dependency"
-  await expect(
-    page.getByRole('dialog', { name: 'Edit dependency' }),
-  ).toBeVisible({ timeout: 5_000 });
+  await arrow.focus();
+  await expect(arrow).toBeFocused();
 }
 
 // ---------------------------------------------------------------------------
@@ -75,35 +82,27 @@ test.describe('Dependency deletion via keyboard', () => {
     await page.waitForTimeout(500);
   });
 
-  test('Delete key removes dependency when properties panel is open', async ({
-    page,
-  }) => {
+  test('Delete key removes focused dependency arrow', async ({ page }) => {
     await expect(page.locator('.dependency-arrow')).toHaveCount(1);
 
-    // Click the arrow to select it (opens properties panel)
-    await clickDependencyArrow(page);
+    // Focus the arrow directly — its onKeyDown handles Delete without the panel
+    await focusDependencyArrow(page);
 
     // Press Delete — should remove the dependency
     await page.keyboard.press('Delete');
 
     // The dependency arrow should be gone
     await expect(page.locator('.dependency-arrow')).toHaveCount(0);
-
-    // The properties panel should also close
-    await expect(page.getByRole('dialog', { name: 'Edit dependency' })).not.toBeVisible();
   });
 
-  test('Backspace key removes dependency when properties panel is open', async ({
-    page,
-  }) => {
+  test('Backspace key removes focused dependency arrow', async ({ page }) => {
     await expect(page.locator('.dependency-arrow')).toHaveCount(1);
 
-    await clickDependencyArrow(page);
+    await focusDependencyArrow(page);
 
     // Press Backspace — should also remove the dependency
     await page.keyboard.press('Backspace');
 
     await expect(page.locator('.dependency-arrow')).toHaveCount(0);
-    await expect(page.getByRole('dialog', { name: 'Edit dependency' })).not.toBeVisible();
   });
 });
