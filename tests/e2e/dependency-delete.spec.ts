@@ -43,13 +43,14 @@ async function setupWithDependency(page: Page): Promise<void> {
   });
 }
 
-/** Click the dependency arrow to select it and open the properties panel. */
+/** Select the dependency arrow and open the properties panel. */
 async function clickDependencyArrow(page: Page): Promise<void> {
   // Use the aria-label on the SVG group to find the arrow
   const arrow = page.locator('g[aria-label^="Dependency from"]').first();
-  // Firefox rejects even force-clicks on SVG <g> elements outside the viewport.
-  // Use evaluate to dispatch the click event directly, bypassing the viewport check.
-  await arrow.dispatchEvent('click');
+  // Firefox/WebKit reject Playwright's click() on SVG <g> elements outside
+  // the viewport (microsoft/playwright#22082). Native DOM .click() fires a
+  // real bubbling event that React picks up, bypassing viewport checks.
+  await arrow.evaluate(el => (el as SVGGElement).click());
   // Panel has aria-label="Edit dependency"
   await expect(
     page.getByRole('dialog', { name: 'Edit dependency' }),

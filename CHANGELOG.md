@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.3](https://github.com/kitikonti/ownchart/compare/v1.7.2...v1.7.3) (2026-04-14)
+
+
+### Bug Fixes
+
+* use focus+Enter for dependency arrow selection in E2E tests ([e9f1710](https://github.com/kitikonti/ownchart/commit/e9f1710f86da0e100cc46c422b46034ccf083560))
+
 ## [1.7.2](https://github.com/kitikonti/ownchart/compare/v1.7.1...v1.7.2) (2026-04-13)
 
 
