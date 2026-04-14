@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.6](https://github.com/kitikonti/ownchart/compare/v1.7.5...v1.7.6) (2026-04-14)
+
+
+### Bug Fixes
+
+* rewrite dependency-delete E2E to use focus+keyboard instead of click ([ed07e2e](https://github.com/kitikonti/ownchart/commit/ed07e2eb9b4e7620966b81f1c1e3de364e5544e9))
+
 ## [1.7.5](https://github.com/kitikonti/ownchart/compare/v1.7.4...v1.7.5) (2026-04-14)
 
 
