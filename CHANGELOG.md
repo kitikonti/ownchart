@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.7.9](https://github.com/kitikonti/ownchart/compare/v1.7.8...v1.7.9) (2026-06-19)
+
+
+### Bug Fixes
+
+* preserve child order when copy-pasting summary tasks ([bb8a1e8](https://github.com/kitikonti/ownchart/commit/bb8a1e8ce6cda02902491e26424425c516128cf2))
+
 ## [1.7.8](https://github.com/kitikonti/ownchart/compare/v1.7.7...v1.7.8) (2026-04-14)
 
 ## [1.7.7](https://github.com/kitikonti/ownchart/compare/v1.7.6...v1.7.7) (2026-04-14)
