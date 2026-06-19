@@ -6,12 +6,16 @@ import {
 import type { Task } from "@/types/chart.types";
 import { tid, hex } from "../../../helpers/branded";
 
-// Helper to create test tasks
+// Helper to create test tasks.
+// `order` defaults to the value derived from the array order at call sites that
+// don't care about it, but can be set explicitly to model the canonical visual
+// order (which is NOT necessarily the array index — see normalizeTaskOrder).
 const createTask = (
   id: string,
   name: string,
   parent?: string,
-  open?: boolean
+  open?: boolean,
+  order = 0
 ): Task => ({
   id: tid(id),
   name,
@@ -20,7 +24,7 @@ const createTask = (
   duration: 7,
   progress: 0,
   color: hex("#3b82f6"),
-  order: 0,
+  order,
   type: "task",
   parent: parent ? tid(parent) : undefined,
   open,
@@ -125,17 +129,39 @@ describe("collectTasksWithChildren", () => {
 
   it("should return tasks in visual order regardless of selection order", () => {
     const tasks = [
-      createTask("1", "Task 1"),
-      createTask("2", "Task 2"),
-      createTask("3", "Task 3"),
+      createTask("1", "Task 1", undefined, undefined, 0),
+      createTask("2", "Task 2", undefined, undefined, 1),
+      createTask("3", "Task 3", undefined, undefined, 2),
     ];
 
     // Select in reverse visual order (e.g. Ctrl+click bottom-to-top)
     const result = collectTasksWithChildren(["3", "1"], tasks);
 
     expect(result).toHaveLength(2);
-    // Result must be in allTasks order (1 before 3), not selection order
+    // Result must be in `order` order (1 before 3), not selection order
     expect(result.map((t) => t.id)).toEqual(["1", "3"]);
+  });
+
+  it("should sort by the `order` field, not the array position (bug repro)", () => {
+    // Mirrors the real-world fixture where the stored tasks array is NOT in
+    // visual order: the parent has order 0 but sits in the middle of the array,
+    // and its children are shuffled relative to their `order` values.
+    const tasks = [
+      createTask("child-c", "Child C", "parent", undefined, 3), // array idx 0
+      createTask("child-a", "Child A", "parent", undefined, 1), // array idx 1
+      createTask("parent", "Parent", undefined, false, 0), // array idx 2, collapsed
+      createTask("child-b", "Child B", "parent", undefined, 2), // array idx 3
+    ];
+
+    const result = collectTasksWithChildren(["parent"], tasks);
+
+    // Parent + 3 children, ordered by `order` (0,1,2,3) — NOT array index.
+    expect(result.map((t) => t.id)).toEqual([
+      "parent",
+      "child-a",
+      "child-b",
+      "child-c",
+    ]);
   });
 
   it("should handle open=undefined as expanded (default)", () => {

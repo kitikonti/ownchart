@@ -41,13 +41,15 @@ function collectHiddenDescendants(
  * - EXCEPTION: If a selected task is collapsed (open === false),
  *   also include its hidden children recursively
  *
- * The result is sorted by the tasks' position in `allTasks` (visual order),
- * so the returned order is deterministic regardless of the order in which
- * `taskIds` were accumulated (e.g. from non-sequential Ctrl+click selection).
+ * The result is sorted by each task's `order` field (the canonical visual
+ * order), so the returned order is deterministic regardless of how `taskIds`
+ * were accumulated (e.g. non-sequential Ctrl+click) AND regardless of the
+ * order in which tasks happen to sit in the `allTasks` array — which is NOT
+ * guaranteed to match visual order (see `normalizeTaskOrder` in hierarchy.ts).
  *
  * @param taskIds - IDs of explicitly selected tasks
- * @param allTasks - Complete task list (defines canonical visual order)
- * @returns Array of tasks to copy, sorted in visual order
+ * @param allTasks - Complete task list (provides the `order` field per task)
+ * @returns Array of tasks to copy, sorted by `order` (visual order)
  */
 export function collectTasksWithChildren(
   taskIds: TaskId[],
@@ -58,7 +60,11 @@ export function collectTasksWithChildren(
 
   // Pre-build O(1) lookup structures to avoid O(n) scans inside loops
   const taskMap = new Map<TaskId, Task>(allTasks.map((t) => [t.id, t]));
-  const orderMap = new Map<TaskId, number>(allTasks.map((t, i) => [t.id, i]));
+  // Sort key is the `order` field (canonical visual order), NOT the array
+  // index — the stored tasks array is not guaranteed to be in visual order.
+  const orderMap = new Map<TaskId, number>(
+    allTasks.map((t) => [t.id, t.order])
+  );
   const childrenMap = new Map<TaskId, Task[]>();
   allTasks.forEach((t) => {
     if (!t.parent) return;
@@ -92,8 +98,9 @@ export function collectTasksWithChildren(
     }
   });
 
-  // Sort by allTasks position to ensure deterministic visual order regardless
-  // of how taskIds were accumulated (e.g. Ctrl+click in non-top-to-bottom order).
+  // Sort by the `order` field to ensure deterministic visual order regardless
+  // of how taskIds were accumulated (e.g. Ctrl+click in non-top-to-bottom order)
+  // and regardless of the tasks' position in the allTasks array.
   return result.sort(
     (a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0)
   );

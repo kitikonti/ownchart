@@ -172,6 +172,45 @@ describe("Clipboard Integration Tests", () => {
       const tasks = useTaskStore.getState().tasks;
       expect(tasks).toHaveLength(4);
     });
+
+    it("should preserve child visual order when the stored tasks array is scrambled", () => {
+      // Regression for the copy/paste child-ordering bug: the stored tasks
+      // array is NOT in visual order (canonical order is the `order` field).
+      // Here the collapsed parent has order 0 but sits mid-array, and its
+      // children are shuffled relative to their order values.
+      useTaskStore.setState({
+        tasks: [
+          createTask("child-c", "Child C", 3, "parent"), // array idx 0
+          createTask("child-a", "Child A", 1, "parent"), // array idx 1
+          createTask("parent", "Parent", 0, undefined, false), // idx 2, collapsed
+          createTask("child-b", "Child B", 2, "parent"), // array idx 3
+        ],
+        selectedTaskIds: ["parent"],
+      });
+
+      const originalIds = new Set(
+        useTaskStore.getState().tasks.map((t) => t.id)
+      );
+
+      const clipboardStore = useClipboardStore.getState();
+      clipboardStore.copyRows(["parent"]);
+      clipboardStore.pasteRows();
+
+      // Isolate the pasted clones (new IDs) and read them in visual order.
+      const pasted = useTaskStore
+        .getState()
+        .tasks.filter((t) => !originalIds.has(t.id))
+        .sort((a, b) => a.order - b.order);
+
+      // Pasted children must follow the source visual order (1,2,3), not the
+      // scrambled array order (C, A, B) that the bug produced.
+      expect(pasted.map((t) => t.name)).toEqual([
+        "Parent",
+        "Child A",
+        "Child B",
+        "Child C",
+      ]);
+    });
   });
 
   describe("Row Cut/Paste", () => {
